@@ -1,0 +1,238 @@
+---
+title: "Lectura 6"
+author: "jaime"
+date: "2024-10-25"
+output: pdf_document
+---
+#Instalamos los datasets
+```{r}
+library(datasets)
+
+```
+
+
+#Prueba de suma de rangos de wilcoxon
+```{r}
+
+#Esta prueba se llama prueba U de Mann-Whitney o prueba de wilcoxon-mann-whitney
+#Es una alternativa no paramétrica a la prueba t de student para dos muestras independientes.
+
+
+```
+Ejemplo:
+Una empresa quiere evaluar la usabilidad de dos interfaces de usuario alternativas, A y B. selecciona 23 voluntarias y voluntarios al azar, que son asignados de manera aleatoria a dos grupos. N_a = 12, N_b = 
+11. Cada grupo interactúa con una de las dos interfaces y se evalua 6 aspectos que llamaremos "Indice de usabilidad", donde 1 es "muy malo" y 7 es "muy bueno". Los resultados son los siguientes:
+
+
+Si bien se cumple la condicion de independencia, no se puede utilizar una prueba t ded student, por que no se puede asegurar que son de igual intervalo. ya que si dos participantes califican un aspecto de A con 3 y 5, mientras que dos participantes califican un aspecto de B con 4 y 6, no se puede asegurar que la diferencia entre 3 y 5 sea igual a la diferencia entre 4 y 6 para B, no se puede asegurar. Por lo tanto, se utiliza la prueba de suma de rangos de wilcoxon.
+
+Definimos las hipotesis:
+
+H0: No hay diferencia en la usabiliad de ambas interfaces (los valores se distribuyen de igual forma.)
+H1: Hay diferencia en la usabilidad de ambas interfaces (las distribuciones de los indices de usabilidad son distintas.)
+
+En R, podemos utilizar la funcion wilcox.test para realizar la prueba de suma de rangos de wilcoxon.
+
+```{r}
+#Realizamos la prueba, primero definimos los datos de la prueba.
+
+# Ingresar los datos
+Interfaz_A <- c(2.7, 6.6, 1.6, 5.1, 3.7, 6.1, 5.0, 1.4, 1.8, 1.5, 3.0, 5.3)
+
+Interfaz_B <- c(5.0, 1.4, 5.6, 4.6, 6.7, 2.7, 1.3, 6.3, 3.7, 1.3, 6.8)
+
+#Establecemos el nivel de significancia.
+alpha <- 0.5
+
+#Realizamos la prueba
+
+Prueba_wilcoxon <- wilcox.test(Interfaz_A, Interfaz_B, alternative = "two.sided", conf.level = 1 - alpha)
+
+#Se utilizan ambos vectores de interfaces, se utiliza una prueba bilatera, debido a que la hipotesis nula se define como diferencias en ambos sentidos, y se establece el nivel de significancia.
+
+#Mostramos los resultados
+print(Prueba_wilcoxon)
+
+```
+Con un resultado de P, obtenido con un valor de 0.7816, podemos concluir con un 95% de confianza que no hay diferencias significativas en la usabilidad de ambas interfaces. Por lo tanto, no se puede rechazar la hipotesis nula.
+
+
+*Como conclusion, debes saber que esta prueba se utiliza cuando no se puede asumir que los datos provienen de una distribucion normal, y se utiliza para comparar dos muestras independientes, por ejemplo con el caso anterior, se utiliza esta prueba por que estamos comparando dos interfaces de usuario, donde cada grupo compara cada interfaz*
+
+
+#Prueba de rangos con signo de Wilcoxon
+
+Esta prueba se utiliza cuando en una prueba t de student, no se puede asumir que los datos provienen de una distribucion normal, y se utiliza para comparar dos muestras dependientes o apareadas, por ejemplo, antes y despues de un tratamiento.
+
+las condiciones para esta prueba son :
+1.- los pares de observaciones deben ser independientes.
+2.- la escala de medicion empleada para ambas muestras debe ser a lo menos ordinal.
+
+Ejemplo:
+
+una empresa de software desea evaluar la usabilidad de dos interfaces de usuario, A y B, pR un nuevo producto, para determinar si la A es mejor que la B, para ello la empresa selecciona 10 al azar, para evaluar con una escada de 1 siendo "muy malo" y 7 siendo "muy bueno". aleatoriamente se elegieron 5 que evaluaron primero la interfaz A, y luego la B, y 5 que evaluaron primero la interfaz B y luego la A.
+
+definimos las Hipotesis:
+
+H0: las mismas personar no perciben diferencias en la usabilidad de ambas interfaces.
+Ha: las mismas personas consideran que la interfaz A tiene mejor usabilidad que la B.
+
+En R, podemos utilizar la funcion wilcox.test para realizar la prueba de rangos con signo de wilcoxon.
+
+```{r}
+# Ingresar los datos
+Interfaz_A2 <- c(2.9, 6.1, 6.7, 4.7, 6.4, 5.7, 2.7, 6.9, 1.7, 6.4)
+
+Interfaz_B2 <- c(6.0, 2.8, 1.3, 4.7, 3.1, 1.8, 2.9, 4.0, 2.3, 1.6)
+
+alpha_2 <- 0.05
+
+#Realizamos la prueba
+
+Prueba_wilcoxon2 <- wilcox.test(Interfaz_A2, Interfaz_B2, paired = TRUE, alternative = "greater", conf.level = 1 - alpha_2)
+
+#Se utilizan ambos vectores de datos, se utiliza paires = TRUE para indicar que se quiere utilizar e metodo de rangos con signo, y se utiliza greater, ya que nuestra Ha, es que la interfaz A es mejor que la B, siendo esta A>B. y se establece el nivel de significancia.
+
+#Mostramos el resultado
+print(Prueba_wilcoxon2)
+```
+De acuerdo al resultado obtenido, con un valor de p de 0.03778, rechazamos la hipotesis nula en favor de la alternativa, por lo que podemos concluir con un 95% de confianza que la interfaz A es mejor que la B en usabilidad.
+
+*Como conclusion, debes saber que esta prueba se utiliza cuando no se puede asumir que los datos provienen de una distribucion normal, y se utiliza para comparar dos muestras dependientes, por ejemplo con el caso anterior, se utiliza esta prueba por que estamos comparando dos interfaces de usuario, donde un mismo sujeto compara primero una interfaz y luego la otra. (muestras pareadas)*
+
+
+
+Ejercicio: 
+
+11.23 El conjunto airquality del paquete datasets contiene mediciones diarias de la calidad del aire en la ciudad de New York, EE.UU., registradas de mayo a septiembre de 1973. Verifica si la calidad del aire respecto del ozono es la misma los primeros 9 días de agosto que los primeros 9 días de septiembre. No olvides verificar si se cumplen las condiciones de la prueba que estás aplicando.
+
+```{r}
+# Cargamos los datos.
+data(airquality)
+
+#Mostramos los primeros datos
+head(airquality)
+```
+Como se nos pide verificar si la cantidad de aire es la misma los primeros 9 dias de agosto que los primeros 9 dias de septiembre, seleccionamos los datos de agosto y septiembre, y realizamos la prueba de suma de rangos de wilcoxon.
+
+Primero filtraremos los datos de agosto y septiembre, y luego realizaremos la prueba.
+
+```{r}
+library(dplyr)
+#Filtramos los datos de agosto y septiembre para el ozono
+datos_septiembre <- airquality %>% filter(Month == 9) %>% select(Ozone) %>% slice(1:9) %>% pull()
+datos_agosto <- airquality %>% filter(Month == 8) %>% select(Ozone) %>% slice(1:9) %>% pull()
+
+
+```
+
+
+```{r}
+# Crear diagramas de caja para comparar distribuciones
+boxplot(datos_agosto, datos_septiembre, names = c("Agosto", "Septiembre"), main = "Comparación de distribuciones de Ozono")
+
+
+dataframe <- data.frame(datos_agosto, datos_septiembre)
+#Cambiamos el nombre de las columnas
+colnames(dataframe) <- c("Agosto", "Septiembre")
+
+print(dataframe)
+
+#Definimos las hipótesis:
+
+#H0: No hay diferencia en la calidad del aire respecto del ozono los primeros 9 días de agosto que los primeros 9 días de septiembre.
+
+#Ha: Hay diferencia en la calidad del aire respecto del ozono los primeros 9 días de agosto que los primeros 9 días de septiembre.
+
+#Realizamos la prueba
+alpha <- 0.05
+Prueba_wilcoxon <- wilcox.test(datos_agosto, datos_septiembre, alternative = "two.sided", conf.level = 1-alpha)
+
+#Mostramos los resultados.
+print(Prueba_wilcoxon)
+
+
+
+
+```
+Conclusión: Al realizar la prueba de Wilcoxon de suma de rangos, obtuvimos un valor de p de 0.7572, siendo este mayor a nuestor nivel de significancia, por lo tanto, fallamos en no rechazar la H0. Por lo tanto no existe suficiente informacion para decir que existe una diferencia en la calidad del aire respecto del ozono los primeros 9 días de agosto que los primeros 9 días de septiembre.
+
+
+
+Ejercicio numero 2:
+
+Enunciado: En el trabajo de título de una estudiante del DIINF se reportan tiempos de ejecución (en milisegundos) y la cercanía con la solución óptima (en por ciento) de la mejor solución encontrada con tres versiones de un algoritmo genético para resolver instancias del problema del vendedor viajero disponibles en repositorios públicos. Ahora debe enfrentar el análisis de estos datos, por que está solicitando ayuda de las y los estudiantes de Estadística Inferencial.
+
+En el contexto de este estudio, realizaremos las siguientes actividades:
+
+1.Copiar los enunciados de las preguntas asignadas como comentarios de un script R.
+2.Obtener los datos, disponibles en el archivo "EP07 Datos.csv", desde el directorio compartido correspondiente.
+3.Familiarizarse con los datos entregados y obtener las muestras indicadas.
+4.Enunciar las hipótesis nula y alternativa que permitan responder las preguntas planteadas.
+5.Argumentar o escribir código R para verificar que no se cumplen las condiciones para pruebas paramétricas con validez para  el caso en estudio.
+6.Adaptar las hipótesis a contrastar de acuerdo al método solicitado en cada caso.
+7.Escribir código R para realizar los análisis estadísticos para datos problemáticos solicitados.
+8.Redactar la respuesta a la pregunta planteada en base a los resultados del análisis realizado.
+
+#Pregunta 1: Observando los datos, la memorista sospecha que hay diferencias significativas en el tiempo de ejecución entre las versiones B y C del algoritmo cuando las instancias tienen 75 o más nodos. ¿Los datos respaldan la intuición de la memorista? Para responder, filtren los datos para tener las instancias con 75 o más nodos y seleccionen las columnas de los tiempos de ejecución de las versiones B y C en formato ancho. Usando como semilla el valor 23, obtenga muestras aleatorias independientes de 23 tiempos registrados por la versión B y 20 tiempos registrados por la versión C del algoritmo. Realicen un análisis estadístico pertinente (enunciar hipótesis, revisar condiciones, seleccionar prueba) para responder la pregunta planteada, utilizando pruebas no paramétricas de ser necesario.
+
+**Obtenemos los datos**
+```{r}
+library(dplyr)
+#Cargamos los datos
+
+datos <- read.csv("EP07 Datos.csv")
+
+#Mostramos los primeros
+head(datos)
+```
+
+Ahora filtramos los datos para registros con 75 o más nodos, y seleccionamos las columnas de los tiempos de ejecución de las versiones B y C en formato ancho.
+
+```{r}
+#Filtramos los datos
+
+
+datos_filtrado <- datos %>% filter(n.nodos >= 75) %>% select(tiempo.B,tiempo.C)
+
+Tiempo_B = datos_filtrado$tiempo.B
+Tiempo_C = datos_filtrado$tiempo.C
+
+#Ponemos la semilla 23, para obtener datos randoms 23 Para B y 20 para C
+
+set.seed(23)
+
+#Obtenemos las muestras aleatorias
+
+muestra_B <- sample(Tiempo_B, 23)
+muestra_C <- sample(Tiempo_C, 20)
+
+#Seleccion de prueba
+
+#Como el enunciado nos pide verificar diferencias de ejecucion entre B y C, y no se puede asumir que los datos provienen de una distribucion normal, utilizaremos la prueba de suma de rangos de wilcoxon.
+
+#Definimos las hipotesis
+
+#H0: No hay diferencias significativas en el tiempo de ejecucion entre las versiones B y C del algoritmo cuando las instancias tienen 75 o más nodos.
+
+#Ha: Hay diferencias significativas en el tiempo de ejecucion entre las versiones B y C del algoritmo cuando las instancias tienen 75 o más nodos.
+
+#verificacion de condiciones:
+
+#1.- Los datos deben ser independientes: Los datos son independientes, ya los tiempos de los algorithmos no dependen de los otros.
+
+#2.- La escala de medicion empleada para ambas muestras debe ser a lo menos ordinal: Los tiempos de ejecucion son una escala de medicion ordinal.
+
+#Realizamos la prueba de wilcoxom.
+
+#definimos el nivel de significancia
+alpha <- 0.05
+prueba_wilcoxon <- wilcox.test(muestra_B, muestra_C, alternative = "two.sided", conf.level = 1-alpha)
+
+print(prueba_wilcoxon)
+
+#Con un valor de P obtenido de 0.000252, podemos rechazar la hipotesis nula, por lo que podemos concluir con un 95% de confianza que hay diferencias significativas en el tiempo de ejecucion entre las versiones B y C del algoritmo cuando las instancias tienen 75 o más nodos.
+```
+
+
+

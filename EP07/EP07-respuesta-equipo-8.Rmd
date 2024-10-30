@@ -1,0 +1,176 @@
+---
+title: "EP07"
+author: "jaime"
+date: "2024-10-29"
+output: pdf_document
+---
+
+
+*Como equipo numero 8, de nos pidió realizar un ejercicio sobre métodos no paramétricos para enfrentar datos numéricos problemáticos.*
+
+#Enunciado: En el trabajo de título de una estudiante del DIINF se reportan tiempos de ejecución (en milisegundos) y la cercanía con la solución óptima (en por ciento) de la mejor solución encontrada con tres versiones de un algoritmo genético para resolver instancias del problema del vendedor viajero disponibles en repositorios públicos. Ahora debe enfrentar el análisis de estos datos, por que está solicitando ayuda de las y los estudiantes de Estadística Inferencial.
+
+Obtenemos los datos que se nos entregaron mediante el archivo csv.
+
+```{r}
+#Leemos los datosdel csv
+
+datos <- read.csv("EP07 Datos.csv")
+
+#Mostramos los datos iniciales
+head(datos)
+```
+Para este enunciado, junto con los datos entregados, se nos entregaron las siguientes preguntas a responder:
+
+*Pregunta 1:* Observando los datos, la memorista sospecha que hay diferencias significativas en el tiempo de ejecución entre las versiones A y B del algoritmo cuando las instancias tienen 70 o más nodos. ¿Los datos respaldan la intuición de la memorista?
+Para responder, filtren los datos para tener las instancias con 70 o más nodos y seleccionen las columnas de los tiempos de ejecución de las versiones A y B (en formato ancho). Usando como semilla el valor 73, obtengan muestras aleatorias independientes de 24 tiempos registrados por la versión A y 20 tiempos registrados por la versión B del algoritmo. Realicen un análisis estadístico pertinente (enunciar hipótesis, revisar condiciones, seleccionar pruebas ómnibus y post-hoc según corresponda) para responder la pregunta planteada, utilizando pruebas no paramétricas de ser necesario
+
+
+```{r}
+#Cargamos las funciones necesarias
+library(dplyr)
+
+#Filtramos los datos para tener las instancias con 70 o más nodos
+
+datos_filtradosEJ1 <- datos %>% filter(n.nodos >= 70)
+
+#Mostramos los primeros datos
+head(datos_filtradosEJ1)
+```
+Ahora debemos obtener solamente los datos de tiempo de ejecución de las versiones A y B, para luego realizar el análisis estadístico pertinente.
+
+```{r}
+#Seleccionamos los tiempos de ejecucion A y B de las instancias que tienen 70 o más nodos
+
+TiempoA <- datos_filtradosEJ1$tiempo.A
+TiempoB <- datos_filtradosEJ1$tiempo.B
+
+#Mostramos los datos filtrados
+datos_filtradosEJ1 <- data.frame(TiempoA, TiempoB)
+print(datos_filtradosEJ1)
+
+```
+*Una vez obtenidos los datos, procedemos a verificar que tipo de prueba estadistica debemos realizar.*
+
+#### Formulamos las hipótesis:
+
+*H0: No existe una diferencia significativa en el tiempo de ejecucion entre las versiones A y B del algoritmo cuando las instancias tienen 70 o más nodos.*
+
+*Ha: Existe una diferencia significativa en el tiempo de ejecucion entre las versiones A y B del algoritmo cuando las instancias tienen 70 o más nodos.*
+
+
+#### Revisamos las condiciones:
+
+Cómo queremos comparar dos muestras independientes, debemos verificar que las muestras provengan de una población con distribución normal. Para esto, utilizaremos el test de Shapiro-Wilk.
+
+```{r}
+#Test de Shapiro-Wilk para TiempoA
+
+shapiro.test(TiempoA)
+
+#Test de Shapiro-Wilk para TiempoB
+
+shapiro.test(TiempoB)
+```
+Debido a que los valores obtenidos en las pruebas de shapiro wilk, son menores que un valor de significancia del 0.05, rechazamos la hipotesis nula sobre que los datos provienen de una distribución normal. Por lo tanto no podemos realizar una prueba t de student, y procederemos a realizar una prueba no parametrica suma de rangos de Wilcoxon.
+
+*Condiciones para realizar la prueba de wilcoxon*
+
+1. Las observaciones de ambas muestras son independientes: debido al enunciado del problema y los datos entregados, podemos asumir que las observaciones son independientes.
+
+2. La escala de medicion empleada debe ser a lo menos ordinal: los datos entregados son de tipo numerico, por lo que cumplen con esta condición.
+
+*Como se cumplen las condiciones para realizar la prueba de wilcoxon, procedemos a realizarla.*
+
+```{r}
+#Prueba de Wilcoxon
+
+#Por enunciado de la pregunta, seteamos la semilla en 73
+set.seed(73)
+
+#Obtenemos muestras aleatorias independientes de 24 tiempos registrados por la versión A y 20 tiempos registrados por la versión B del algoritmo
+
+muestraA <- sample(TiempoA, 24)
+muestraB <- sample(TiempoB, 20)
+
+#Realizamos la prueba de Wilcoxon
+
+alpha <- 0.05
+
+#Realizamos la prueab de wilcoxon
+Prueba_Wilcoxon <- wilcox.test(muestraA,muestraB,alternative = "two.sided", paired = FALSE, conf.level = 1-alpha)
+
+
+print(Prueba_Wilcoxon)
+```
+*Con los resultados obtenidos, siendo un valor de P de 0.0647, no podemos rechazar la hipotesis nula, por lo que no existen diferencias significativas en el tiempo de ejecucion entre las versiones A y B del algoritmo cuando las instancias tienen 70 o más nodos.*
+
+*Pregunta 2:* La memorista también sospecha que, al comparar las mismas instancias de prueba con iguales características, las mejores soluciones encontradas por las versiones B y C tienen rendimientos distintos. ¿Estará en lo cierto?
+Para responder, filtren los datos para tener las instancias con 70 o más nodos y seleccionen las columnas con el mejor rendimiento de las versiones B y C en formato ancho. Usando como semilla el valor 71, obtengan una muestra aleatoria de 24 instancias. Realicen un análisis estadístico pertinente (enunciar hipótesis, revisar condiciones, seleccionar pruebas ómnibus y post-hoc según corresponda) para responder la pregunta planteada, utilizando pruebas no paramétricas de ser necesario.
+
+```{r}
+#Filtramos los datos para tener las instancias con 70 o más nodos
+
+datos_filtradosEJ2 <- datos %>% filter(n.nodos >= 70)
+
+#Mostramos los primeros datos
+head(datos_filtradosEJ2)
+```
+Ahora debemos obtener solamente los datos de mejor rendimiento de las versiones B y C, para luego realizar el análisis estadístico pertinente.
+
+```{r}
+#Seleccionamos los mejores rendimientos de las versiones B y C de las instancias que tienen 70 o más nodos
+
+RendimientoB <- datos_filtradosEJ2$mejor.B
+RendimientoC <- datos_filtradosEJ2$mejor.C
+
+#Mostramos los datos filtrados
+
+datos_filtradosEJ2 <- data.frame(RendimientoB, RendimientoC)
+
+#Mostramos el data frame
+
+print(datos_filtradosEJ2)
+```
+
+*Una vez obtenidos los datos, procedemos a verificar que tipo de prueba estadistica debemos realizar.*
+
+#### Formulamos las hipótesis:
+
+*H0: No existe una diferencia significativa en el mejor rendimiento entre las versiones B y C del algoritmo cuando las instancias tienen 70 o más nodos.*
+
+*Ha: Existe una diferencia significativa en el mejor rendimiento entre las versiones B y C del algoritmo cuando las instancias tienen 70 o más nodos.*
+
+#### Revisamos las condiciones:
+
+Cómo queremos comparar dos muestras independientes, debemos verificar que las muestras provengan de una población con distribución normal. Para esto, utilizaremos el test de Shapiro-Wilk.
+
+```{r}
+#Test de Shapiro-Wilk para RendimientoB
+
+shapiro.test(RendimientoB)
+
+#Test de Shapiro-Wilk para RendimientoC
+
+shapiro.test(RendimientoC)
+``` 
+Debido a los valores P obtenido, siendo estos menores a un nivel de significancia del 0.05, rechazamos las hipotesis nula, sobre la normalidad de los datos. Por lo tanto, no podemos realizar una prueba t de student, y procederemos a realizar una prueba no parametrica suma de rangos de Wilcoxon.
+
+```{r}
+#Realizamos la prueba de wilcoxon.
+
+#Por enunciado se nos solicita setear la semilla en 71
+
+set.seed(71)
+
+#LLevamos los datos filtrados a formato ancho: 
+
+datos_ancho <- datos_filtradosEJ2 %>% pivot_wider(names_from = "RendimientoB", values_from = "RendimientoC")
+
+
+
+
+```
+
+
+

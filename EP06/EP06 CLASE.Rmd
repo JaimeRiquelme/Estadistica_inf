@@ -1,0 +1,144 @@
+---
+title: "EP06 CLASE"
+author: "jaime"
+date: "2024-10-24"
+output: pdf_document
+---
+
+
+# Contexto del problema 
+
+**Un equipo de investigadores del área de interacción humano-información está estudiando si el área temática y el nivel de dificultad del problema de información influyen en el tiempo (en segundos) que toma un usuario en formular una consulta de búsqueda para resolver dicho problema. Para ello, han reclutado a un grupo de participantes voluntarios, asignados aleatoriamente a distintos grupos. Cada participante debe resolver tres problemas de información con diferentes niveles de dificultad: baja, media y alta. A su vez, cada grupo debe resolver problemas relacionados a una temática diferente.**
+
+Cómo equipo N°8 se nos ha solicitado responder la siguiente pregunta: 
+
+En este momento, los investigadores buscan determinar si existen diferencias en el tiempo que tardan los usuarios en formular consultas para problemas con diferente nivel de dificultad en el área de psicología.
+
+*Obtenemos los datos desde el archivo csv*
+
+```{r}
+#Cargamos los datos
+
+datos <- read.csv("EP06 Datos.csv")
+
+#Mostramos los datos iniciales
+
+head(datos)
+```
+Cómo se nos realiza la pregunta de si existen diferencias en el tiempo que tardan los usuarios en formular consultas para problemas con diferente nivel de dificultad en el área de psicología, esto siendo un mismo sujeto, midiendo un tiempo, en diferentes niveles de dificultad, procederemos a realizar una prueba de *ANOVA para muestras correlacionadas*.
+
+Por otro lado, como se nos solicita solamente realizar esta prueba para el área de psicología, procederemos a filtrar los datos para que solo se muestren los datos de esta área.
+
+```{r}
+library(dplyr)
+
+#Filtramos los datos para mostrar solo los datos del área de psicología
+
+datos_filtrados <- datos %>% filter(area == "Psicología")
+
+#Seleccionamos las columnas de interés que utilizaremos para realizar la prueba
+
+datos_filtrados <- datos_filtrados %>% select(id,dificultad,tiempo)
+
+#Convertimos a factores
+datos_filtrados[["dificultad"]] <- factor(datos_filtrados[["dificultad"]])
+
+datos_filtrados[["id"]] <- factor(datos_filtrados[["id"]])
+
+#Mostramos los primeros datos
+head(datos_filtrados)
+```
+Luego de obtener los datos con los que trabajaremos, procederemos a verificar las condiciones necesarias para realizar la prueba de ANOVA para muestras correlacionadas.
+
+
+Por enunciado podemos asumir que los datos son independientes, ya que se menciona que los participantes son asignados aleatoriamente a distintos grupos.
+
+Para verificar la normalidad de los datos obtenidos, realizaremos un grafico Q-Q.
+
+```{r}
+#Importamos la libreria
+library(ggpubr)
+
+#Grafico Q-Q
+
+g1 <- ggqqplot(datos_filtrados, x = "tiempo", y = "dificultad", color = "dificultad")
+
+g1 <- g1 + facet_wrap(~dificultad)
+g1 <- g1 + rremove("x.ticks") + rremove("x.text")
+g1 <- g1 + rremove("y.ticks") + rremove("y.text")
+g1 <- g1 + rremove("axis.title")
+
+print(g1)
+```
+ Por último, para verificar la condicion de varianza-covarianzas esferica. omitiremos esta condicion de momento, ya que la funcion ezAnova, nos ofrece esta prueba para verificar esta condicion.
+ 
+ Procedemos a realizar la prueba.
+ 
+```{r}
+#Importamos la libreria
+library(ez)
+
+#Realizamos la prueba utilizando ezANOVA
+
+Prueba_ezAnova <- ezANOVA(data = datos_filtrados,
+                          dv = tiempo,
+                          wid = id,
+                          within = dificultad,
+                          return_aov = TRUE)
+print("Prueba de ezANOVA para muestras correlacionadas")
+print(Prueba_ezAnova)
+
+#Realizamos la prueba con aov, para confirmar.
+
+Prueba_aov <- aov(tiempo ~ dificultad + Error(id/dificultad), data = datos_filtrados)
+
+print("Prueba de aov para muestras correlacionadas")
+print(summary(Prueba_aov))
+```
+Dado el valor de p obtenido por *Mauchly's Test for Sphericity*, con un valor de P 0.7475901. No tenemos suficiente evidencia para rechazar Hipotesis nula, por lo que podemos asumir que la condicion de varianza-covarianzas esferica se cumple.
+
+Por otro lado, al realizar la prueba de Anova, obtenemos un valor de P 1.16e-09, siendo este menor al nivel de significancia 0.05, por lo que rechazamos la hipotesis nula, y concluimos que existen diferencias en el tiempo que tardan los usuarios en formular consultas para problemas con diferente nivel de dificultad en el área de psicología.
+
+Procederemos a realizar un grafico del tamaño del efecto.
+
+```{r}
+efecto_grafico <- ezPlot(data = datos_filtrados,
+                 dv = tiempo,
+                 wid = id,
+                 within = dificultad,
+                 y_lab = "Tiempo (segundos)",
+                 x = dificultad)
+
+print(efecto_grafico)
+```
+Debido al resultado Obtenido en Anova, procederemos a realizar una prueba post-hoc utilizando el metodo de Tukey.
+
+```{r}
+#Importamos la libreria
+library(tidyverse)
+library(nlme)
+library(emmeans)
+
+#Realizamos la prueba post-hoc utilizando Tukey
+
+mixto <- lme(tiempo ~ dificultad, random = ~1|id, data = datos_filtrados)
+
+medias <-  emmeans(mixto, "dificultad")
+
+tukey <- pairs(medias, adjust = "tukey")
+
+print("Prueba post-hoc de Tukey")
+print(tukey)
+
+```
+Dado el resultado obtenido al realizar la prueba de post-hoc, dandonos distintos valores de P, podemos concluir lo siguiente: 
+
+Entre los niveles de dificultad Alta-Baja, existe una diferencia significativa en el tiempo que tardan los usuarios en formular consultas para problemas con diferente nivel de dificultad en el área de psicología.
+
+Entre los niveles Alta-Media, existe una diferencia significativa en el tiempo que tardan los usuarios en formular consultas para problemas con diferente nivel de dificultad en el área de psicología.
+
+Entre los niveles Baja-media, no existe evidencia suficiente para afirmar que existe una diferencia significativa en el tiempo que tardan los usuarios en formular consultas para problemas con diferente nivel de dificultad en el área de psicología.
+
+
+
+

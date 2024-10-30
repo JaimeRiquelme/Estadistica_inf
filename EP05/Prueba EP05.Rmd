@@ -1,0 +1,124 @@
+---
+title: "Prueba EP05"
+author: "Jaime Riquelme, Fabian Lizama, Martín Gamboa"
+date: "2024-10-15"
+output: pdf_document
+---
+
+
+# Procedimiento anova de una via para muestras independientes.
+
+```{r}
+
+#Cargamos la libreria
+library(tidyverse)
+library(ggpubr)
+library(DescTools)
+
+
+
+#Creamos el data frame 
+
+A <- c(23,19,25,23,20)
+B <- c(26,24,28,23,29)
+C <- c(19,24,20,21,17)
+
+#Creamos el data frame
+
+datos <- data.frame(A,B,C)
+
+#Llevamos los datos a formato largo
+
+datos <- datos %>% pivot_longer(c("A","B","C"),
+                                names_to = "Algoritmo",
+                                values_to = "Tiempo")
+
+#Añadimos los factores
+
+datos[["Algoritmo"]] <- factor(datos[["Algoritmo"]])
+datos[["instancia"]] <- factor(1:nrow(datos))
+
+#Comprobamos normalidad de los datos
+
+g <- ggqqplot(datos,
+              x = "Tiempo",
+              y = "Algoritmo",
+              color = "Algoritmo")
+g <- g + facet_wrap(~Algoritmo)
+g <- g + rremove("x.ticks") + rremove("x.text")
+g <- g + rremove("y.ticks") + rremove("y.text")
+g <- g + rremove("axis.title")
+print(g)
+
+
+#Realizamos el procedimiento anova
+
+Prueba_Anova <- aov(Tiempo ~ Algoritmo, data = datos)
+#print(summary(Prueba_Anova))
+
+#Como el p es menor al nivel de significancia de 0.025
+#Realizamos una prueba de post-hoc de holm
+
+Post_Holm <- pairwise.t.test(datos[["Tiempo"]],
+                             datos[["Algoritmo"]],
+                             p.adj = "holm",
+                             pool.sd = TRUE,
+                             paired = FALSE,
+                             conf.level = 1-0.025)
+
+#print(Post_Holm)
+
+
+#Prueba de comparacion de sheffe
+
+#1. Existe diferencia entre los tiempos de ejecucion de los algortimos A y B?
+
+#Definimos las hipotesis nula y alternativa para este caso
+
+#H0: mu_a - mu_b = 0 
+#H1: mu_a - mu_b != 0
+
+#La hipotesis nula puede expresarse como una combinacion lineal c1*mu_a + c2*mu_b + c3 * mu_c= 0 en este caso la convinacion lineal seria del tipo c1 = 1, c2 = -1, c3 = 0 quedando como 1*mu_a -1 * mu_b + 0*mu_C = 0
+
+#Vector de coeficientes de la combinacion lineal
+
+c <- c(1,-1,0)
+
+# 2. Es el tiempo promedio de ejecucion del algoritmo A distinto al tiempo de ejecucuin promedio de los algoritmos B y c
+
+
+#Definimos la hipotesis nula y alternativa para este caso
+
+#H0: mu_a - (mu_b + mu_c)/2 = 0
+#H1: mu_a - (mu_b + mu_c)/2 != 0
+
+#En este caso el vector de coeficientes de la combinacion lineal es c1 = 1, c2 = -1/2, c3 = -1/2 quedando como 1*mu_a - 1/2 * mu_b - 1/2 * mu_c = 0
+
+c2 <- c(1,-1/2,-1/2)
+
+contrastes <- matrix(c(1,-1,0,1,-1/2,-1/2),ncol = 3,byrow = TRUE)
+
+contrastes
+
+#transponemos la matriz de contrastes
+contrastes <- t(contrastes)
+
+contrastes
+
+
+#Realizamos la prueba de scheffe
+
+scheffe_prueba <- ScheffeTest(x = Prueba_Anova,
+                              which = "Algoritmo",
+                              contrasts = contrastes,
+                              conf.level = 1-0.025)
+
+
+#Imprimimos los resultados
+
+print(scheffe_prueba)
+
+
+
+```
+

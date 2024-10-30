@@ -1,0 +1,170 @@
+---
+title: "EP03"
+author: "JAIME RIQUELME"
+date: "2024-10-07"
+output: pdf_document
+
+En una planta química hay dos máquinas que envasan detergentes industriales en bidones con un volumen de producto que sigue una distribución normal con
+ desviación estándar de 1 litro. La ingeniera a cargo de la planta debe asegurar que los bidones se están llenando con una media de 10 litros. Pero ella tiene la
+ sospecha de que hay desviaciones en esta media, lo que piensa confirmar usando una muestra aleatoria de 100 envases (50 de cada una de las máquinas).
+ También cree que hay diferencia en el cumplimiento del volumen requerido entre la máquina más antigua y la más moderna, que han de andar por el 90% y
+ 96% de los bidones, respectivamente.
+ 
+ 1.- Si la ingeniera piensa rechazar la hipótesis nula cuando la muestra presente una media menor a 9,78 litros o mayor a 10,22 litros, ¿cuál es la probabilidad
+ de que cometa un error de tipo I? Para responder, generen un gráfico de la distribución muestral de las medias hipotetizada en donde se marquen las
+ zonas correspondientes a la probabilidad solicitada, para luego, basándose en este gráfico, calcular el área correspondiente. Tome como ejemplo los
+ scripts presentados en la lectura sobre poder estadístico
+---
+```{r}
+library(ggplot2)
+library(ggpattern)
+library(ggpubr)
+#Datos conocidos
+
+lim_inf = 9.78
+lim_sup = 10.22
+mu = 10
+sigma = 1
+n = 100
+SE <- sigma/sqrt(n)
+
+x <- mu + c(-6,5)*SE
+
+g<- ggplot()+ xlim(x)
+g<- g + labs(title = "Distribución muestral de la media", x = "Media", y = "Densidad")
+g<- g + theme_pubr()
+
+dist_0 <- stat_function(fun = dnorm, args = list(mean = mu, sd = SE),
+                        geom = "area",
+                        colour = "black", fill = "skyblue", alpha = 0.2)
+
+g1 <- g + dist_0
+g1 <- g1 + geom_vline(xintercept = mu, colour = "red")
+
+#Calcular las regiones criticas de la H0
+
+z_inferior <- qnorm(alpha/2, mean = mu, sd = SE, lower.tail = TRUE)
+z_superior <- qnorm(alpha/2, mean = mu, sd = SE, lower.tail = FALSE)
+
+#colorear las regiones de rechazo
+
+g2<- g1+ stat_function(fun = dnorm, args = list(mean = mu, sd = SE),
+                        xlim = c(x[1], z_inferior),
+                        geom = "area", fill = "red", alpha = 0.2)
+g2<- g2+ stat_function(fun = dnorm, args = list(mean = mu, sd = SE),
+                        xlim = c(z_superior, x[2]),
+                        geom = "area", fill = "red", alpha = 0.2)
+
+g2
+z_inferior
+z_superior
+
+#Calcular el error tipo I
+alpha <- pnorm(z_inferior, mean = mu, sd = SE, lower.tail = TRUE) +
+  pnorm(z_superior, mean = mu, sd = SE, lower.tail = FALSE)
+
+alpha
+
+#basandonos en el grafico y en el calculo de alpha, la probabilidad de cometer un error tipo I es de 0.0278069.
+
+
+
+
+
+```
+
+2.-Si el verdadero volumen medio de los bidones fuera de 10,2 litros, ¿cuál sería la probabilidad de que la ingeniera, que obviamente no conoce este dato,
+ cometa un error de tipo II? Para responder, agregue al gráfico anterior la verdadera distribución muestral de las medias y marquen (con otro color) la zona
+ correspondiente a la probabilidad solicitada, para luego, basándose en este gráfico, calcular el área correspondiente. También hay ejemplos de este
+ procedimiento en la lectura sobre poder estadístico.
+ 
+```{r}
+#Datos conocidos
+mu_2 = 10.2
+delta <- mu - mu_2
+
+#Añadimos la verdadera distribucion muestral
+
+g3 <- g2 + stat_function(fun = dnorm, args = list(mean = mu_2, sd = SE),
+                         geom = "area", colour = "black", fill = "skyblue", alpha = 0.2) +
+      geom_vline(xintercept = mu_2, colour = "blue")
+
+#Añadimos una linea vertical en la region de rechazo
+
+g3 <- g3 + geom_vline (xintercept = z_superior, colour = "red")
+
+g3 <- g3 + stat_function(fun = dnorm, args = list(mean = mu_2, sd = SE),
+                         xlim = c(z_superior, x[2]),
+                         geom = "area", fill = "red", alpha = 0.2)
+g3
+
+#Calculamos la probabilidad de cometer un error tipo II
+
+poder1 <- pnorm(z_inferior, mean = mu_2, sd = SE, lower.tail = TRUE)
+poder2 <- pnorm(z_superior, mean = mu_2, sd = SE, lower.tail = FALSE)
+
+poder = poder1 + poder2
+beta = 1 - poder
+
+beta
+
+#Basandonos en el grafico y en el calculo de beta, la probabilidad de cometer un error tipo II es de 0.5792464
+```
+
+3.-Como no se conoce el verdadero volumen medio, genere un gráfico del poder estadístico con las condiciones anteriores, pero suponiendo que el
+ verdadero volumen medio podría variar de 9,5 a 10,5 litros. Hay un ejemplo de este tipo de gráfico en la lectura sobre poder estadístico.
+ 
+```{r}
+#Datos conocidos
+library(pwr)
+
+mu_3 = seq(9.5, 10.5, 0.01)
+deltas <- mu_3 -  mu
+deltas_norm <- deltas/sigma
+
+f_b <- function(x) pwr.norm.test(x, n = n, sig.level = alpha,
+                                 alternative = "two.sided")$power
+
+poderes <- sapply(deltas_norm, f_b)
+
+f_u <- function(x) pwr.norm.test(x, n = n, sig.level = alpha,
+                                 alternative = "less")$power
+poderes_u <- sapply(deltas_norm, f_u)
+
+#Graficamos las curvas
+datos_anchos = data.frame(deltas, poderes, poderes_u)
+g4 <- ggplot(datos_anchos, aes(x = deltas, y = poderes)) +
+  geom_line(color = "blue") +
+  geom_line(aes(x = deltas, y = poderes_u), color = "red") +
+  labs(title = "Poder estadístico", x = "Diferencia de medias", y = "Poder") +
+  theme_pubr()
+
+g4
+```
+ 
+ 4.-Considerando un volumen medio de 10 litros, ¿cuántos bidones deberían revisarse para conseguir un poder estadístico de 0,75 y un nivel de significación
+ de 0,05?
+ 
+```{r}
+#Datos conocidos
+poder = 0.75
+alpha = 0.05
+efecto_normalizado = delta / sigma
+
+#Para reponder esta pregunta, debemos utilizar la funcion de poder estadistico, dejando en "NULL" el campo que queremos encontrar, en este caso, el tamaño de la muestra.
+
+poder4 <- pwr.norm.test(d = efecto_normalizado, n = NULL, sig.level = alpha,
+                        power = poder, alternative = "two.sided")
+
+poder4
+
+#Por lo tanto, se necesita una muestra de 174 bidones aaproximadamente para obtener una potencia estadistica de 0.75.
+```
+5.-¿Alcanzaría esta muestra para detectar la diferencia que la ingeniera sospecha que existe entre las dos máquinas de la planta con las mismas
+ probabilidades de cometer errores?
+ 
+```{r}
+
+```
+ 
+

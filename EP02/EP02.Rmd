@@ -1,0 +1,18 @@
+---
+title: "EP02 Formativo"
+output: pdf_document
+date: "2024-10-01"
+---
+
+```{r}
+datos <- read.csv2("EP02 Datos.csv",stringsAsFactors = TRUE)
+
+#Filtramos los datos por raza rientales
+
+datosorientales <- datos[datos$Raza=="Oriental",]
+
+
+
+
+```
+

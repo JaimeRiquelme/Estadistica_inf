@@ -1,0 +1,119 @@
+---
+title: "EP04 ejercicio"
+author: "JAIME RIQUELME"
+date: "2024-10-10"
+output: pdf_document
+---
+
+```{r}
+#Creamos tabla de contigencia
+
+comestibles <- c(404,1948,32,228,1596)
+venenoso <- c(48,1708,0,600,1556)
+
+#Creamos la tabla de contigencia
+
+tabla <- as.table(rbind(comestibles,venenoso))
+
+#Nombramos las filas y columnas
+
+dimnames(tabla) <- list(c("Comestibles","Venenoso"),c("Campana","Convexo","Hundido","Nudoso","Plano"))
+
+
+#Definimos las hipotesis nula y alternativa
+
+#H0: Las variables clase y formas son independientes
+#H1: Las variables clase y formas no son independientes
+
+# con un nivel de significancia de 0.01
+
+#Calculamos el chi cuadrado de prueba de independencia
+
+prueba <- chisq.test(tabla)
+
+prueba
+
+```
+El valor obtenido de la prueba chi cuadrado es de 485.64, junto a grado de livertas de 4, y un p valor menor a 2.2e-16, por lo que se rechaza la hipotesis nula, y se concluye que las variables clase y forma no son independientes.
+
+
+# Prueba excata de Fisher
+
+```{r}
+#Contruimos la tabla de contigencia
+
+vacuna <- c(rep("Argh",6),rep("Grrr",11))
+resultado <- c(rep("Humano",12),rep("Vampiro",5))
+
+datos <- data.frame(resultado,vacuna)
+tabla <- xtabs(~.,datos)
+
+
+#Aplicamos la prueba exacta de Fisher
+
+prueba_1 <- fisher.test(tabla,conf.level = 0.95)
+prueba_1
+
+prueba_2 <- fisher.test(vacuna,resultado,conf.level = 0.95)
+
+prueba_2
+```
+
+# Prueba de McNemar
+
+```{r}
+
+#Creamos la tabla de contigencia
+
+alumno <- seq(1:25)
+modelo_1 <- c(rep("Correcto",16),rep("Incorrecto",9))
+modelo_2 <- c(rep("Correcto",9),rep("Incorrecto",11),rep("Correcto",5))
+
+datos <- data.frame(alumno,modelo_1,modelo_2)
+tabla <- table(modelo_2,modelo_1)
+
+#Aplicamos al prueba de MCnemar
+
+prueba_1 <- mcnemar.test(tabla)
+prueba_1
+
+#Aplicamos la prueba de McNemar directamente
+
+prueba_2 <- mcnemar.test(modelo_1,modelo_2)
+prueba_2
+
+
+
+
+
+```
+
+```{r}
+
+library(dplyr)
+library(tidyr)
+library(rcompanion)
+library(RVAideMemoire)
+#Las autoridades de la universidad desean conocer si las semanas de receso (sin actividades docentes) ayuda o no al descanso del estudiantado. Para eso seleccionaron 20 estudiantes de forma aleatoria y les consultaron si se sentían “cansada/o” o “descansada/o” en tres ocasiones: el lunes, miércoles y viernes de la primera semana de receso del semestre. Los resultados se muestran en la siguiente tabla, donde 0 representa cansancio y 1 descanso.
+
+estudiante <- 1:20
+lunes <- c(1,0,0,0,1,1,0,0,1,0,1,0,1,0,1,0,1,1,0,0)
+miercoles <- c(1,1,0,1,0,1,1,1,1,0,1,0,1,0,1,0,0,1,1,1)
+viernes <- c(1,1,1,0,1,0,1,1,0,1,1,1,1,0,1,1,0,1,0,1)
+
+datos1 <- data.frame(estudiante,lunes,miercoles,viernes)
+
+datos1 <- datos1 %>% pivot_longer(c("lunes","miercoles","viernes"),names_to = "Dias",values_to = "Valor")
+
+datos1[["estudiante"]] <- factor(datos1[["estudiante"]])
+datos1[["Dias"]] <- factor(datos1[["Dias"]])
+
+#Hacemos la prueba Q de Cochran.
+prueba_Q <- cochran.qtest(Valor ~ Dias | estudiante, data = datos1, alpha = 0.05)
+
+prueba_Q
+```
+
+
+
+

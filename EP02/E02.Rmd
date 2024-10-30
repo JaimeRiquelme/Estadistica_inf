@@ -1,0 +1,258 @@
+---
+title: "E02"
+author: "César Rodríguez, Jaime Riquelme y Benjamín Bustamante"
+date: "2024-10-01"
+output: html_document
+---
+##### *Importante*
+
+Es clave destacar que para poder hacer uso de las diversas funciones necesarias para este análisis serán importadas las siguientes librerías: *dplyr*, *ggpubr*.
+
+```{r, echo = FALSE, message = FALSE}
+library(dplyr)
+library(ggpubr)
+library(plotly)
+```
+
+
+#### Desarrollo
+
+En primer lugar, se hará una lectura de los datos a través de la función nativa de R, *read.csv2*.
+
+```{r setup, echo = FALSE, message = FALSE}
+datos <- read.csv2("/Users/maxito/Desktop/Nivel 6/Inferencial/Ejercicios/E02/EP02 Data.csv")
+```
+
+A proceder, las preguntas a responder son las siguientes:
+
+##### 1.- El Comité Olímpico cree que el mejor tiempo medio de los atletas de raza oriental antes de ingresar al programa de entrenamiento era 19,4 segundos. ¿Soportan los datos esta afirmación?
+
+R: Según enunciado se nos está proponiendo un valor hipotético para la media de la muestra, es por eso que para poder hacer el estudio de este valor, tenemos las alternativas de la prueba Z y la prueba t de Student. Antes de continuar es importante **fijar el nivel de significancia**, que **será de *0.05***. 
+
+```{r, echo = FALSE, message = FALSE}
+alpha = 0.05
+
+datos_raza_oriental <- datos %>%
+  filter(Raza == "Oriental")
+
+datos_previo_oriental <- datos_raza_oriental$Previo
+valor_normalidad_1 <- shapiro.test(datos_previo_oriental)
+valor_p <- valor_normalidad_1$p.value
+
+cantidad_observaciones_oriental <- count(datos_raza_oriental)
+```
+
+En específico, como la cantidad de observaciones de la muestra es menor a 30, en específico es de *`r cantidad_observaciones_oriental`* y no conocemos la varianza, requisito específico de la prueba Z, se aplicará la prueba t de Student para el análisis de los datos para la verificación de lo que se nos plantea.
+
+Para poder aplicar la prueba t de Student se deben cumplir 2 condiciones, siendo estas las siguientes:
+
+**Las observaciones deben ser independientes.** Como la variable de estudio tiempo proviene de diversos atletas en un programa de entrenamiento, la selección de uno no depende de otra. Es por esto que se puede decir que las observaciones son independientes entre sí.
+
+**Los datos provienen de una distribución aproximadamente normal** Para verificar esta condición tenemos 2 alternativas realmente buenas, Shapiro Test para muestras de no más 5.000 observaciones y QQPlot, uno siendo un test rápido que verifica la normalidad de la distribución y el otro es un gráfico cuantil que nos obliga a hacer análisis gráfico para el estudio de la normalidad.
+
+En ese caso, hablando del Shapiro Test, se obtiene un valor p de *`r valor_p`*.
+
+Por otro lado, el gráfico QQ de los datos es el siguiente:
+
+```{r, echo = FALSE}
+grafico <- ggqqplot(datos_raza_oriental, 
+                    x = "Previo", 
+                    color = "Red")
+ggplotly(grafico)
+```
+
+**Análisis Shapiro Test:*** Como el valor obtenido p del Shapiro Test es mayor a nuestro nivel de significancia, se puede decir que los datos provienen de una distribución aproximadamente normal.
+
+**Análisis gráfico QQPlot:** Como se puede apreciar en el gráfico, todas observaciones (puntos) están dentro de la banda aceptable y además, no se encuentran valores atípicos, es por esto, que se puede decir que los datos provienen de una distribución aproximadamente normal.
+
+Una vez confimada la posiblidad de poder aplicar la prueba t de Student, se hará la definición de la Hipótesis Nula (H0) y la Hipótesis Alternativa (HA), siendo estas las siguientes:
+
+**H0:** La media del tiempo previo del entrenamiento es de 19,4 segundos.
+
+**HA:** La media del tiempo previo es distinto a 19,4 segundos.
+
+Matemáticamante hablando:
+
+**H0:** mu = m0
+
+**HA:** mu != m0
+
+```{r, echo = FALSE}
+test_t_p1 <- t.test(x = datos_previo_oriental,
+                    alternativa = "two.sided",
+                    mu = 19.4,
+                    conf.level = 1 - alpha,)
+```
+
+Así, una vez definidas las Hipótesis, se hará el cálculo de la prueba con la función nativa de R ***t.test***, obteniendo un valor p de `r test_t_p1$p.value`.
+
+Así, como el valor p obtenido es mayor a nuestro nivel de significancia, por lo que la evidencia nos sugiere rechazar HA en favor de la hipótesis H0 y se puede afirmar con 95% de confianza que el tiempo promedio previo es de *19,4*.
+
+##### 2.- ¿Sugieren los datos que la mejor marca de los atletas de raza negra se reduce en promedio 1,3 segundos tras el entrenamiento?
+
+R: En esta pregunta se nos habla de *la mejor marca antes y después del entrenamiento*, de esa forma cada observación va ligada a un mismo atleta, se presume que estas muestras son pareadas y el análisis que se hará, será respecto de la diferencia entre las observaciones con un nivel de significancia (alpha) del 0.05.
+
+De esa forma, debemos analizar el cumplimiento de las siguientes condiciones:
+
+**Las observaciones deben ser independientes.** En este caso como hablamos de atletas específicos en un entrenamiento dado, la selección de uno no afecta la del otro, es por esto que se puede decir que las observaciones son independientes entre sí.
+
+**Los datos provienen de una distribución aproximadamente normal.** Para hacer esta comprobación, se puede seguir el test shapiro o el gráfico QQ.
+
+```{r, echo = FALSE}
+datos_raza_negra <- datos %>% 
+  filter(Raza == "Negra")
+
+datos_posterior <- datos_raza_negra$Posterior
+datos_previo <- datos_raza_negra$Previo
+
+datos_resta <- datos_previo - datos_posterior
+
+valor_normalidad_2 <- shapiro.test(datos_resta)
+```
+
+En ese caso, hablando del Shapiro Test, se obtiene un valor p de *`r valor_normalidad_2$p.value`*.
+
+Por otro lado, el gráfico QQ de los datos es el siguiente:
+```{r, echo = FALSE}
+grafico_p2 <- ggqqplot(datos_resta, color = "Pink")
+ggplotly(grafico_p2)
+```
+
+**Análisis Shapiro Test:*** Como el valor obtenido p del Shapiro Test es mayor a nuestro nivel de significancia, se puede decir que los datos provienen de una distribución aproximadamente normal.
+
+**Análisis gráfico QQPlot:** Como se puede apreciar en el gráfico, todas observaciones (puntos) están dentro de la banda aceptable y además, no se encuentran valores atípicos, es por esto, que se puede decir que los datos provienen de una distribución aproximadamente normal.
+
+Una vez confimada la posiblidad de poder aplicar la prueba t de Student, se hará la definición de la Hipótesis Nula (H0) y la Hipótesis Alternativa (HA), siendo estas las siguientes:
+
+**H0:** La diferencia de las medias del tiempo previo y posterior es 1.3
+
+**HA:** La diferencia de las medias del tiempo previo y posterior es menor a 1.3.
+
+Matemáticamante hablando:
+
+**H0:** mudif = 1.3
+
+**HA:** mudif < 1.3
+
+```{r, echo = FALSE}
+media_previa <- mean(datos_previo)
+media_posterior <- mean(datos_posterior)
+diferencia <- media_posterior - media_previa
+
+test_t_p2 <- t.test(x = datos_previo,
+                    y = datos_posterior,
+                    paired = TRUE,
+                    alternativa = "less",
+                    mu = 1.3,
+                    conf.level = 1 - alpha,)
+```
+
+Así, una vez definidas las Hipótesis, se hará el cálculo de la prueba con la función nativa de R ***t.test***, obteniendo un valor p de `r test_t_p2$p.value`.
+
+Así, como el valor p obtenido es menor a nuestro nivel de significancia, por lo que la evidencia nos sugiere rechazar HA en favor de la hipótesis H0 y se puede afirmar con 95% de confianza que la diferencia entre las medias previas y posteriores es de 1,3 segundos.
+
+##### 3.- ¿Es posible afirmar que, en promedio, los atletas de raza negra superaban a los de raza oriental por menos de 5,2 segundos x antes del entrenamiento?
+
+R: En esta pregunta se nos habla de *los atletas de raza negra respecto a los de raza oriental*, así, se presume poder aplicar una prueba t de Student para 2 muestras independientes, de esa forma se analizará la diferencia de las medias muestrales con un nivel de significancia (alpha) de 0.05.
+
+De esa forma, debemos analizar el cumplimiento de las siguientes condiciones para cada muestra:
+
+**Las observaciones deben ser independientes.** Como ambas muestras provienen especificamente de atletas *diferentes* la selección de uno no influye en la del otro, es por esto que se puede decir que las muestras son independientes entre sí, tanto como para la raza oriental como para la negra.
+
+```{r, echo = FALSE}
+p_raza_negra <- shapiro.test(datos_raza_negra$Previo)$p.value
+p_raza_oriental <- shapiro.test(datos_raza_oriental$Previo)$p.value
+```
+
+**Los datos provienen de una distribución aproximadamente normal.** Para hacer este análisis se hará uso del Test Shapiro, donde para la muestra de raza negra se obtuvo un valor de p = `r p_raza_negra` y para la muestra de raza oriental se obtuvo un valor de p = `r p_raza_oriental`. Con estos valores se puede suponer que ambas muestras provienen de una distribución aproximadamente normal.
+
+Así, se define la hipótesis nula (H0) y la alternativa (HA) como:
+
+**H0:** La diferencia de las medias de ambas razas previo al entrenamiento es de 5,2.
+
+
+**HA:** La diferencia de las medias de ambas razas previo al entrenamiento es menor a 5,2.
+
+Matemáticamente hablando:
+
+**H0:** mudif = 5,2
+
+**HA:** mudif < 5,2
+
+```{r, echo = FALSE}
+media_raza_negra <- mean(datos_raza_negra$Previo)
+media_raza_oriental <- mean(datos_raza_oriental$Previo)
+
+prueba_t <- t.test(x = datos_raza_negra$Previo,
+                   y = datos_raza_oriental$Previo,
+                   alternative = "less",
+                   mu = 5.2,
+                   conf.level = 1 - alpha)
+```
+
+Ahora, una vez calculada la prueba t de Student para muestras independientes se obtuvo un valor p = `r prueba_t$p.value`, que sugiere rechazar la H0 siendo este mucho menor a nuestro nivel de significancia. Concluyendo, podemos asegurar que con un 95% de confianza la media de las diferencias entre las razas es menor a 5.2.
+
+##### 4.- ¿Será cierto que hay menos atletas de raza oriental que redujeron sus mejores marcas en al menos 5,2 segundos que atletas de raza blanca que lo hicieron en al menos 2,8 segundos?
+
+R: Como se nos habla de *cantidad de atletas de raza oriental que redujeron su tiempo en x versus la cantidad de atletas de raza blanca que redujeron su tiempo en y*, se puede decir que no se nos pide hacer un análisis de las medias de los datos, si no, de las proporciones que sigan lo pedido, de esa forma se presume decir que son dos proporciones, además se utilizará un valor de significancia del 0,05.
+
+Así, se verificarán las condiciones para poder aplicar el método de Wilson para dos proporciones, donde las condiciones son las siguientes:
+
+**Cada proporción sigue el modelo normal.** Como cada muestra por separado habla de los tiempos de atletas de cada raza, la elección de uno no depende del otro, así, se puede decir que las muestras son independientes entre sí. Por otro lado, para verificar la **condición exito-fracaso** se calculará la probabilidad de obtener un atleta que haya disminuido su tiempo en de cada muestra en específico, obteniendo así:
+
+```{r, echo = FALSE}
+datos_raza_blanca <- datos %>%  # filtro de datos con unicamente raza == blanca
+  filter(Raza == "Blanca")
+
+
+datos_raza_blanca_diferencia <- datos_raza_blanca %>% # se filtran los datos donde la diferencia
+  filter((Previo - Posterior) >= 2.8)                 # entre los tiempos sea mayor o igual a 2.8
+
+datos_raza_oriental_diferencia <- datos_raza_oriental %>% # mismo caso que arriba
+  filter((Previo - Posterior) >= 5.2)
+
+# cálculo de proporciones para ambas razas
+proporcion_blanca <- count(datos_raza_blanca_diferencia) / count(datos_raza_blanca) 
+proporcion_oriental <- count(datos_raza_oriental_diferencia) / count(datos_raza_oriental)
+
+# cálculo de la cantidad de éxitos y fracasos para la raza blanca
+exitos_raza_blanca <- count(datos_raza_blanca) * proporcion_blanca
+fracasos_raza_blanca <- count(datos_raza_blanca) * (1 - proporcion_blanca)
+
+# cálculo de la cantidad de éxitos y fracasos para la raza oriental
+exitos_raza_oriental <- count(datos_raza_oriental) * proporcion_oriental
+fracasos_raza_oriental <- count(datos_raza_oriental) * (1 - proporcion_oriental)
+```
+
+**Probabilidades:**
+
+*raza blanca = `r proporcion_blanca`*
+
+*raza oriental = `r proporcion_oriental`*
+
+Así, aproximadamente se debería obtener:
+
+**Cantidades raza blanca:**
+
+*éxitos  = `r exitos_raza_blanca` atletas*
+
+*fracasos = `r fracasos_raza_blanca` atletas*
+
+**Cantidades raza oriental:**
+
+*éxitos = `r exitos_raza_oriental` atletas*
+
+*fracasos = `r fracasos_raza_oriental` atletas*
+
+
+**Las dos muestras son independientes una de la otra.** Como cada proporción está hablando de atletlas de diferentes razas donde la elección de uno no depende del otro, así, se puede decir que las muestras son independientes entre sí.
+
+```{r, echo = FALSE}
+cantidad_blanca <- count(datos_raza_blanca)
+cantidad_oriental <- count(datos_raza_oriental)
+
+n <- c(cantidad_blanca, cantidad_oriental)
+exitos <- c(exitos_raza_blanca, exitos_raza_oriental)
+alpha <- 0.05
+
+```
