@@ -1,0 +1,356 @@
+---
+title: "EP06 LECTURA"
+author: "Jaime Riquelme"
+date: "2024-10-23"
+output: html_document
+---
+
+# Lectura 11. Capítulo 11: Métodos clásicos para enfrentar variables numéricas problematicas.
+
+## Transformación de datos.
+
+**Transformacion lineal**
+
+Sirven para poder convertir unidades a otras por ejemplo, de celcius a farenheit.
+
+$$y_i = m*x_i + n$$
+Ejemplo para convertir de celcius a farenheit:
+Utilizamos la formula
+
+$$F = 1.8*C + 32$$
+
+```{r}
+# Transformación lineal Ejemplo:
+
+Celcius <- c(-5,0, 10, 20, 30, 40, 50)
+
+Farenheit <- 1.8*Celcius + 32
+
+#Mostramos los resultados
+data.frame(Celcius, Farenheit)
+
+```
+
+**Tranformación Logaritmica**
+
+Esta se usa cuando tenemos distrubuciones muy sesgadas, para poder hacerlas mas simetricas y con ello poder cumplir la condicion de normalidad para poder aplicar pruebas estadisticas.
+
+Para realizar esta prueba se utiliza la funcion "Log(x,base)". y tener cuidado con los valores 0.
+
+Ejemplo: Veremos unos datos que registraron el peso corporal (kg) y el peso del cerebro (g) de animales.
+
+```{r}
+library(ggpubr)
+# Transformación logaritmica Ejemplo:
+# Definimos los vectores de datos
+animal <- c("Mountain beaver", "Cow", "Grey wolf", "Goat", "Guinea pig", 
+            "Diplodocus", "Asian elephant", "Donkey", "Horse", 
+            "Potar monkey", "Cat", "Giraffe", "Gorilla", "Human", 
+            "African elephant", "Triceratops", "Rhesus monkey", "Kangaroo", 
+            "Golden hamster", "Mouse", "Rabbit", "Sheep", "Jaguar", 
+            "Chimpanzee", "Brachiosaurus", "Mole", "Pig")
+
+body_weight <- c(1.35, 465, 36.33, 27.66, 1.04, 11700, 2547, 187.1, 521, 10, 
+                 3.3, 529, 207, 62, 6654, 9400, 6.8, 35, 0.12, 0.023, 2.5, 
+                 55.5, 100, 52.16, 87000, 0.122, 192)
+
+brain_weight <- c(465, 423, 119.5, 115, 5.5, 50, 4603, 419, 655, 115, 25.6, 
+                  680, 406, 1320, 5712, 70, 179, 56, 1, 0.4, 12.1, 175, 157, 
+                  440, 154.5, 3, 180)
+
+# Creación del data frame
+datos <- data.frame(animal, body_weight, brain_weight)
+
+#Aplicamos la tranformacion logaritmica
+
+log_cuerpo <- log(body_weight)
+log_cerebro <- log(brain_weight)
+
+datos <- data.frame(datos, log_cuerpo, log_cerebro)
+
+#Mostramos los resultados antes y despues
+
+#Grafico de los datos originales
+
+g1 <- gghistogram(datos, x = "brain_weight", bins = 10 ,
+                  xlab = "Peso del cerebro (g)", ylab = "Frecuencia",
+                  color = "red", fill = "red")
+
+#Grafico de los datos transformados
+
+g2 <- gghistogram(datos, x = "log_cerebro", bins = 10 ,
+                  xlab = "Logaritmo del peso del cerebro (g)", ylab = "Frecuencia",
+                  color = "blue", fill = "blue")
+
+#Creamos una unica figura para mostrar ambos
+
+histograma <- ggarrange(g1, g2, ncol = 2, nrow = 1)
+Titulo <- text_grob("Peso del cerebro (g) vs Logaritmo del peso del cerebro (g)",
+                    face = "bold", size = 14, color = "blue")
+
+histograma <- annotate_figure(histograma, top = Titulo)
+
+print(histograma)
+
+#Graficos de dispercion para relacion entre paso corporal y pero del cerebro antes y despues de la transformacion
+
+g3 <- ggscatter(datos, x = "body_weight", y = "brain_weight",
+                xlab = "Peso corporal (kg)", ylab = "Peso del cerebro (g)",
+                color = "red", fill = "red")
+
+g4 <- ggscatter(datos, x = "log_cuerpo", y = "log_cerebro",
+                xlab = "Logaritmo del peso corporal (kg)", ylab = "Logaritmo del peso del cerebro (g)",
+                color = "blue", fill = "blue")
+
+#Creamos una unica figura para mostrar ambos
+
+dispersion <- ggarrange(g3, g4, ncol = 2, nrow = 1)
+
+Titulo <- text_grob("Relación entre peso corporal y peso del cerebro",
+                    face = "bold", size = 14, color = "blue")
+
+dispersion <- annotate_figure(dispersion, top = Titulo)
+
+print(dispersion)
+```
+### IMPORTANTE: CUANDO USAMOS ESTA TRANSFORMACION Y COMPARAMOS MEDIAS, ESTAMOS COMPARANDO MEDIAS GEOEMTRICAS.
+
+**Escalera de potencias de Tukey** 
+
+Esta es más general que la logaritmica, esta transformacion nos ayuda a cambiar la distribucion para que se aserque a una distribucion normal. esta se define por la siguiente formula:
+
+$$\tilde{x}_\lambda = \begin{cases} 
+x^\lambda & \lambda > 0 \\
+\log(x) & \lambda = 0 \\
+-(x^\lambda) & \lambda < 0 
+\end{cases}$$
+
+Pero por falta de computadores, se usa la siguiente tabla : 
+
+$$
+\begin{array}{|c|c|c|c|c|c|c|c|c|}
+\hline
+\lambda & -2 & -1 & -\frac{1}{2} & 0 & \frac{1}{2} & 1 & 2 \\ 
+\hline
+\tilde{x}_\lambda & -\frac{1}{x^2} & -\frac{1}{x} & -\frac{1}{\sqrt{x}} & \log(x) & \frac{1}{\sqrt{x}} & x & x^2 \\ 
+\hline
+\end{array}
+$$
+**Ejemplo:**
+
+Usaremos la poblacion total de estados unidos
+
+```{r}
+# Cargar las librerías necesarias
+library(ggpubr)
+library(rcompanion)
+
+# Cargar los datos
+Year <- c(1610, 1620, 1630, 1640, 1650, 1660, 1670, 1680, 1690, 1700, 1710,
+          1720, 1730, 1740, 1750, 1760, 1770, 1780, 1790, 1800, 1810, 1820,
+          1830, 1840, 1850)
+
+Population <- c(0.00035, 0.002302, 0.004646, 0.026634, 0.050368, 0.075058,
+                0.111935, 0.151507, 0.210372, 0.250888, 0.331711, 0.466185,
+                0.629445, 0.905563, 1.17076, 1.593625, 2.148076, 2.780369,
+                3.929214, 5.308483, 7.239881, 9.638453, 12.86602, 17.069453,
+                23.191876)
+
+# Crear el data frame
+
+datos2 <- data.frame(Year, Population)
+
+#Creamos el grafico de dispersion e histograma
+
+g5 <- ggscatter(datos2, x = "Year", y = "Population",
+                xlab = "Año", ylab = "Población (millones)",
+                color = "red", fill = "red")
+
+g6 <- gghistogram(datos2, x = "Population", bins = 10,
+                  xlab = "Población (millones)", ylab = "Frecuencia",
+                  color = "blue", fill = "blue")
+
+#Creamos una unica figura para mostrar ambos
+
+dispersion2 <- ggarrange(g5, g6, ncol = 2, nrow = 1)
+
+Titulo <- text_grob("Relación entre año y población",
+                    face = "bold", size = 14, color = "blue")
+
+dispersion2 <- annotate_figure(dispersion2, top = Titulo)
+
+print(dispersion2)
+
+```
+
+Ahora realizamos la transformacion de Tukey, mediante la tabla de transformaciones.
+
+```{r}
+# Transformación de Tukey Ejemplo:
+
+lambda_menos_dos <- -1/(datos2$Population^2)
+lambda_menos_uno <- -1/datos2$Population
+lambda_menos_un_medio <- -1/sqrt(datos2$Population)
+lambda_cero <- log(datos2$Population)
+lambda_un_medio <- 1/sqrt(datos2$Population)
+lambda_dos <- datos2$Population^2
+
+tranformaciones <- data.frame(datos2, lambda_menos_dos, lambda_menos_uno, lambda_menos_un_medio,
+                               lambda_cero, lambda_un_medio, lambda_dos)
+
+#Graficos de dispercion para la tranformacion de tukey de la poblacion y el año, usando los valores de lambda
+
+gt1 <- ggscatter(tranformaciones, x = "Year", y = "lambda_menos_dos",
+                xlab = "Año", ylab = "Transformación de Tukey (λ = -2)",
+                color = "red", fill = "red")
+
+gt2 <- ggscatter(tranformaciones, x = "Year", y = "lambda_menos_uno",
+                xlab = "Año", ylab = "Transformación de Tukey (λ = -1)",
+                color = "blue", fill = "blue")
+
+gt3 <- ggscatter(tranformaciones, x = "Year", y = "lambda_menos_un_medio",
+                xlab = "Año", ylab = "Transformación de Tukey (λ = -1/2)",
+                color = "green", fill = "green")
+
+gt4 <- ggscatter(tranformaciones, x = "Year", y = "lambda_cero",
+                xlab = "Año", ylab = "Transformación de Tukey (λ = 0)",
+                color = "purple", fill = "purple")
+
+gt5 <- ggscatter(tranformaciones, x = "Year", y = "lambda_un_medio",
+                xlab = "Año", ylab = "Transformación de Tukey (λ = 1/2)",
+                color = "orange", fill = "orange")
+
+gt6 <- ggscatter(tranformaciones, x = "Year", y = "lambda_dos",
+                xlab = "Año", ylab = "Transformación de Tukey (λ = 2)",
+                color = "black", fill = "black")
+
+#Creamos una unica figura para mostrar todos los graficos
+
+dispersion3 <- ggarrange(gt1, gt2, gt3, gt4, gt5, gt6, ncol = 3, nrow = 2)
+
+Titulo <- text_grob("Relación entre año y transformación de Tukey",
+                    face = "bold", size = 14, color = "blue")
+
+dispersion3 <- annotate_figure(dispersion3, top = Titulo)
+
+print(dispersion3)
+
+
+
+```
+Ahora podemos realizar esto mismo pero utilizando la funcion transformTukey() de la libreria rcompanion.
+
+```{r}
+# Transformación de Tukey Ejemplo:
+
+library(rcompanion)
+
+transformaciones2 <- transformTukey(datos2$Population, start = -4 , end = 4, int = 0.001, returnLambda = TRUE)
+
+
+
+print(transformaciones2)
+```
+**Transformación de Box-Cox**
+
+La tranformacion de Box-cox es una version escalada de la transformacion de Tukey, esta se define por la siguiente formula:
+
+R, tiene distintos paquetes para esta tranformacion: 
+
+BoxCoxLamda(x,lowe,upper)
+BoxCox(x,lambda)
+BoxCoxInv(x,lambda)
+
+
+```{r}
+# Transformación de Box-Cox Ejemplo:
+
+# Cargar librerías necesarias
+library(ggpubr)
+library(DescTools)
+
+# Cargar datos
+Year <- c(1610, 1620, 1630, 1640, 1650, 1660, 1670, 1680, 1690, 1700, 1710,
+          1720, 1730, 1740, 1750, 1760, 1770, 1780, 1790, 1800, 1810, 1820,
+          1830, 1840, 1850)
+
+Population <- c(0.00035, 0.002302, 0.004646, 0.026634, 0.050368, 0.075058,
+                0.111935, 0.151507, 0.210372, 0.250888, 0.331711, 0.466185,
+                0.629445, 0.905563, 1.17076, 1.593625, 2.148076, 2.780369,
+                3.929214, 5.308483, 7.239881, 9.638453, 12.86602, 17.069453,
+                23.191876)
+
+# Crear un data frame
+datos <- data.frame(Year, Population)
+
+# Función para la transformación de Box-Cox
+box_cox <- function(x, lambda) {
+  if (lambda == 0) {
+    return(log(x))
+  } else {
+    resultado <- (x ** lambda - 1) / lambda
+    return(resultado)
+  }
+}
+
+# Aplicar las transformaciones de Box-Cox
+lambda_menos_dos <- box_cox(datos$Population, -2)
+lambda_menos_uno <- box_cox(datos$Population, -1)
+lambda_cero <- box_cox(datos$Population, 0)
+lambda_uno <- box_cox(datos$Population, 1)
+lambda_dos <- box_cox(datos$Population, 2)
+
+# Crear un nuevo data frame con las transformaciones
+transformaciones <- data.frame(datos, lambda_menos_dos, lambda_menos_uno,
+                               lambda_cero, lambda_uno, lambda_dos)
+
+# Gráficos de dispersión para las transformaciones de Box-Cox
+g1 <- ggscatter(transformaciones, x = "Year", y = "lambda_menos_dos", 
+                color = "purple", xlab = "Año", ylab = "lambda = -2") + rotate_x_text(45)
+
+g2 <- ggscatter(transformaciones, x = "Year", y = "lambda_menos_uno", 
+                color = "purple", xlab = "Año", ylab = "lambda = -1") + rotate_x_text(45)
+
+g3 <- ggscatter(transformaciones, x = "Year", y = "lambda_cero", 
+                color = "purple", xlab = "Año", ylab = "lambda = 0") + rotate_x_text(45)
+
+g4 <- ggscatter(transformaciones, x = "Year", y = "lambda_uno", 
+                color = "purple", xlab = "Año", ylab = "lambda = 1") + rotate_x_text(45)
+
+g5 <- ggscatter(transformaciones, x = "Year", y = "lambda_dos", 
+                color = "purple", xlab = "Año", ylab = "lambda = 2") + rotate_x_text(45)
+
+# Crear una única figura con todos los gráficos de dispersión
+dispersion <- ggarrange(g1, g2, g3, g4, g5, ncol = 3, nrow = 2)
+texto <- "Población transformada por año"
+titulo <- text_grob(texto, face = "bold", size = 14)
+dispersion <- annotate_figure(dispersion, top = titulo)
+print(dispersion)
+
+# Buscar la mejor transformación de Box-Cox usando funciones de R
+lambda <- BoxCoxLambda(datos$Population, lower = -4, upper = 4)
+cat("Lambda óptimo:", lambda)
+
+# Aplicar la transformación óptima de Box-Cox
+transformacion <- BoxCox(datos$Population, lambda)
+datos <- data.frame(datos, transformacion)
+
+# Graficar los datos transformados
+g1 <- ggqqplot(transformacion, color = "purple")
+print(g1)
+
+g2 <- gghistogram(datos, bins = 10, x = "transformacion", color = "purple", 
+                  fill = "purple", xlab = "Población (Box-Cox)", ylab = "Frecuencia") + rotate_x_text(45)
+print(g2)
+
+#Grafico de dispercion para la tranformacion de box-cox de la poblacion y el año, usando los valores de lambda
+
+g3 <- ggscatter(datos, x = "Year", y = "transformacion",
+                xlab = "Año", ylab = "Transformación de Box-Cox", rotate_x_text = 45,
+                color = "red", fill = "red")
+
+print(g3)
+```
+
+
+

@@ -61,18 +61,32 @@ print(datos_filtradosEJ1)
 
 #### Revisamos las condiciones:
 
-Cómo queremos comparar dos muestras independientes, debemos verificar que las muestras provengan de una población con distribución normal. Para esto, utilizaremos el test de Shapiro-Wilk.
+Cómo queremos comparar dos muestras independientes, debemos verificar que las muestras provengan de una población con distribución normal. Para esto, utilizaremos el test de Shapiro-Wilk junto a un grafico Q-Q para verificar la normalidad de los datos.
 
 ```{r}
+library(ggpubr)
 #Test de Shapiro-Wilk para TiempoA
 
 shapiro.test(TiempoA)
 
+#Realizamos un grafico Q-Q para TiempoA
+
+g1 <- ggqqplot(TiempoA, ylab = "TiempoA")
+print(g1)
+```
+
+
+```{r}
 #Test de Shapiro-Wilk para TiempoB
 
 shapiro.test(TiempoB)
+
+#Realizamos un grafico Q-Q para TiempoB
+
+g2 <- ggqqplot(TiempoB, ylab = "TiempoB")
+print(g2)
 ```
-Debido a que los valores obtenidos en las pruebas de shapiro wilk, son menores que un valor de significancia del 0.05, rechazamos la hipotesis nula sobre que los datos provienen de una distribución normal. Por lo tanto no podemos realizar una prueba t de student, y procederemos a realizar una prueba no parametrica suma de rangos de Wilcoxon.
+Debido a que los valores obtenidos en las pruebas de shapiro wilk, son menores que un valor de significancia del 0.05, y al visualizar el grafico podemos ver una anormalidad en los datos, rechazamos la hipotesis nula sobre que los datos provienen de una distribución normal. Por lo tanto no podemos realizar una prueba t de student, y procederemos a realizar una prueba no parametrica suma de rangos de Wilcoxon.
 
 *Condiciones para realizar la prueba de wilcoxon*
 
@@ -121,16 +135,9 @@ Ahora debemos obtener solamente los datos de mejor rendimiento de las versiones 
 ```{r}
 #Seleccionamos los mejores rendimientos de las versiones B y C de las instancias que tienen 70 o más nodos
 
-RendimientoB <- datos_filtradosEJ2$mejor.B
-RendimientoC <- datos_filtradosEJ2$mejor.C
+datos_filtradosEJ2 <- datos_filtradosEJ2 %>% select(instancia , mejor.B , mejor.C)
 
-#Mostramos los datos filtrados
-
-datos_filtradosEJ2 <- data.frame(RendimientoB, RendimientoC)
-
-#Mostramos el data frame
-
-print(datos_filtradosEJ2)
+head(datos_filtradosEJ2)
 ```
 
 *Una vez obtenidos los datos, procedemos a verificar que tipo de prueba estadistica debemos realizar.*
@@ -143,34 +150,71 @@ print(datos_filtradosEJ2)
 
 #### Revisamos las condiciones:
 
-Cómo queremos comparar dos muestras independientes, debemos verificar que las muestras provengan de una población con distribución normal. Para esto, utilizaremos el test de Shapiro-Wilk.
+Cómo queremos comparar dos muestras independientes, debemos verificar que las muestras provengan de una población con distribución normal. Para esto, utilizaremos el test de Shapiro-Wilk junto a un grafico Q-Q para verificar la normalidad de los datos.
 
 ```{r}
+library(ggpubr)
 #Test de Shapiro-Wilk para RendimientoB
 
-shapiro.test(RendimientoB)
+shapiro.test(datos_filtradosEJ2$mejor.B)
 
+#Gráfico Q-Q para RendimientoB
+
+g1 <- ggqqplot(datos_filtradosEJ2$mejor.B, ylab = "RendimientoB")
+print(g1)
+```
+
+Ahroa realizamos el mismo procedimiento para los datos de mejor rendimiento de la versión C.
+```{r}
 #Test de Shapiro-Wilk para RendimientoC
 
-shapiro.test(RendimientoC)
-``` 
-Debido a los valores P obtenido, siendo estos menores a un nivel de significancia del 0.05, rechazamos las hipotesis nula, sobre la normalidad de los datos. Por lo tanto, no podemos realizar una prueba t de student, y procederemos a realizar una prueba no parametrica suma de rangos de Wilcoxon.
+shapiro.test(datos_filtradosEJ2$mejor.C)
 
+#Gráfico Q-Q para RendimientoC
+
+g2 <- ggqqplot(datos_filtradosEJ2$mejor.C, ylab = "RendimientoC")
+
+print(g2)
+
+```
+Debido a los valores P obtenido, siendo estos menores a un nivel de significancia del 0.05, y además de la verificación mediante los graficos Q-Q, podemos apreciar que los datos no provienen de una distribución normal, por lo que no podemos realizar una prueba t de student, y procederemos a realizar una prueba no parametrica de wilcoxon.
+
+Por otro lado, como la memorista realiza la pregunta para comparar mismas instancias, podemos concluir que para esta prueba son datos pareados, por lo que realizaremos una prueba de rangos con signo de Wilcoxon.
+
+*Condiciones para realizar la prueba de wilcoxon*
+
+1. Las observaciones de ambas muestras son independientes: debido al enunciado del problema y los datos entregados, podemos asumir que las observaciones son independientes.
+
+2. La escala de medicion empleada debe ser a lo menos ordinal: los datos entregados son de tipo numerico, por lo que cumplen con esta condición.
+
+
+*Como se cumplen las condiciones para realizar la prueba de wilcoxon, procedemos a realizarla.*
 ```{r}
-#Realizamos la prueba de wilcoxon.
+#Realizamos la prueba de Wilcoxon
 
-#Por enunciado se nos solicita setear la semilla en 71
+#Por enunciado de la pregunta, seteamos la semilla en 71
 
 set.seed(71)
 
-#LLevamos los datos filtrados a formato ancho: 
+#Obtenemos una muestra aleatoria de 24 instancias
 
-datos_ancho <- datos_filtradosEJ2 %>% pivot_wider(names_from = "RendimientoB", values_from = "RendimientoC")
+muestra <- sample_n(datos_filtradosEJ2,24)
 
+#Mostramos la muestra
 
+print(muestra)
 
+#Realizamos la prueba de Wilcoxon
 
+alpha <- 0.05 #Nivel de significancia
+
+Prueba_Wilcoxon_EJ2 <- wilcox.test(muestra$mejor.B,muestra$mejor.C,alternative = "two.sided", paired = TRUE, conf.level = 1-alpha)
+
+print(Prueba_Wilcoxon_EJ2)
 ```
+*Con los resultados obtenidos, siendo un valor de p de 0.002575, podemos rechazar la hipotesis nula, por lo que existen diferencias significativas en el mejor rendimiento entre las versiones B y C del algoritmo cuando las instancias tienen 70 o más nodos.*
+
+
 
 
 

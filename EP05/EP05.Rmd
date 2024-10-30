@@ -1,0 +1,79 @@
+---
+title: "Untitled"
+author: "yo"
+date: "2024-10-21"
+output: html_document
+---
+En una emocionante competencia de cubos Rubik, participantes de Chile, Argentina, Colombia, Uruguay, Perú y Ecuador demostraron su destreza en resolver tres tipos de cubos: 2x2x2, 3x3x3 y Megaminx.
+
+Después del torneo, un grupo de investigadores de la Asociación Mundial del Cubo, interesado en los tiempos que hicieron las jugadoras y los jugadores en la competencia, decidieron estudiar si el país y el tipo de cubo usado en cada prueba tienen influencia en los segundos que se tardan en resolverlos. Para ello usaron una muestra aleatoria de los datos de la competencia, en la cual participaron más de 2.000 personas, con las siguientes variables:
+
+¿Existen diferencias en el tiempo de resolución de cubos 3x3x3 entre participantes de Chile, Colombia y Uruguay?
+
+Para responder esta pregunta, proponemos las siguientes hipotesis:
+
+H0: El tiempo promedio de resolucion de cubos 3x3x3 entre participantes de Chile, Colombia y Uruguay es igual.
+
+Ha: El tiempo promedio de resolucion de cubos 3x3x3 entre participantes de Chile, Colombia y Uruguay es diferente en al menos una nacionalidad.
+
+```{r}
+library(dplyr)
+library(tidyverse)
+library(ggpubr)
+library(ez)
+```
+
+```{r}
+datos = read.csv2("EP05 Datos.csv")
+datos = datos %>% filter(tipo == "3x3x3")
+datos = datos %>% filter(pais == "Chile" | pais == "Colombia" | pais == "Uruguay")
+datos = datos %>% select(id, pais, tiempo)
+datos[["pais"]] = factor(datos[["pais"]])
+datos[["id"]] = factor(1:nrow(datos))
+alpha = 0.025
+```
+
+Comprobamos condiciones y aplicamos una prueba anova de una via para muestras independientes.
+
+Comprobar condiciones:
+intervalos: Como estamos midiendo en tiempo, sabemos que este se mide en una escala de intervalos iguales
+independencia: Al tratarse de ocaciones individuales de resolucion podemos decir que las muestras son independientes
+Normalidad: Como se puede ver en el grafico no existen valores atipicos por lo que los datos siguen distribucion normal
+```{r}
+gg = ggqqplot(datos, x="tiempo", y="pais", color= "pais")
+gg = gg + facet_wrap(~ pais)
+gg = gg + rremove("x.ticks") + rremove("x.text")
+gg = gg + rremove("y.ticks") + rremove("y.text")
+gg = gg + rremove("axis.title")
+print(gg)
+```
+
+Homocedasticidad: Por la prueba de levene's se obtiene un F y un P > que una significancia 0.025 por lo que no hay informacion suficiente para dudar que el principio de homocedasticidad se cumple.
+```{r}
+prueba = ezANOVA(data = datos, dv = tiempo, between = pais, wid = id, return_aov = TRUE)
+print(prueba)
+```
+
+```{r}
+g = ezPlot(data = datos, dv = tiempo, between = pais, wid = id, y_lab="Tiempo promedio de resolucion [s]", x = pais)
+g = g + theme_pubr()
+print(g)
+```
+
+Con una significancia del 0.025 podemos rechazar la hipotesis nula en favor de la alternativa, por lo que existe al menos un a nacionalidad con un tiempo promedio diferente.
+
+Por lo anterior se realizara una prueba Post-Hoc.
+
+```{r}
+#Prueba 1
+holm = pairwise.t.test(datos[["tiempo"]], datos[["pais"]], p.adj="holm", pool.sd=TRUE, paired=FALSE, conf.level=1-alpha)
+print(holm)
+```
+
+```{r}
+anova = aov(tiempo ~ pais, data = datos)
+tuk = TukeyHSD(anova, "pais", ordered=TRUE, conf.level=1-alpha)
+print(tuk)
+```
+
+Todos los valores P son menores a la significancia de 0.025 por lo que se puede concluir con un 97.5 % de confianza que todas las nacionalidades tienen un tiempo promedio de resolucion diferente.
