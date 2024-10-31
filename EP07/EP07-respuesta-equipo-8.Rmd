@@ -215,6 +215,389 @@ print(Prueba_Wilcoxon_EJ2)
 *Con los resultados obtenidos, siendo un valor de p de 0.002575, podemos rechazar la hipotesis nula, por lo que existen diferencias significativas en el mejor rendimiento entre las versiones B y C del algoritmo cuando las instancias tienen 70 o más nodos.*
 
 
+*Pregunta 3:* La memorista sospecha que hay diferencias significativas en el tiempo de ejecución entre las versiones del algoritmo cuando las instancias de prueba tienen 50 o más nodos. ¿Los datos respaldan la intuición de la memorista?
+Para responder, filtren los datos para tener las instancias con 50 o más nodos y seleccionen las columnas con los tiempos de ejecución registrados (en formato ancho). Usando como semilla el valor 43, obtengan muestras aleatorias independientes de 13, 14 y 13 tiempos registrados por las versiones A, B y C, respectivamente. Realicen un análisis estadístico pertinente (enunciar hipótesis, revisar condiciones, seleccionar pruebas ómnibus y post-hoc según corresponda) para responder la pregunta planteada, utilizando pruebas no paramétricas de ser necesario.
 
+```{r}
+library(dplyr)
+#Filtramos los datos para tener las instancias con 50 o más nodos
+
+datos_filtradosEJ3 <- datos %>% filter(n.nodos >= 50)
+
+#Mostramos los primeros datos
+
+head(datos_filtradosEJ3)
+
+```
+
+Ahora debemos obtener solamente los datos de tiempo de ejecución de las versiones A, B y C, para luego realizar el análisis estadístico pertinente.
+
+```{r}
+#Seleccionamos los tiempos de ejecucion de las versiones A, B y C de las instancias que tienen 50 o más nodos
+
+datos_filtradosEJ3 <- datos_filtradosEJ3 %>% select(tiempo.A, tiempo.B, tiempo.C)
+
+#Obtenemos muestras aleatorias independientes de 13, 14 y 13 tiempos registrados por las versiones A, B y C, respectivamente
+
+set.seed(43)
+
+nA <- 13; nB <- 14; nC <- 13
+
+nT <- nA + nB + nC
+
+Datos_Muestra3 <- datos_filtradosEJ3[sample(1:nrow(datos_filtradosEJ3), nT),]
+
+head(Datos_Muestra3)
+
+```
+*Formulamos las hipótesis:*
+
+H0: No existe una diferencia significativa en el tiempo de ejecucion entre las versiones del algoritmo cuando las instancias tienen 50 o más nodos.(muA = muB = muC)
+
+Ha: Existe una diferencia significativa en el tiempo de ejecucion entre las versiones del algoritmo cuando las instancias tienen 50 o más nodos.(muA != muB != muC)
+
+
+Como la memorista realiza la pregunta para comparar las versiones del algoritmo A, B y C. Podemos inferir que debemos realizar una prueba ANOVA, debido a comparar más de dos grupos, es por eso que realizaremos las verificaciones de condiciones para realizar esta prueba.
+
+*Condiciones*
+
+1.- La escala con que se mide la variable dependiente tiene las propiedades de una escala de intervalos
+iguales : los datos entregados son de tipo numerico, por lo que cumplen con esta condición.
+
+2.- Las k muestras son obtenidas de manera aleatoria e independiente desde la(s) población(es) de origen. : debido al enunciado del problema y los datos entregados, podemos asumir que las observaciones son independientes, además de que se obtienen de manera aleatoria.
+
+
+3.- Se puede suponer razonablemente que la(s) población(es) de origen sigue(n) una distribución normal: pAra verificar esta condición, utilizaremos el test de Shapiro-Wilk junto a un grafico Q-Q para verificar la normalidad de los datos.
+
+```{r}
+library(ggpubr)
+#Test de Shapiro-Wilk para TiempoA
+
+shapiro.test(Datos_Muestra3$tiempo.A)
+
+#Realizamos un grafico Q-Q para TiempoA
+
+g1 <- ggqqplot(Datos_Muestra3$tiempo.A, ylab = "TiempoA")
+
+print(g1)
+```
+
+
+```{r}
+#Test de Shapiro-Wilk para TiempoB
+
+shapiro.test(Datos_Muestra3$tiempo.B)
+
+#Realizamos un grafico Q-Q para TiempoB
+
+g2 <- ggqqplot(Datos_Muestra3$tiempo.B, ylab = "TiempoB")
+
+print(g2)
+```
+
+
+```{r}
+#Test de Shapiro-Wilk para TiempoC
+
+shapiro.test(Datos_Muestra3$tiempo.C)
+
+#Realizamos un grafico Q-Q para TiempoC
+
+g3 <- ggqqplot(Datos_Muestra3$tiempo.C, ylab = "TiempoC")
+
+print(g3)
+
+```
+Debido a los valores P obtenidos, siendo estos menores al nivel de significancia del 0.05, y al visualizar los graficos Q-Q, podemos apreciar que los datos no provienen de una distribución normal, por lo que no podemos realizar una prueba ANOVA directamente, es por eso que procederemosa realizar una transformacion de los datos para que estos se ajusten a una distribución normal, y luego realizar la prueba ANOVA.
+
+```{r}
+#Transformamos los datos para que se ajusten a una distribución normal
+
+library(rcompanion)
+library(DescTools)
+
+#Transformamos los datos de tiempo A
+
+#Obtenemos el valor optimo de lambda para la transformación de Box-Cox
+valor_optimo <- BoxCoxLambda(Datos_Muestra3$tiempo.A)
+valor_optimo
+
+#Realizamos la transformación de Box-Cox
+
+TransA <- BoxCox(Datos_Muestra3$tiempo.A, lambda = valor_optimo)
+
+#Verificamos la normalidad de los datos transformados con un grafico Q-Q
+
+g1 <- ggqqplot(TransA, ylab = "TiempoA")
+
+
+print(g1)
+```
+
+Ahora realizamos la transformacion para los datos de tiempo B y C
+```{r}
+#Transformamos los datos de tiempo B
+
+#Obtenemos el valor optimo de lambda para la transformación de Box-Cox
+
+valor_optimoB <- BoxCoxLambda(Datos_Muestra3$tiempo.B)
+valor_optimoB
+
+#Realizamos la transformación de Box
+
+TransB <- BoxCox(Datos_Muestra3$tiempo.B, lambda = valor_optimoB)
+
+#Verificamos la normalidad de los datos transformados con un grafico Q-Q
+
+g2 <- ggqqplot(TransB, ylab = "TiempoB")
+
+print(g2)
+
+```
+```{r}
+#Transformamos los datos de tiempo C
+
+#Obtenemos el valor optimo de lambda para la transformación de Box-Cox
+
+valor_optimoC <- BoxCoxLambda(Datos_Muestra3$tiempo.C)
+
+valor_optimoC
+
+#Realizamos la transformación de Box-Cox
+
+TransC <- BoxCox(Datos_Muestra3$tiempo.C, lambda = valor_optimoC)
+
+#Verificamos la normalidad de los datos transformados con un grafico Q-Q
+
+g3 <- ggqqplot(TransC, ylab = "TiempoC")
+
+print(g3)
+```
+Debido a que los datos transformados se ajustan a una distribución normal, procederemos a realizar la prueba ANOVA.
+
+```{r}
+#Realizamos la prueba ANOVA
+library(tidyverse)
+library(ez)
+
+#Creamos un dataframe con los datos transformados
+
+data_transform <- data.frame(TransA,TransB,TransC)
+
+
+
+#Llevamos los datos a formato largo
+
+data_transform1 <- data_transform %>% pivot_longer(c("TransA","TransB","TransC"), names_to = "algoritmo", values_to = "Tiempo")
+
+data_transform1[["algoritmo"]] <- factor(data_transform1[["algoritmo"]])
+data_transform1[["instancia"]] <- factor(rep(1:nrow(data_transform1)))
+
+print(data_transform1)
+
+#Aplicamos ANOVA
+
+Anova_test <- ezANOVA(data = data_transform1, dv = Tiempo, wid = instancia, between = algoritmo, return_aov = TRUE)
+
+print(Anova_test)
+```
+
+*Pregunta 3:* La memorista sospecha que hay diferencias significativas en el tiempo de ejecución entre las versiones del algoritmo cuando las instancias de prueba tienen 50 o más nodos. ¿Los datos respaldan la intuición de la memorista?
+Para responder, filtren los datos para tener las instancias con 50 o más nodos y seleccionen las columnas con los tiempos de ejecución registrados (en formato ancho). Usando como semilla el valor 43, obtengan muestras aleatorias independientes de 13, 14 y 13 tiempos registrados por las versiones A, B y C, respectivamente. Realicen un análisis estadístico pertinente (enunciar hipótesis, revisar condiciones, seleccionar pruebas ómnibus y post-hoc según corresponda) para responder la pregunta planteada, utilizando pruebas no paramétricas de ser necesario.
+
+```{r}
+library(dplyr)
+#Filtramos los datos para tener las instancias con 50 o más nodos
+
+datos_filtradosEJ3 <- datos %>% filter(n.nodos >= 50)
+
+#Mostramos los primeros datos
+
+head(datos_filtradosEJ3)
+
+```
+
+Ahora debemos obtener solamente los datos de tiempo de ejecución de las versiones A, B y C, para luego realizar el análisis estadístico pertinente.
+
+```{r}
+#Seleccionamos los tiempos de ejecucion de las versiones A, B y C de las instancias que tienen 50 o más nodos
+
+datos_filtradosEJ3 <- datos_filtradosEJ3 %>% select(tiempo.A, tiempo.B, tiempo.C)
+
+#Obtenemos muestras aleatorias independientes de 13, 14 y 13 tiempos registrados por las versiones A, B y C, respectivamente
+
+set.seed(43)
+
+nA <- 13; nB <- 14; nC <- 13
+
+nT <- nA + nB + nC
+
+Datos_Muestra3 <- datos_filtradosEJ3[sample(1:nrow(datos_filtradosEJ3), nT),]
+
+head(Datos_Muestra3)
+
+```
+*Formulamos las hipótesis:*
+
+H0: No existe una diferencia significativa en el tiempo de ejecucion entre las versiones del algoritmo cuando las instancias tienen 50 o más nodos.(muA = muB = muC)
+
+Ha: Existe una diferencia significativa en el tiempo de ejecucion entre las versiones del algoritmo cuando las instancias tienen 50 o más nodos.(muA != muB != muC)
+
+
+Como la memorista realiza la pregunta para comparar las versiones del algoritmo A, B y C. Podemos inferir que debemos realizar una prueba ANOVA, debido a comparar más de dos grupos, es por eso que realizaremos las verificaciones de condiciones para realizar esta prueba.
+
+*Condiciones*
+
+1.- La escala con que se mide la variable dependiente tiene las propiedades de una escala de intervalos
+iguales : los datos entregados son de tipo numerico, por lo que cumplen con esta condición.
+
+2.- Las k muestras son obtenidas de manera aleatoria e independiente desde la(s) población(es) de origen. : debido al enunciado del problema y los datos entregados, podemos asumir que las observaciones son independientes, además de que se obtienen de manera aleatoria.
+
+
+3.- Se puede suponer razonablemente que la(s) población(es) de origen sigue(n) una distribución normal: pAra verificar esta condición, utilizaremos el test de Shapiro-Wilk junto a un grafico Q-Q para verificar la normalidad de los datos.
+
+```{r}
+library(ggpubr)
+#Test de Shapiro-Wilk para TiempoA
+
+shapiro.test(Datos_Muestra3$tiempo.A)
+
+#Realizamos un grafico Q-Q para TiempoA
+
+g1 <- ggqqplot(Datos_Muestra3$tiempo.A, ylab = "TiempoA")
+
+print(g1)
+```
+
+
+```{r}
+#Test de Shapiro-Wilk para TiempoB
+
+shapiro.test(Datos_Muestra3$tiempo.B)
+
+#Realizamos un grafico Q-Q para TiempoB
+
+g2 <- ggqqplot(Datos_Muestra3$tiempo.B, ylab = "TiempoB")
+
+print(g2)
+```
+
+
+```{r}
+#Test de Shapiro-Wilk para TiempoC
+
+shapiro.test(Datos_Muestra3$tiempo.C)
+
+#Realizamos un grafico Q-Q para TiempoC
+
+g3 <- ggqqplot(Datos_Muestra3$tiempo.C, ylab = "TiempoC")
+
+print(g3)
+
+```
+Debido a los valores P obtenidos, siendo estos menores al nivel de significancia del 0.05, y al visualizar los graficos Q-Q, podemos apreciar que los datos no provienen de una distribución normal, por lo que no podemos realizar una prueba ANOVA directamente, es por eso que procederemosa realizar una transformacion de los datos para que estos se ajusten a una distribución normal, y luego realizar la prueba ANOVA.
+
+```{r}
+#Transformamos los datos para que se ajusten a una distribución normal
+
+library(rcompanion)
+library(DescTools)
+
+#Transformamos los datos de tiempo A
+
+#Obtenemos el valor optimo de lambda para la transformación de Box-Cox
+valor_optimo <- BoxCoxLambda(Datos_Muestra3$tiempo.A)
+valor_optimo
+
+#Realizamos la transformación de Box-Cox
+
+TransA <- BoxCox(Datos_Muestra3$tiempo.A, lambda = valor_optimo)
+
+#Verificamos la normalidad de los datos transformados con un grafico Q-Q
+
+g1 <- ggqqplot(TransA, ylab = "TiempoA")
+
+
+print(g1)
+```
+
+Ahora realizamos la transformacion para los datos de tiempo B y C
+```{r}
+#Transformamos los datos de tiempo B
+
+#Obtenemos el valor optimo de lambda para la transformación de Box-Cox
+
+valor_optimoB <- BoxCoxLambda(Datos_Muestra3$tiempo.B)
+valor_optimoB
+
+#Realizamos la transformación de Box
+
+TransB <- BoxCox(Datos_Muestra3$tiempo.B, lambda = valor_optimoB)
+
+#Verificamos la normalidad de los datos transformados con un grafico Q-Q
+
+g2 <- ggqqplot(TransB, ylab = "TiempoB")
+
+print(g2)
+
+```
+```{r}
+#Transformamos los datos de tiempo C
+
+#Obtenemos el valor optimo de lambda para la transformación de Box-Cox
+
+valor_optimoC <- BoxCoxLambda(Datos_Muestra3$tiempo.C)
+
+valor_optimoC
+
+#Realizamos la transformación de Box-Cox
+
+TransC <- BoxCox(Datos_Muestra3$tiempo.C, lambda = valor_optimoC)
+
+#Verificamos la normalidad de los datos transformados con un grafico Q-Q
+
+g3 <- ggqqplot(TransC, ylab = "TiempoC")
+
+print(g3)
+```
+Debido a que los datos transformados se ajustan a una distribución normal, procederemos a realizar la prueba ANOVA.
+
+```{r}
+#Realizamos la prueba ANOVA
+library(tidyverse)
+library(ez)
+
+#Creamos un dataframe con los datos transformados
+
+data_transform <- data.frame(TransA,TransB,TransC)
+
+
+
+#Llevamos los datos a formato largo
+
+data_transform1 <- data_transform %>% pivot_longer(c("TransA","TransB","TransC"), names_to = "algoritmo", values_to = "Tiempo")
+
+data_transform1[["algoritmo"]] <- factor(data_transform1[["algoritmo"]])
+data_transform1[["instancia"]] <- factor(rep(1:nrow(data_transform1)))
+
+print(data_transform1)
+
+#Aplicamos ANOVA
+
+Anova_test <- ezANOVA(data = data_transform1, dv = Tiempo, wid = instancia, between = algoritmo, return_aov = TRUE)
+
+print(Anova_test)
+```
+*Conclusión*
+Dado el valor de p obtenido, siendo este de 9.497792e-63, podemos rechazar la hipótesis nula, en favor de la alternativa, por lo que podemos concluir que existen diferencias significativas en el tiempo de ejecución entre las versiones del algoritmo cuando las instancias de prueba tienen 50 o más nodos.
+
+Debido al resultado obtenido, procederemos a realizar una prueba post-hoc para determinar cuales son las diferencias significativas entre las versiones del algoritmo.
+
+```{r}
+#Realizamos la prueba post-hoc de Tukey
+
+
+
+```
 
 
