@@ -1,0 +1,44 @@
+---
+title: "LECTURA10ej"
+author: "Jaime Riquelme"
+date: "2024-11-01"
+output: pdf_document
+---
+
+11.34 El conjunto airquality del paquete datasets contiene mediciones de la radiación solar (expresada en Langleys) recibida diariamente (con algunos datos perdidos) en la ciudad de New York, EE.UU., desde mayo a septiembre de 1973. Verifica si la radiación recibida en la ciudad es la misma durante los meses de verano (junio a agosto). No olvides enunciar las hipótesis y verificar si se cumplen las condiciones de las pruebas aplicadas. Utiliza la corrección de Benjamini y Hochberg para comparaciones múltiples de ser necesario.
+```{r}
+#Cargamos librerias
+library(datasets)
+
+#Cargamos los datos
+data(airquality)
+
+#Vemos los datos
+head(airquality)
+```
+Como nos piden verificar la radiación recibida en la ciudad durante los meses de verano, primero debemos filtrar los datos para que solo queden los meses de junio a agosto. Luego, debemos verificar si la radiación recibida en la ciudad es la misma durante estos meses. Para esto, verificaremos las condiciones para utilizar una prueba ANOVA de una vía para muestras independientes. Las hipótesis a contrastar son las siguientes:
+
+H0: No existe diferencia en la radiación recibida en la ciudad durante los meses de verano.
+H1: Existe diferencia en la radiación recibida en la ciudad durante los meses de verano.
+
+```{r}
+#Filtramos los datos para obtener los meses de verano
+
+Mes_junio <- airquality$Ozone[airquality$Month == 6]
+Mes_julio <- airquality$Ozone[airquality$Month == 7]
+Mes_agosto <- airquality$Ozone[airquality$Month == 8]
+```
+
+Una vez que hemos filtrado los datos, verificamos las condiciones para utilizar una prueba ANOVA de una vía para muestras independientes. Estas condiciones son las siguientes:
+
+1. Independencia: Los datos deben ser independientes entre sí. En este caso, asumimos que las mediciones de radiación solar son independientes.
+2. Normalidad: Cada grupo debe seguir una distribución normal. Para verificar esto, podemos realizar una prueba de Shapiro-Wilk para cada grupo.
+
+```{r}
+#Prueba de Shapiro-Wilk para cada grupo
+
+shapiro.test(Mes_junio)
+shapiro.test(Mes_julio)
+shapiro.test(Mes_agosto)
+```
+

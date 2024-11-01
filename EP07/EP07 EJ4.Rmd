@@ -1,0 +1,90 @@
+---
+title: "EP07-respuesta-equipo-8"
+output: html_document
+date: "2024-10-29"
+---
+
+4.La memorista también sospecha que, al comparar las mismas instancias con iguales características, las mejores soluciones encontradas por las diferentes versiones del algoritmo tienen rendimientos distintos. ¿Estará en lo cierto?
+Para responder, filtren los datos para tener las instancias con 50 o más nodos y seleccionen las columnas con los mejores rendimientos registrados. Usando como semilla el valor 16, obtengan una muestra aleatoria de 21 instancias. Realicen un análisis estadístico pertinente (enunciar hipótesis, revisar condiciones, seleccionar pruebas ómnibus y post-hoc según corresponda) para responder la pregunta planteada, utilizando pruebas no paramétricas de ser necesario.
+
+los datos ya se encuentran en formato largo por lo cual podemos recibir los datos
+
+```{r}
+library(dplyr)
+library(reshape2)
+library(car)
+
+# Filtrar instancias con 50 o más nodos y seleccionar columnas de rendimiento y de instancia
+dato_50 <- datos %>%
+  filter(n.nodos >= 50) %>%
+  select(instancia, mejor.A, mejor.B, mejor.C)
+
+# Convertir a formato largo para la prueba de Friedman
+dato_best <- melt(dato_50, id.vars = "instancia", variable.name = "Version", value.name = "Rendimiento")
+
+# Tomar una muestra aleatoria de 21 instancias completas
+set.seed(16)
+instancias_muestra <- sample(unique(dato_best$instancia), 21)
+muestra <- dato_best %>% filter(instancia %in% instancias_muestra)
+
+```
+**Condiciones parametricas
+
+Para realizar una prueba parametrica necesitamos cumplir con la condicion de que la muestra sigue una distribucion normal y particularmente en este caso hay que confirmalo para cada version del algoritmo.
+
+
+```{r}
+#Prueba de normalidad
+
+shapiro_results <- by(muestra$Rendimiento, muestra$Version, shapiro.test)
+print(shapiro_results)
+
+# Prueba de homogeneidad de varianzas
+levene_result <- leveneTest(Rendimiento ~ Version, data = muestra)
+print(levene_result)
+
+```
+De aqui podemos ver que la version.B no cumple con el requisito de poseer una distribucion normal (ya que el p-value es menor a 0.05) pero cumple con el requisito de varianzas homogenias (ya que el p-value es mayor a 0.05), si es que esta fuera parametrica hariamos uso del test ANOVA por lo cual habra que hacer uso de Friedman ya que es la opcion no parametrica de ANOVA para muestras correlacionadas ya que se quiere comparar "las mismas instancias con iguales características, las mejores soluciones encontradas por las diferentes versiones del algoritmo tienen rendimientos distintos". 
+
+Teniendo en mente que se realizara un test no parametrico para lo cual las hipotesis planteadas son las siguientes: 
+
+H0: Los algoritmos tienen redimientos similares.
+
+Ha: Al menos un algoritmo que obtiene mejor rendimiento que al menos otro algoritmo.
+
+
+Para hacer uso de Friedman tenemos que primero verificar que se cumplan las siguientes condiciones:
+
+1.-La variable independiente debe ser categorica y tener a lo menos 3 niveles.
+
+La variable independiente son los algoritmos para los cuales contamos con A, B y C por lo cual se cumple la condicion de ser categorica con a lo menos 3 niveles.
+
+2.-La escala de la variable dependiente debe ser, a lo menos, ordinal.
+
+La variable dependiente es el rendimiento el cual esta expresado en porcetajes, con esto sabemos que es una escala ordinal asi cumpliendo la condicion.
+
+3.-Las observaciones son una muestra aleatoria e independiente de la poblacion.
+
+De la manera que se nos pide realizar tratar los datos originales se cumple esto ya que se genera una muestra aleatoria, independiente de la poblacion lor lo cual se cumple con la tercera condicion.
+
+Una vez cumplida con las 3 condiciones se procede a aplicar el test de Friedman
+
+```{r}
+#Prueba no parametrica
+friedman_result <- friedman.test(Rendimiento ~ Version | instancia, data = muestra)
+print(friedman_result)
+
+```
+Podemos ver que el p-value es menor a 0.05 por lo cual hay que realizar un analisis post-hoc.
+
+```{r}
+#Analisis Post-hoc pareado con ajuste Holm
+
+Post<- pairwise.wilcox.test(muestra$Rendimiento, muestra$Version, 
+                            p.adjust.method = "holm", paired = TRUE, exact = FALSE)
+print(Post)
+```
+Gracias al analizis post-hoc podemos ver que hay diferencias significativas para A VS B al contar con un p-value menor a 0.05 por lo cual existe una diferencia entre estos 2. Por otro lado A VS C y B VS C vemos que no hay diferencias significativas al contar con un p-value mayor a 0.05.
+
+Finalmente podemos concluir con un 95% de confianza que efectivamente existe un algoritmo que tiene mejor rendimiento que otro, por lo cual la sospecha de la memorista se cumple para A VS B.
+
