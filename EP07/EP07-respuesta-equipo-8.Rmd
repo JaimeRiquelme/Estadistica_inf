@@ -168,8 +168,16 @@ head(datos_filtradosEJ2)
 
 ### Revisión de Condiciones
 
-Como queremos comparar dos muestras independientes, debemos verificar que las muestras provengan de una población con distribución normal. Para esto, utilizaremos el test de Shapiro-Wilk junto a un gráfico Q-Q para verificar la normalidad de los datos.
+Como queremos comparar dos muestras independientes, debemos verificar que las muestras provengan de una población con distribución normal. Para esto, utilizaremos el test de Shapiro-Wilk junto a un gráfico Q-Q para verificar la normalidad de los datos, además de calcular la diferencia entre los mejores rendimientos de las versiones B y C para la condicion de la prueba t.
 
+```{r}
+#Restamos los vectores de mejor rendimiento de las versiones B y C
+
+Resta_muestras <- datos_filtradosEJ2$mejor.B - datos_filtradosEJ2$mejor.C
+
+shapiro.test(Resta_muestras)
+```
+*Gráficos de Q-Q para verificar la normalidad de los datos*
 ```{r}
 library(ggpubr)
 # Test de Shapiro-Wilk para RendimientoB
@@ -196,7 +204,7 @@ g2 <- ggqqplot(datos_filtradosEJ2$mejor.C, ylab = "RendimientoC")
 print(g2)
 ```
 
-Debido a los valores P obtenidos, siendo estos menores a un nivel de significancia del 0.05, y además de la verificación mediante los gráficos Q-Q, podemos apreciar que los datos no provienen de una distribución normal, por lo que no podemos realizar una prueba t de Student, y procederemos a realizar una prueba no paramétrica de Wilcoxon.
+Dado el valor obtenido en la prueba de Shapiro-wilk de las diferencias de las muestras, siendo este mayor el nivel de significancia, podemos asumir que los datos provienen de una distribución normal, por lo que podemos realizar una prueba t de estudent, pero en este caso, para fines academicos, realizaremos una prueba no parametrica de Wilcoxon.
 
 Por otro lado, como la memorista realiza la pregunta para comparar mismas instancias, podemos concluir que para esta prueba son datos pareados, por lo que realizaremos una prueba de rangos con signo de Wilcoxon.
 
@@ -398,7 +406,7 @@ Para responder, filtren los datos para tener las instancias con 50 o más nodos 
 
 ```{r}
 # Filtramos los datos para tener las instancias con 50 o más nodos
-
+library(dplyr)
 datos_filtradosEJ4 <- datos %>% filter(n.nodos >= 50)
 
 # Mostramos los primeros datos
@@ -441,6 +449,7 @@ Como la memorista realiza la pregunta para comparar las versiones del algoritmo 
 3. Se puede suponer razonablemente que la(s) población(es) de origen sigue(n) una distribución normal: Para verificar esta condición, utilizaremos el test de Shapiro-Wilk junto a un gráfico Q-Q para verificar la normalidad de los datos.
 
 ```{r}
+library(ggpubr)
 # Test de Shapiro-Wilk para muestra A
 
 shapiro.test(datos_filtradosEJ4$mejor.A)
