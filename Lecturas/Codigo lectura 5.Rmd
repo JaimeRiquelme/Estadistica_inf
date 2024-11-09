@@ -1,0 +1,47 @@
+---
+title: "Codigos Chi2"
+author: "jaime"
+date: "2024-11-09"
+output: pdf_document
+---
+
+# Pruebas no parametricas con proporciones
+
+## Prueba chi cuadrado de pearson
+
+Esta prueba sirve para inferir con proporciones cuando disponemos de dos variables categoricas, y una de ellas es dicotómica(dos niveles).
+
+**Condiciones para uso de prueba chi-cuadrado**
+
+1.- Las observaciones deben ser independientes entre sí
+2.- Debe haber a lo menos 5 observaciones esperadas en cada grupo.
+
+Para esta prueba de chi-cuadrado, es comun tener tres tipos de pruebas:
+
+1.- Prueba chi-cuadrado de homogeneidad
+2.- Prueba chi-cuadrado de bondad de ajuste
+3.- Prueba chi-cuadrado de independencia
+
+La unica diferencia entre ellas es conceptual y tiene relacion con como se miren las variables y poblaciones involucradas.
+
+
+### Prueba chi-cuadrado de homogeneidad
+
+Esta prueba es adecuada si queremos determinar si dos poblaciones (Variable dicótomica) presentan mismas proporcones en los diferentes niveles de una variable categorica.
+
+Ejemplo:
+
+se hizo una encuesta a 300 programadores con mas de 3 años de experiencia de todo el pais, escogidos al azar y se les preguntó su lenguaje de programacion favorito
+¿Son similares las preferencias de lenguaje de programacion entre hombres y mujeres?
+
+**Datos del problema**
+
+```{r}
+programadores <- c(42,56,51,27,24)
+programadoras <- c(25,24,27,15,9)
+
+tabla1 <- as.table(rbind(programadores,programadoras))
+
+dimnames(tabla1) <- list(sexo = c())
+```
+
