@@ -73,3 +73,111 @@ Con un nivel de signifancia del 0.05, y un valor de p obtenido de 0.811, podemos
 
 
 ### Prueba chi-cuadrado de bondad de ajuste
+
+Esta prueba permite comparar si una distribucion de frecuencias observadas se asemeja a una distribucion de frecuencias esperadas. (Usualmente se emplea para comprobar si una muestra es representativa de la poblacion).
+
+Ejemplo: 
+
+una empresa cuenta con una nomina de 660 programadores y programadoas, se selecciona un subconjunto de 55 personas de esta nomina supuestamente aleatoria, pero es acusado de seleccionar con conveniencia, es por eso que se necesita demostrar que el grupo seleccionado es unamuestra representativa.
+
+```{r}
+#Datos del problema
+
+nomina <- c(236,78,204,76,66)
+muestra <- c(17,9,14,10,5)
+
+tabla2 <- as.table(rbind(nomina,muestra))
+
+dimnames(tabla2) <- list(sexo = c("nomina","muestra"),
+                         lenguajes = c("C","Java","Python","Ruby","Otro"))
+```
+
+
+**Condiciones**
+
+1.- Las observaciones son independientes entre si, y además representa menos del 10% de la poblacion total.
+2.- Debe haber a lo menos 5 observaciones esperadas en cada grupo, lo cual se cumple calculando para cada valor esperado su frecuencia esperada de la siguiente manera: 
+
+```{r}
+n_nomina <- sum(nomina)
+n_muestra <- sum(muestra)
+proporciones <- round(nomina/n_nomina,3)
+esperados <- round(proporciones*n_muestra,3)
+print(esperados)
+
+```
+Asi deberiamos obtener cada valor esperado para cada lenguaje y estos deberian ser mayor que 5 observaciones. 
+
+**Hipotesis**
+
+H0: las proporciones de cada lenguaje de programacion en la muestra son iguales a las de la nomina.
+Ha: las proporciones de cada lenguaje de programacion en la muestra no son iguales a las de la nomina.
+
+Como comprobamos las condiciones procedemos a realizar la prueba de bondad de ajuste.
+
+```{r}
+#Nivel de significancia 
+
+alpha_0.05 <- 0.05
+
+#Realizamos la prueba de chi-cuadrado de bondad de ajuste
+
+prueba_bondad_ajuste <- chisq.test(tabla2, correct = FALSE)
+
+print(prueba_bondad_ajuste)
+```
+Con un valor de p de 0.4609 obtenido, concluimos que no tenemos suficiente informacion para rechazar la hipotesis nula, por lo que no hay suficiente evidencia para afirmar que la muestra no es representativa de la nomina.
+
+### Prueba chi-cuadrado de independencia
+
+Esta prueba sirve para determinar si dos variables categoricas, de una misma poblacion, son estadisticamente independientes, o si están relacionadas.
+
+Ejemplo: 
+
+un micologo desea determinar si existe relacion entre la forma del sombrero de los hongos y si estos son comestibles o no comestribles.
+
+```{r}
+#Datos del problema
+
+comestibles <- c(404,1948,32,228,1596)
+venenoso <- c(48,1708,0,600,1556)
+
+tabla3 <- as.table(rbind(comestibles,venenoso))
+
+dimnames(tabla3) <- list(comestibles = c("comestibles","venenoso"),
+                         sombrero = c("campana","convexto","hundido","nudoso","plano"))
+
+print(tabla3)
+```
+
+**Condiciones**
+
+1.- Las observaciones son independientes entre si, y además representa menos del 10% de la poblacion total mundial de los hongos.
+2.- debe haber a lo menos 5 observaciones, para este caso la prueba los calcula internamente, asi que lo verificaremos luego.
+
+**Hipotesis**
+
+H0: Las variables clase y forma del sombrero son independientes.
+Ha: Las variables clase y forma del sombrero están relacionadas.
+
+
+**Realizamos la prueba**
+```{r}
+#Nivel de significancia
+
+alpha_0.05 <- 0.05
+
+#Realizamos la prueba de chi-cuadrado de independencia
+
+prueba_independencia <- chisq.test(tabla3)
+
+print("Muestras esperadas")
+print(prueba_independencia$expected)
+
+#Como las muestras esperadas son mayor a 5, por lo tanto si se cumple esta condicion.
+
+print(prueba_independencia)
+
+```
+
+Luego de realizar la prueba de chi-cuadrado de independencia, obtenemos un valor de p < 2.2e-16, por lo que podemos rechazar la hipoitesis nula en favor de la alternativa, es decir, hay suficiente evidencia para afirmar que la forma del sombrero de los hongos y si son comestibles o no, estan relacionados.
