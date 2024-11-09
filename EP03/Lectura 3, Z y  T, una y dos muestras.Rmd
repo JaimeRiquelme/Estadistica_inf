@@ -1,0 +1,296 @@
+---
+title: "Inferencia Estadística con Medias Muestrales"
+subtitle: "Análisis mediante Pruebas Z y t"
+author: "Jaime"
+date: "2024-11-06"
+output: pdf_document
+---
+
+# 1. Pruebas de Hipótesis para Medias
+
+## 1.1 Prueba Z para una Muestra
+
+### 1.1.1 Condiciones de Aplicación
+
+1. Las observaciones deben ser independientes
+2. La población sigue aproximadamente una distribución normal
+3. La muestra debe tener al menos 30 observaciones
+4. Se asume que la varianza observada corresponde a la varianza poblacional. Si hay menos de 30 observaciones, se debe conocer la varianza poblacional
+
+La prueba es adecuada si queremos asegurar o descartar que la media de la población tiene un cierto valor hipotético.
+
+Ejemplo:
+
+Un empresario quiere saber para su campaña de marketing si, en promedio, las utilidades obtenidas el mes pasado por las empresas a las que brinda apoyo fueron 20 millones de pesos. Para ello, nos ha informado que la desviación estándar para las utilidades fue de 2,32 millones de pesos. La media observada es de x = 26,066.
+
+Como el empresario quiere saber si las medias fueron de 20 millones, declaramos la hipótesis nula y alternativa.
+
+H0: La media de utilidades obtenidas el mes pasado por las empresas a las que brinda apoyo fue de 20 millones (μ = 20)
+Ha: La media de utilidades obtenidas el mes pasado por las empresas a las que brinda apoyo fue distinta de 20 millones (μ ≠ 20)
+
+```{r}
+muestra <- c(19.33, 29.37, 29.14, 32.10, 25.04, 22.22, 31.26, 26.92,
+             31.40, 17.66, 22.55, 20.69, 24.68, 28.74, 26.85, 29.68,
+             29.27, 26.72, 27.08, 20.62)
+
+sd1 <- 2.32
+media_1 <- 26.066
+valor_nulo1 <- 20
+alpha_0.05 <- 0.05
+```
+
+Verificamos las condiciones.
+
+1.- Como se nos indica en el enunciado, podemos decir que las observaciones son independientes ya que se tratan de diferentes empresas.
+
+2.- La población sigue una distribución normal aproximada. Para esta prueba utilizaremos la función de Shapiro-Wilk para verificar si la muestra sigue una distribución normal.
+
+```{r}
+shapiro.test(muestra)
+```
+Como el valor obtenido en la prueba es mayor a un nivel de significancia de 0.05, podemos decir que la población sigue una distribución normal.
+
+3.- La muestra tiene al menos 30 observaciones, como la muestra es igual a la población, esta cumple la condición.
+
+4.- Asumimos que la varianza observada corresponde a la varianza poblacional.
+
+Como nuestros datos cumplen con todas las condiciones, procedemos a realizar la prueba Z.
+
+```{r}
+library(TeachingDemos)
+# Prueba Z
+
+Prueba_Z <- z.test(muestra, valor_nulo1, sd1, alternative = "two.sided", conf.level = 1 - alpha_0.05)
+
+# Otra opción es utilizar directamente el valor de la media de la población en lugar de la muestra.
+
+print(Prueba_Z)
+```
+Con un nivel de significancia de 0.05, y además de un valor de p obtenido < 2.2e-16, rechazamos la hipótesis nula en favor de la alternativa, por lo que podemos decir que la media de utilidades obtenidas el mes pasado por las empresas a las que brinda apoyo fue distinta de 20 millones.
+
+## 1.2 Pruebas t
+
+### 1.2.1 Prueba t para una Muestra
+
+#### Condiciones de Aplicación
+
+1. Las observaciones deben ser independientes entre sí
+2. Las observaciones provienen de una distribución cercana a la normal
+
+Esta prueba es adecuada cuando:
+- Tenemos muestras menores a 30 observaciones y no conocemos la desviación estándar
+- También es válida cuando la muestra es grande
+
+Ejemplo:
+
+Un ingeniero quiere determinar si el tiempo promedio que tarda una implementación dada de un algoritmo en resolver un problema, sabiendo que siempre se ejecuta en mismas condiciones, es inferior a 500ms, por eso seleccionó aleatoriamente 15 instancias del problema.
+
+**Hipótesis**
+
+H0: El tiempo promedio que tarda el algoritmo en resolver una instancia del problema es de 500ms (μ = 500)
+
+Ha: El tiempo promedio que tarda el algoritmo en resolver una instancia del problema es menor a 500ms (μ < 500)
+
+Verificamos las condiciones.
+
+1.- Como se nos indica que las instancias se tomaron aleatoriamente, podemos decir que son independientes entre sí.
+2.- La población sigue una distribución normal aproximada. Para esta prueba graficaremos utilizando un histograma para verificar si la muestra sigue una distribución normal.
+
+```{r}
+# Cargamos la librería
+library(ggpubr)
+
+# Datos del problema (instancias)
+tiempo2 <- c(411.5538, 393.2753, 445.8905, 411.4022, 498.8969,
+             388.6731, 430.0382, 469.4734, 409.5844, 442.0800,
+             418.1169, 408.4110, 463.3733, 407.0908, 516.5222)
+
+# Prueba de normalidad
+
+g1 <- ggqqplot(data = data.frame(tiempo2),
+               x = "tiempo2",
+               color = "red",
+               xlab = "Teórico",
+               ylab = "Muestra",
+               title = "Prueba de normalidad")
+print(g1)
+```
+Como podemos visualizar en el gráfico, la muestra no es directamente una línea recta, pero esta se encuentra dentro de los límites de confianza, por lo que podemos asumir una distribución normal.
+
+**Realizamos la prueba t**
+
+Función a utilizar: 
+
+t.test(x, alternative, mu, conf.level)
+
+```{r}
+# Datos del problema
+
+valor_nulo2 <- 500
+alpha_0.05 <- 0.05
+
+# Realizamos la prueba
+
+Prueba_t_una_muestra <- t.test(tiempo2, alternative = "less", mu = valor_nulo2, conf.level = 1 - alpha_0.05)
+
+print(Prueba_t_una_muestra)
+```
+**Conclusión**
+
+Como el valor de p al realizar la prueba t para una muestra, siendo el valor de p < 5.219e-06, rechazamos la hipótesis nula en favor de la alternativa, por lo que podemos decir con un 95% de confianza que el tiempo promedio que tarda el algoritmo en resolver una instancia del problema es menor a 500ms.
+
+### 1.2.2 Prueba t para Dos Muestras
+
+#### A. Muestras Pareadas
+
+##### Condiciones de Aplicación
+
+Ejemplo:
+
+Para esta prueba el mismo ingeniero tiene dos algoritmos A y B, que en teoría deberían tardar lo mismo en resolver un problema. Para ello probó ambos algoritmos para 35 instancias, elegidas aleatoriamente. Además de calcular la diferencia en los tiempos de ejecución, el ingeniero quiere comprobar si el rendimiento de ambos es igual. 
+
+**Datos del problema**
+
+```{r}
+# Datos del problema
+
+t_A <- c(436.5736, 470.7937, 446.8354, 470.9810, 485.9394,
+         464.6145, 466.2139, 468.9065, 473.8778, 413.0639,
+         496.8705, 450.6578, 502.9756, 465.6358, 437.2597,
+         468.8806, 503.1435, 430.0524, 438.8969, 439.7409,
+         464.5916, 467.9926, 415.8730, 437.9201, 493.7020,
+         433.1082, 445.7433, 515.2049, 441.9420, 472.1396,
+         481.7234, 476.6149, 420.7918, 460.1070, 450.1008)
+
+t_B <- c(408.5142, 460.1076, 490.2311, 513.6910, 467.6467,
+         484.1697, 465.9334, 502.4670, 444.9693, 456.3341,
+         501.1443, 471.7833, 441.1206, 544.1575, 447.8844,
+         432.4108, 477.1712, 482.3943, 468.2536, 474.9865,
+         496.0153, 485.8112, 457.4263, 483.3700, 510.7131,
+         467.5739, 482.6621, 451.3986, 385.9391, 546.7564,
+         467.2533, 494.7049, 451.9716, 522.3699, 444.1270)
+
+instancias <- seq(1, 35, 1)
+```
+
+**Hipótesis**
+
+H0: El tiempo promedio que tarda el algoritmo A en resolver una instancia del problema es igual al tiempo promedio que tarda el algoritmo B en resolver una instancia del problema (μ_A - μ_B = 0)
+
+Ha: El tiempo promedio que tarda el algoritmo A en resolver una instancia del problema es diferente al tiempo promedio que tarda el algoritmo B en resolver una instancia del problema (μ_A - μ_B ≠ 0)
+
+Para este caso, hay dos formas de resolverlo.
+
+1.- Podemos calcular la diferencia entre los tiempos de ejecución de ambos algoritmos y realizar la prueba t para una muestra.
+2.- Realizar la prueba t para dos muestras pareadas.
+
+**Verificamos condiciones**
+
+1.- Las observaciones son independientes entre sí, ya que el enunciado nos indica que las instancias fueron elegidas aleatoriamente.
+2.- La población sigue una distribución normal aproximada. Para esta prueba utilizaremos la función de Shapiro-Wilk para verificar si la muestra sigue una distribución normal.
+
+```{r}
+# Prueba de normalidad con Shapiro-Wilk
+
+shapiro.test(t_A)
+
+shapiro.test(t_B)
+```
+Como al calcular la prueba de Shapiro-Wilk para ambas muestras, el valor de p es mayor a 0.05, podemos decir que ambas muestras siguen una distribución normal.
+
+**Realizamos la prueba t para dos muestras pareadas**
+
+Función a utilizar:
+
+t.test(x, y, paired, alternative, conf.level)
+
+```{r}
+# Datos del problema
+
+alpha_0.05 <- 0.05
+Valor_nulo3 <- 0
+
+# Método con la diferencia de los tiempos
+
+diferencia <- t_A - t_B
+
+Prueba_t_diferencia <- t.test(diferencia, alternative = "two.sided", mu = Valor_nulo3, conf.level = 0.95)
+
+print(Prueba_t_diferencia)
+
+# Método con las muestras
+
+Prueba_t_pareada <- t.test(t_A, t_B, paired = TRUE, alternative = "two.sided", mu = Valor_nulo3, conf.level = 0.95)
+
+print(Prueba_t_pareada)
+```
+**Conclusión**
+
+Dado el valor obtenido de p al realizar la prueba, siendo este de 0.03698, siendo este menor al nivel de significancia, rechazamos la hipótesis nula en favor de la alternativa, por lo que podemos decir que el tiempo promedio que tarda el algoritmo A en resolver una instancia del problema es diferente al tiempo promedio que tarda el algoritmo B en resolver una instancia del problema.
+
+#### B. Muestras Independientes
+
+##### Condiciones de Aplicación
+
+En este caso la prueba t de dos muestras independientes se usa para comparar las medias de dos poblaciones que no tienen relación una con la otra.
+Para este caso se usa la diferencia de las medias, siendo usualmente el valor nulo = 0.
+
+**Condiciones para la prueba t de dos muestras independientes**
+
+1.- Cada muestra cumple con las condiciones para usar la distribución t.
+2.- Las muestras son independientes entre sí.
+
+Ejemplo:
+
+Un doctor quiere determinar si una nueva vacuna A es más efectiva que otra vacuna B, para ello reclutó a 28 voluntarios de países, 15 de los cuales elegidos al azar recibieron la vacuna A y los otros 13 recibieron la vacuna B. Los datos muestran concentración de anticuerpos al cabo de un mes de recibir la vacuna.
+
+**Hipótesis**
+
+H0: La concentración de anticuerpos al cabo de un mes de recibir la vacuna A es igual a la concentración de anticuerpos al cabo de un mes de recibir la vacuna B (μ_A - μ_B = 0) 
+
+Ha: La concentración de anticuerpos al cabo de un mes de recibir la vacuna A es diferente a la concentración de anticuerpos al cabo de un mes de recibir la vacuna B (μ_A - μ_B ≠ 0)
+
+**Datos del problema**
+
+```{r}
+# Datos del problema
+vacuna_A <- c(6.04, 19.84, 8.62, 13.02, 12.20, 14.78, 4.53, 26.67,
+              3.14, 19.14, 10.86, 13.19, 6.34, 11.16, 7.62)
+
+vacuna_B <- c(5.32, 3.31, 5.68, 5.73, 4.86, 5.68, 2.93, 5.48, 6.10,
+              2.56, 7.52, 7.41, 4.02)
+```
+
+**Verificamos condiciones**
+
+1.- Las muestras son independientes entre sí, ya que los voluntarios fueron elegidos al azar.
+2.- Las muestras siguen una distribución normal aproximada. Para esta prueba utilizaremos la función de Shapiro-Wilk para verificar si la muestra sigue una distribución normal.
+
+```{r}
+# Prueba de normalidad con Shapiro-Wilk
+
+shapiro.test(vacuna_A)
+
+shapiro.test(vacuna_B)
+```
+Dados los valores de p obtenidos al realizar la prueba de Shapiro-Wilk, podemos decir que ambas muestras siguen una distribución normal.
+
+**Realizamos la prueba t para dos muestras independientes**
+
+```{r}
+# Datos del problema
+
+alpha_0.05 <- 0.05
+Valor_nulo4 <- 0
+
+# Realizamos la prueba
+
+Prueba_t_dos_muestras_ind <- t.test(vacuna_A, vacuna_B, paired = FALSE, alternative = "two.sided", mu = Valor_nulo4, conf.level = 1 - alpha_0.05)
+
+print(Prueba_t_dos_muestras_ind)
+```
+Dado el valor de p obtenido, siendo este de 0.001, siendo este menor al nivel de significancia, rechazamos la hipótesis nula en favor de la alternativa, por lo que podemos decir que la concentración de anticuerpos al cabo de un mes de recibir la vacuna A es diferente a la concentración de anticuerpos al cabo de un mes de recibir la vacuna B.
+
+
+
+
