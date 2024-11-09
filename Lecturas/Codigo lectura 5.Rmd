@@ -39,9 +39,37 @@ se hizo una encuesta a 300 programadores con mas de 3 años de experiencia de to
 ```{r}
 programadores <- c(42,56,51,27,24)
 programadoras <- c(25,24,27,15,9)
-
-tabla1 <- as.table(rbind(programadores,programadoras))
-
-dimnames(tabla1) <- list(sexo = c())
 ```
 
+**Condiciones**
+
+1.- Las observaciones deben ser independientes entre sí, ya que se tomaron aleatoriamente los programadores y programadoras, y además cumplen con ser menor del 10% de la poblacion total.
+2.- Debe haber a lo menos 5 observaciones esperadas en cada grupo, lo cual se cumple.
+
+**Hipotesis**
+
+H0: La preferencia de lenguajes para programadores y programadoras es la misma.
+H1: La preferencia de lenguajes para programadores y programadoras no es la misma.
+
+
+```{r}
+tabla1 <- as.table(rbind(programadores,programadoras))
+
+dimnames(tabla1) <- list(sexo = c("programadores","programadoras"),
+                         lenguajes = c("C","Java","Python","Ruby","Otro"))
+
+print(tabla1)
+
+#Nivel de significancia
+
+alpha_0.05 <- 0.05
+
+#Realizamos la prueba de chi-cuadrado de homogeneidad
+
+prueba_homogeneidad <- chisq.test(tabla1)
+print(prueba_homogeneidad)
+```
+Con un nivel de signifancia del 0.05, y un valor de p obtenido de 0.811, podemos concluir que no hay suficiente evidencia para poder rechazar la hipotesis nula, es decir, no hay suficiente evidencia que sugiera, con 95% de confianza, que programadores hombres y mujeres prefieran lenguajes de programacion distintos.
+
+
+### Prueba chi-cuadrado de bondad de ajuste
