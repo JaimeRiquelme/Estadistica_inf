@@ -1,38 +1,36 @@
 ---
-title: "Codigos Chi2"
-author: "jaime"
+title: "Pruebas Chi-Cuadrado"
+author: "Jaime"
 date: "2024-11-09"
 output: pdf_document
 ---
 
-# Pruebas no parametricas con proporciones
+# **Pruebas No Paramétricas con Proporciones**
 
-## Prueba chi cuadrado de pearson
+## **Prueba Chi-Cuadrado de Pearson**
 
-Esta prueba sirve para inferir con proporciones cuando disponemos de dos variables categoricas, y una de ellas es dicotómica(dos niveles).
+Esta prueba se utiliza para inferir sobre proporciones cuando disponemos de dos variables categóricas, y una de ellas es dicotómica (dos niveles).
 
-**Condiciones para uso de prueba chi-cuadrado**
+**Condiciones para uso de la prueba Chi-Cuadrado:**
 
-1.- Las observaciones deben ser independientes entre sí
-2.- Debe haber a lo menos 5 observaciones esperadas en cada grupo.
+1. Las observaciones deben ser independientes entre sí.
+2. Debe haber al menos 5 observaciones esperadas en cada grupo.
 
-Para esta prueba de chi-cuadrado, es comun tener tres tipos de pruebas:
+Para esta prueba de Chi-Cuadrado, es común tener tres tipos de pruebas:
 
-1.- Prueba chi-cuadrado de homogeneidad
-2.- Prueba chi-cuadrado de bondad de ajuste
-3.- Prueba chi-cuadrado de independencia
+1. **Prueba Chi-Cuadrado de Homogeneidad**
+2. **Prueba Chi-Cuadrado de Bondad de Ajuste**
+3. **Prueba Chi-Cuadrado de Independencia**
 
-La unica diferencia entre ellas es conceptual y tiene relacion con como se miren las variables y poblaciones involucradas.
+La única diferencia entre ellas es conceptual y tiene relación con cómo se interpretan las variables y poblaciones involucradas.
 
+### **1. Prueba Chi-Cuadrado de Homogeneidad**
 
-### Prueba chi-cuadrado de homogeneidad
+Esta prueba es adecuada si queremos determinar si dos poblaciones (variable dicotómica) presentan las mismas proporciones en los diferentes niveles de una variable categórica.
 
-Esta prueba es adecuada si queremos determinar si dos poblaciones (Variable dicótomica) presentan mismas proporcones en los diferentes niveles de una variable categorica.
+**Ejemplo:**
 
-Ejemplo:
-
-se hizo una encuesta a 300 programadores con mas de 3 años de experiencia de todo el pais, escogidos al azar y se les preguntó su lenguaje de programacion favorito
-¿Son similares las preferencias de lenguaje de programacion entre hombres y mujeres?
+Se hizo una encuesta a 300 programadores con más de 3 años de experiencia de todo el país, escogidos al azar, y se les preguntó su lenguaje de programación favorito. **¿Son similares las preferencias de lenguaje de programación entre hombres y mujeres?**
 
 **Datos del problema**
 
@@ -43,14 +41,13 @@ programadoras <- c(25,24,27,15,9)
 
 **Condiciones**
 
-1.- Las observaciones deben ser independientes entre sí, ya que se tomaron aleatoriamente los programadores y programadoras, y además cumplen con ser menor del 10% de la poblacion total.
-2.- Debe haber a lo menos 5 observaciones esperadas en cada grupo, lo cual se cumple.
+1. Las observaciones deben ser independientes entre sí, ya que se tomaron aleatoriamente los programadores y programadoras, y además cumplen con ser menor del 10% de la población total.
+2. Debe haber al menos 5 observaciones esperadas en cada grupo, lo cual se cumple.
 
-**Hipotesis**
+**Hipótesis**
 
 H0: La preferencia de lenguajes para programadores y programadoras es la misma.
 H1: La preferencia de lenguajes para programadores y programadoras no es la misma.
-
 
 ```{r}
 tabla1 <- as.table(rbind(programadores,programadoras))
@@ -60,28 +57,27 @@ dimnames(tabla1) <- list(sexo = c("programadores","programadoras"),
 
 print(tabla1)
 
-#Nivel de significancia
+# Nivel de significancia
 
 alpha_0.05 <- 0.05
 
-#Realizamos la prueba de chi-cuadrado de homogeneidad
+# Realizamos la prueba de chi-cuadrado de homogeneidad
 
 prueba_homogeneidad <- chisq.test(tabla1)
 print(prueba_homogeneidad)
 ```
-Con un nivel de signifancia del 0.05, y un valor de p obtenido de 0.811, podemos concluir que no hay suficiente evidencia para poder rechazar la hipotesis nula, es decir, no hay suficiente evidencia que sugiera, con 95% de confianza, que programadores hombres y mujeres prefieran lenguajes de programacion distintos.
+Con un nivel de significancia del 0.05, y un valor de p obtenido de 0.811, podemos concluir que no hay suficiente evidencia para poder rechazar la hipótesis nula, es decir, no hay suficiente evidencia que sugiera, con 95% de confianza, que programadores hombres y mujeres prefieran lenguajes de programación distintos.
 
+### **2. Prueba Chi-Cuadrado de Bondad de Ajuste**
 
-### Prueba chi-cuadrado de bondad de ajuste
+Esta prueba permite comparar si una distribución de frecuencias observadas se asemeja a una distribución de frecuencias esperadas. (Usualmente se emplea para comprobar si una muestra es representativa de la población).
 
-Esta prueba permite comparar si una distribucion de frecuencias observadas se asemeja a una distribucion de frecuencias esperadas. (Usualmente se emplea para comprobar si una muestra es representativa de la poblacion).
+**Ejemplo:**
 
-Ejemplo: 
-
-una empresa cuenta con una nomina de 660 programadores y programadoas, se selecciona un subconjunto de 55 personas de esta nomina supuestamente aleatoria, pero es acusado de seleccionar con conveniencia, es por eso que se necesita demostrar que el grupo seleccionado es unamuestra representativa.
+Una empresa cuenta con una nómina de 660 programadores y programadoras, se selecciona un subconjunto de 55 personas de esta nómina supuestamente aleatoria, pero es acusado de seleccionar con conveniencia, es por eso que se necesita demostrar que el grupo seleccionado es una muestra representativa.
 
 ```{r}
-#Datos del problema
+# Datos del problema
 
 nomina <- c(236,78,204,76,66)
 muestra <- c(17,9,14,10,5)
@@ -92,11 +88,10 @@ dimnames(tabla2) <- list(sexo = c("nomina","muestra"),
                          lenguajes = c("C","Java","Python","Ruby","Otro"))
 ```
 
-
 **Condiciones**
 
-1.- Las observaciones son independientes entre si, y además representa menos del 10% de la poblacion total.
-2.- Debe haber a lo menos 5 observaciones esperadas en cada grupo, lo cual se cumple calculando para cada valor esperado su frecuencia esperada de la siguiente manera: 
+1. Las observaciones son independientes entre sí, y además representa menos del 10% de la población total.
+2. Debe haber al menos 5 observaciones esperadas en cada grupo, lo cual se cumple calculando para cada valor esperado su frecuencia esperada de la siguiente manera: 
 
 ```{r}
 n_nomina <- sum(nomina)
@@ -104,40 +99,39 @@ n_muestra <- sum(muestra)
 proporciones <- round(nomina/n_nomina,3)
 esperados <- round(proporciones*n_muestra,3)
 print(esperados)
-
 ```
-Asi deberiamos obtener cada valor esperado para cada lenguaje y estos deberian ser mayor que 5 observaciones. 
+Así deberíamos obtener cada valor esperado para cada lenguaje y estos deberían ser mayor que 5 observaciones. 
 
-**Hipotesis**
+**Hipótesis**
 
-H0: las proporciones de cada lenguaje de programacion en la muestra son iguales a las de la nomina.
-Ha: las proporciones de cada lenguaje de programacion en la muestra no son iguales a las de la nomina.
+H0: Las proporciones de cada lenguaje de programación en la muestra son iguales a las de la nómina.
+Ha: Las proporciones de cada lenguaje de programación en la muestra no son iguales a las de la nómina.
 
 Como comprobamos las condiciones procedemos a realizar la prueba de bondad de ajuste.
 
 ```{r}
-#Nivel de significancia 
+# Nivel de significancia 
 
 alpha_0.05 <- 0.05
 
-#Realizamos la prueba de chi-cuadrado de bondad de ajuste
+# Realizamos la prueba de chi-cuadrado de bondad de ajuste
 
 prueba_bondad_ajuste <- chisq.test(tabla2, correct = FALSE)
 
 print(prueba_bondad_ajuste)
 ```
-Con un valor de p de 0.4609 obtenido, concluimos que no tenemos suficiente informacion para rechazar la hipotesis nula, por lo que no hay suficiente evidencia para afirmar que la muestra no es representativa de la nomina.
+Con un valor de p de 0.4609 obtenido, concluimos que no tenemos suficiente información para rechazar la hipótesis nula, por lo que no hay suficiente evidencia para afirmar que la muestra no es representativa de la nómina.
 
-### Prueba chi-cuadrado de independencia
+### **3. Prueba Chi-Cuadrado de Independencia**
 
-Esta prueba sirve para determinar si dos variables categoricas, de una misma poblacion, son estadisticamente independientes, o si están relacionadas.
+Esta prueba sirve para determinar si dos variables categóricas, de una misma población, son estadísticamente independientes, o si están relacionadas.
 
-Ejemplo: 
+**Ejemplo:**
 
-un micologo desea determinar si existe relacion entre la forma del sombrero de los hongos y si estos son comestibles o no comestribles.
+Un micólogo desea determinar si existe relación entre la forma del sombrero de los hongos y si estos son comestibles o no comestibles.
 
 ```{r}
-#Datos del problema
+# Datos del problema
 
 comestibles <- c(404,1948,32,228,1596)
 venenoso <- c(48,1708,0,600,1556)
@@ -145,39 +139,214 @@ venenoso <- c(48,1708,0,600,1556)
 tabla3 <- as.table(rbind(comestibles,venenoso))
 
 dimnames(tabla3) <- list(comestibles = c("comestibles","venenoso"),
-                         sombrero = c("campana","convexto","hundido","nudoso","plano"))
+                         sombrero = c("campana","convexo","hundido","nudoso","plano"))
 
 print(tabla3)
 ```
 
 **Condiciones**
 
-1.- Las observaciones son independientes entre si, y además representa menos del 10% de la poblacion total mundial de los hongos.
-2.- debe haber a lo menos 5 observaciones, para este caso la prueba los calcula internamente, asi que lo verificaremos luego.
+1. Las observaciones son independientes entre sí, y además representa menos del 10% de la población total mundial de los hongos.
+2. Debe haber al menos 5 observaciones, para este caso la prueba los calcula internamente, así que lo verificaremos luego.
 
-**Hipotesis**
+**Hipótesis**
 
 H0: Las variables clase y forma del sombrero son independientes.
 Ha: Las variables clase y forma del sombrero están relacionadas.
 
-
 **Realizamos la prueba**
 ```{r}
-#Nivel de significancia
+# Nivel de significancia
 
 alpha_0.05 <- 0.05
 
-#Realizamos la prueba de chi-cuadrado de independencia
+# Realizamos la prueba de chi-cuadrado de independencia
 
 prueba_independencia <- chisq.test(tabla3)
 
 print("Muestras esperadas")
 print(prueba_independencia$expected)
 
-#Como las muestras esperadas son mayor a 5, por lo tanto si se cumple esta condicion.
+# Como las muestras esperadas son mayor a 5, por lo tanto si se cumple esta condición.
 
 print(prueba_independencia)
-
 ```
 
-Luego de realizar la prueba de chi-cuadrado de independencia, obtenemos un valor de p < 2.2e-16, por lo que podemos rechazar la hipoitesis nula en favor de la alternativa, es decir, hay suficiente evidencia para afirmar que la forma del sombrero de los hongos y si son comestibles o no, estan relacionados.
+Luego de realizar la prueba de chi-cuadrado de independencia, obtenemos un valor de p < 2.2e-16, por lo que podemos rechazar la hipótesis nula en favor de la alternativa, es decir, hay suficiente evidencia para afirmar que la forma del sombrero de los hongos y si son comestibles o no, están relacionados.
+
+
+## **Prueba Exacta de Fisher**
+
+Esta prueba es una alternativa a las prueba de chi-cuadrado para cuando las condiciones de la prueba no se cumplen, es decir, cuando no se tiene al menos 5 observaciones esperadas en cada grupo.
+
+Esta es una alternativa a la prueba **Chi-Cuadrado de Independencia** en el caso que ambas variables sean dicotómicas.
+
+Es por eso que las hipótesis a contrastar son:
+
+**Hipótesis:**
+
+H0: Las variables son independientes.
+Ha: Las variables están relacionadas.
+
+**Ejemplo:**
+
+Un estudio quiere determinar si dos vacunas, A y B, son igualmente efectivas para inmunizar a la población ante una mordida de vampiro. Para ello reclutaron a 17 voluntarios de todo el mundo de los cuales 6 recibieron la vacuna A y 11 la vacuna B, luego de 3 meses fueron sometidos a una mordida de vampiro y observaron que ninguno de los voluntarios que recibieron la vacuna A resultó afectado, mientras que 5 de los que recibieron la vacuna B sí resultaron afectados.
+
+**Datos del problema**
+```{r}
+vacuna <- c(rep("A",6),rep("B",11))
+resultado <- c(rep("Humano",12),rep("Vampiro",5))
+
+datos <- data.frame(resultado, vacuna)
+
+tabla4 <- xtabs(~.,datos)
+print(tabla4)
+```
+**Hipótesis**
+
+H0: Las variables tipo de vacuna y resultado son independientes.
+Ha: Las variables tipo de vacuna y resultado están relacionadas.
+
+Aplicamos la prueba de Fisher
+
+```{r}
+#Prueba de fisher directamente a la tabla de contingencia
+
+prueba_fisher_tabla <- fisher.test(tabla4)
+
+print(prueba_fisher_tabla)
+
+#Prueba de fisher a partir de los datos
+
+prueba_fisher_datos <- fisher.test(vacuna,resultado)
+
+print(prueba_fisher_datos)
+```
+Dado el valor de p obtenido, siendo este de 0.1023, no rechazamos la hipótesis nula, por lo que se concluye con 95% de confianza que no existe una asociación entre la cantidad de nuevos vampiros y la vacuna recibida.
+
+## **Prueba de McNemar**
+
+Las pruebas anteriores utilizan muestras independientes para comparar las poblaciones subyacentes. En esta prueba se considera el análisis de frecuencias apareadas, es decir, cuando una misma característica con respuesta dicotómica, se mide en dos ocasiones diferentes para el mismo grupo.
+
+Es por eso que esta prueba sirve para determinar si existe o no un cambio significativo en las proporciones observadas entre ambas mediciones.
+
+Las hipótesis a trabajar en esta prueba serían del tipo:
+
+H0: No hay cambios significativos en las respuestas.
+Ha: Sí hay cambios significativos en las respuestas.
+
+**Ejemplo:**
+
+Un cientista de datos ha construido modelos para predecir a partir de las notas obtenidas en cursos previos, si sus estudiantes aprobarán o no la asignatura de aprendizaje automático. Al probar sus modelos con los 25 estudiantes del semestre anterior, observó que predijeron el resultado final de cada estudiante, y obtuvo los siguientes resultados:
+
+**Datos del problema**
+
+```{r}
+alumno <- seq(1:25)
+modelo_1 <- c(rep("Correcto",16),rep("Incorrecto",9))
+modelo_2 <- c(rep("Correcto",9),rep("Incorrecto",11),rep("Correcto",5))
+
+datos2 <- data.frame(alumno,modelo_1,modelo_2)
+
+tabla5 <- table(modelo_2,modelo_1)
+
+
+print(tabla5)
+
+#aplicar la prueba de McNemar directamente a la tabla de datos
+
+prueba_mcnemar_tabla <- mcnemar.test(tabla5)
+
+print(prueba_mcnemar_tabla)
+
+#Aplicar la prueba de McNemar a partir de los datos
+
+prueba_mcnemar_datos <- mcnemar.test(modelo_1,modelo_2)
+
+print(prueba_mcnemar_datos)
+
+```
+Con el valor de p obtenido de 0.7727, no rechazamos la hipótesis nula, por lo que concluimos que no hay suficiente evidencia para afirmar que exista un cambio significativo en las proporciones observadas entre ambas mediciones.
+
+
+## **Prueba de Cochran**
+
+Esta prueba es una extensión de la prueba McNemar, y se usa cuando la variable de respuesta es dicotómica y la variable independiente tiene más de dos observaciones apareadas.
+
+**Ejemplo:**
+
+Elsa Capunta, estudiante de algoritmos, tiene como tarea determinar si existe una diferencia significativa en el desempeño de tres metaheurísticas que buscan resolver el problema del vendedor viajero. Para ello tiene información en una tabla donde la primera columna identifica cada una de las 15 instancias del problema empleadas para evaluar las metaheurísticas, mientras que las columnas restantes indican si la metaheurística en cuestión encontró (1) o no (0) la solución óptima.
+
+Las hipótesis contrastadas por la prueba de Cochran es la misma o no en todas las mediciones.
+
+**Hipótesis**
+
+H0: La proporción de instancias en que se encuentra la solución óptima es la misma para todas las metaheurísticas.
+Ha: La proporción de instancias en que se encuentra la solución óptima no es la misma para todas las metaheurísticas.
+
+Esta prueba tiene condiciones:
+
+1. La variable de respuesta es dicotómica (la metaheurística consigue o no la solución).
+2. La variable independiente es categórica (las tres metaheurísticas).
+3. Las observaciones son independientes entre sí.
+4. El tamaño de la muestra es suficientemente grande para que se puedan realizar las comparaciones.
+
+**Datos del problema**
+```{r}
+
+#Librerias a utilizar
+library(tidyverse)
+library(RVAideMemoire)
+library(rcompanion)
+
+instancias2 <- 1:15
+annealing <- c(0,1,0,0,0,0,0,1,0,0,0,0,1,0,0)
+hormigas <- c(0,0,1,0,0,1,0,0,0,1,0,0,0,0,1)
+genetivo <- c(1,0,1,1,1,1,0,1,0,1,1,0,0,1,1)
+
+datos3 <- data.frame(instancias2,annealing,hormigas,genetivo)
+
+print(datos3)
+
+```
+Para aplicar la prueba de Cochran, necesitamos tener los datos en formato largo
+
+```{r}
+#Convertimos a formato largo
+
+datos3 <- datos3 %>% pivot_longer(c("annealing","hormigas","genetivo"),names_to = "metaheuristica",values_to = "solucion")
+
+datos3[["instancias2"]] <- factor(datos3[["instancias2"]])
+datos3[["metaheuristica"]] <- factor(datos3[["metaheuristica"]])
+
+#Realizamos la prueba de cochran
+
+prueba_cochran <- cochran.qtest(solucion ~ metaheuristica | instancias2, data = datos3, alpha = 0.05)
+
+print(prueba_cochran)
+
+
+```
+Al obtener un valor de p de 0.0277 en la prueba de Cochran, rechazamos la hipótesis nula en favor de la alternativa, por lo que podemos concluir con un 95% de confianza que la proporción de instancias en que se encuentra la solución óptima no es la misma para todas las metaheurísticas.
+
+Por otro lado, para conocer cuáles son las diferencias procedemos a realizar una prueba post-hoc
+
+```{r}
+#Prueba post-hoc con corrección de Bonferroni
+
+post_hoc_1 <- pairwiseMcnemar(solucion ~ metaheuristica | instancias2, data = datos3, method = "bonferroni")
+
+print(post_hoc_1)
+
+#Prueba post-hoc con corrección de Holm
+
+post_hoc_2 <- pairwiseMcnemar(solucion ~ metaheuristica | instancias2, data = datos3, method = "holm")
+
+print(post_hoc_2)
+```
+Con la prueba post-hoc podemos observar que se encuentra una diferencia entre genetivo y hormigas con un valor de p de 0.0313, por lo que podemos concluir que la proporción de instancias en que se encuentra la solución óptima no es la misma para estos casos, mientras que para las demás combinaciones no se encuentran diferencias significativas.
+
+Por otro lado, como el valor se acerca al nivel de significancia, se recomienda aumentar la cantidad de instancias para tener una mayor confianza en los resultados obtenidos.
+
+
+
