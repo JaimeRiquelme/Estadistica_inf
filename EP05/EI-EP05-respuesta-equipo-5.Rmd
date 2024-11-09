@@ -1,0 +1,220 @@
+---
+title: "EP05 - ANOVA para muestras independientes"
+author: "Jaime Riquelme, Fabián Lizama, Martín Gamboa"
+date: "2024-10-15"
+output:
+  pdf_document:
+    latex_engine: xelatex
+
+---
+
+# Como equipo N°5, se nos pide responder una pregunta de estadística, utilizando ANOVA para muestras independientes.
+
+# Contexto: En una emocionante competencia de cubos Rubik, participantes de Chile, Argentina, Colombia, Uruguay, Perú y Ecuador demostraron su destreza en resolver tres tipos de cubos: 2x2x2, 3x3x3 y Megaminx. Después del torneo, un grupo de investigadores de la Asociación Mundial del Cubo, interesado en los tiempos que hicieron las jugadoras y los jugadores en la competencia, decidieron estudiar si el país y el tipo de cubo usado en cada prueba tienen influencia en los segundos que se tardan en resolverlos. Para ello usaron una muestra aleatoria de los datos de la competencia, en la cual participaron más de 2.000 personas,
+
+## Pregunta: ¿Existen diferencias en el tiempo de resolución de cubos 3x3x3 entre participantes de Chile, Colombia y Uruguay?
+
+
+Para proceder con la realización de la prueba ANOVA, primero se debe cargar los datos que contienen el tiempo de resolución de cubos 3x3x3 de los participantes de Chile, Colombia y Uruguay.
+```{r}
+#Carga de librerias
+library(tidyverse)
+library(ggpubr)
+library(car)
+
+
+#Carga de datos
+
+datos <- read.csv2("EP05 Datos.csv")
+
+#Mostramos los primeros datos
+
+head(datos)
+
+```
+Como la pregunta nos pide solamente realizar la prueba con los paises de Chile, Colombia y Uruguay, además de utilizar solamente el cubo 3x3x3, Realizaremos un filtro para los datos.
+
+```{r}
+#Filtramos los datos por los paises y el tipo de la prueba a realizar.
+datos_filtrados <- datos %>% filter(pais %in% c("Chile","Colombia","Uruguay"), tipo == "3x3x3")
+
+#Seleccionamos solo las columnas de pais y tiempo
+datos_filtrados <- datos_filtrados %>% select(id,pais, tiempo)
+
+#Mostramos los primeros
+head(datos_filtrados )
+```
+
+Para poder responder a la pregunta planteada, formularemos las siguientes hipótesis nula y alternativa:
+
+Hipotesis nula: No existen diferencias en el tiempo de resolución de cubos 3x3x3 entre participantes de Chile, Colombia y Uruguay. 
+H0 : μ1 = μ2 = μ3
+
+Donde: 
+
+μ1 = Tiempo de resolución de cubos 3x3x3 de los participantes de Chile.
+μ2 = Tiempo de resolución de cubos 3x3x3 de los participantes de Colombia.
+μ3 = Tiempo de resolución de cubos 3x3x3 de los participantes de Uruguay.
+
+Hipótesis alternativa: Existen diferencias en el tiempo de resolución de cubos 3x3x3 entre almenos nos de los grupos de participantes de Chile, Colombia y Uruguay.
+
+Ha: ∃i ≠ j: μi ≠ μj (i,j = 1,2,3)
+
+#### Verificamos las condiciones para realizar Anova
+
+**Condiciones para realizar Anova:**
+
+1. La escala con que se mide la variable dependiente tiene las propiedades de una escala de intervalos
+iguales.
+2. Las k muestras son obtenidas de manera aleatoria e independiente desde la(s) población(es) de origen.
+3. Se puede suponer razonablemente que la(s) población(es) de origen sigue(n) una distribución normal.
+4. Si las muestras provienen de más de una población, estas tienen la misma varianza.
+
+Por enunciado sabemos que las muestras son independientes y aleatorias, por lo que solo nos queda verificar la normalidad y homocedasticidad de los datos.
+
+**Normalidad de los datos:**
+Para verificar la normalidad de los datos, procederemos a realizar una prueba de shapiro-wilk, junto a un gráfico de Q-Q plot para cada una de las variables.
+
+```{r}
+# Normalidad muestra pais Chile
+
+#Filtramos los datos de chile
+muestra_chile <- datos_filtrados %>% filter(pais == "Chile")
+
+#Realizamos la prueba de shapiro-wilk para la muestra de chile
+
+shapiro_chile <- shapiro.test(muestra_chile$tiempo)
+
+#Mostramos el resultado para la prueba de shapiro de chile.
+
+print(shapiro_chile)
+
+#Realizamos el grafico de Q-Q
+
+g_chile <- ggqqplot(muestra_chile,
+                    x = "tiempo",
+                    color = "red")
+```
+Con el codigo anterior, vemos la normalidad de los datos para chile.
+
+
+```{r}
+# Normalidad muestra pais colombia
+
+#Filtramos los datos de colombia
+muestra_colombia <- datos_filtrados %>% filter(pais == "Colombia")
+
+#Realizamos la prueba de shapiro-wilk para la muestra de Colombia.
+shapiro_colombia <- shapiro.test(muestra_colombia$tiempo)
+
+#Mostramos el resultado para la prueba de shapiro de Colombia.
+print(shapiro_colombia)
+
+#Realizamos el grafico de Q-Q
+g_colombia <- ggqqplot(muestra_colombia,
+                    x = "tiempo",
+                    color = "blue")
+
+```
+
+Con el codigo anterior, vemos la normalidad de los datos para Colombia.
+
+```{r}
+# Normalidad muestra pais Uruguay
+
+#Filtramos los datos de Uruguay
+muestra_uruguay <- datos_filtrados %>% filter(pais == "Uruguay")
+
+#Realizamos la prueba de shapiro-wilk para la muestra de Uruguay
+shapiro_uruguay <- shapiro.test(muestra_uruguay$tiempo)
+
+#Mostramos el resultado para la prueba de shapiro de Uruguay.
+print(shapiro_uruguay)
+
+#Realizamos el grafico de Q-Q
+g_uruguay <- ggqqplot(muestra_uruguay,
+                    x = "tiempo",
+                    color = "green")
+
+```
+Ahora mostramos los gráficos Q-Q para cada pais para comprobar la normalidad de los datos.
+
+```{r}
+# Combinamos los graficos de Q-Q
+graficos <- ggarrange(g_chile, g_colombia, g_uruguay, ncol = 3, nrow = 1)
+
+#Mostramos los graficos
+print(graficos)
+```
+
+Con el codigo anterior, vemos la normalidad de los datos para Uruguay, y con esto, podemos concluir que los datos siguen una distribución normal asegurado por la prueba de shapiro-wilk con un nivel de significancia de 0.05, junto al grafico de Q-Q.
+Por otro lado, Como en los graficos de Q-Q se representa la unidad de tiempo, se observa de igual manera, que los datos cumplen con la primera condicion de Anova y que los intervalos de tiempo son consistentes entre si.
+
+Finalmente, realizaremos una prueba de levene para verificar que estas muestras tienen la misma varianza.
+
+```{r}
+#Realizamos la prueba de levene para verificar la homogeneidad de varianzas
+
+#Con las siguiente hipotesis:
+
+#H0: Las varianzas de las muestras son iguales.
+#Ha: Las varianzas de las muestras no son iguales.
+
+levene_test <- leveneTest(tiempo ~ pais, data = datos_filtrados)
+
+#Mostramos el resultado de la prueba de levene
+print(levene_test)
+
+
+```
+Como el valor P obtenido en la prueba es de 0.4728, siendo este mayor a 0.05, no se rechaza la hipotesis nula, por lo que se puede asumir con un 95% de confianza que las varianzas de las muestras son iguales.
+Por lo tanto, con esto podemos concluir que se cumplen las condiciones para realizar la prueba Anova.
+
+
+**Realizamos la prueba Anova**
+
+```{r}
+#Realizamos la prueba Anova
+anova_test <- aov(tiempo ~ pais, data = datos_filtrados)
+
+#Mostramos el resultado de la prueba Anova
+print(summary(anova_test))
+```
+Al realizar la prueba anova, podemos ver se obtiene un valor de P < 2e-16, por lo que rechazamos la hipótesis nula en favor de la alternativa, concluyendo que existe almenos una diferencia en el tiempo de resolución de cubos 3x3x3 entre los participantes de Chile, colombia y Uruguay.
+
+Ahora mostraremos el grafico del tamaño del efecto.
+
+```{r}
+#Cargo la libreria ez
+library(ez)
+
+#Creo el grafico del tamaño del efecto
+g1 <- ezPlot(data = datos_filtrados,
+             dv = tiempo,
+             wid = id,
+             between = pais,
+             x = pais,
+             y_lab = "Tiempo de resolución")
+
+#Mostro el grafico
+print(g1)
+             
+```
+
+Debido a que existe una diferencia en almenos uno de los paises, se procederá a realizar una prueba Post-hoc de Tukey para determinar entre cuales de los paises existe una diferencia significativa.
+
+```{r}
+#Realizamos al prueba Post-hoc de Tukey
+alpha <- 0.05 #Definimos el nivel de significancia para la prueba
+
+tukey_test <- TukeyHSD(anova_test,
+                       "pais",
+                       ordered = TRUE,
+                       conf.level = 1 - alpha)
+
+#Mostramos el resultado de la prueba Post-hoc de Tukey
+print(tukey_test)
+```
+**Conclusión:**
+Al realizar la prueba de Anova para verificar si existen diferencias en el tiempo de resolución de cubos 3x3x3 entre participantes de Chile, colombia y Uruguay, se concluye que existe almenos una diferencia en el tiempo de resolución de cubos 3x3x3 entre los participantes de Chile, Colombia y Uruguay. Además, al realizar la prueba Post-hoc de Tukey, se determina que la diferencia significativa se encuentra entre los paises de Colombia-chile, Uruguay-chile y Uruguay-colombia con un nivel de significancia de 0.05.
+
