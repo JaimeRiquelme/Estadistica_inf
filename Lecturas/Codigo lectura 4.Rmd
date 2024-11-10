@@ -1,7 +1,0 @@
----
-title: "Codigos Lectura 4"
-author: "jaime"
-date: "2024-11-09"
-output: pdf_document
----
-
