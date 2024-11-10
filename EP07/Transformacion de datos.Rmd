@@ -1,0 +1,140 @@
+---
+title: "Métodos clásicos para enfrentar variables numéricas problemáticas"
+author: "Jaime Riquelme
+date: "2024-11-10"
+output: pdf_document
+---
+
+# Métodos clásicos para enfrentar variables numéricas problemáticas
+
+Como ya sabemos, muchos procedimientos estadísticos requieren que los datos cumplan con ciertas propiedades o condiciones, lo que no siempre ocurre. En este documento abordaremos algunos métodos para enfrentar estos problemas cuando se intenta inferir sobre las medias poblacionales de variables aleatorias numéricas.
+
+## Transformación de datos
+
+Un fenómeno que ocurre a menudo en los estudios, además del incumplimiento de ciertas condiciones, es la necesidad de convertir los datos de una escala a otra diferente. Para hacer tales transformaciones, debemos aplicar una determinada función a una variable aleatoria X, lo que nos entrega como resultado una nueva variable aleatoria Y.
+
+### Transformación lineal
+
+```{r}
+# Crear un vector con cuatro observaciones en grados Celsius.
+Celsius <- c(-8, 0, 29.8, 100)
+
+# Aplicar transformación lineal para convertir a grados Fahrenheit.
+Fahrenheit <- 1.8 * Celsius + 32
+
+# Mostrar los resultados.
+cat("Temperaturas en grados Celsius\n")
+print(Celsius)
+cat("\nTemperaturas en grados Fahrenheit\n")
+print(Fahrenheit)
+```
+
+### Transformación logarítmica
+
+La transformación logarítmica nos puede servir cuando tenemos distribuciones muy asimétricas, pues ayuda a reducir la desviación y así facilita el cumplimiento de la condición de normalidad requerida por muchas de las pruebas estadísticas que ya conocemos.
+
+```{r}
+library(ggpubr)
+
+# Cargar datos
+animal <- c("Mountain beaver", "Cow", "Grey wolf", "Goat", "Guinea pig",
+            "Dipliodocus", "Asian elephant", "Donkey", "Horse",
+            "Polar monkey", "Cat", "Giraffe", "Gorilla", "Human",
+            "African elephant", "Triceratops", "Rhesus monkey", "Kangaroo",
+            "Golden hamster", "Mouse", "Rabbit", "Sheep", "Jaguar",
+            "Chimpanzee", "Brachiosaurus", "Mole", "Pig")
+
+body_weight <- c(1.35, 465, 36.33, 27.66, 1.04, 11700, 2547, 187.1, 521, 10,
+                3.3, 529, 207, 62, 6654, 9400, 6.8, 35, 0.12, 0.023, 2.5,
+                55.5, 100, 52.16, 87000, 0.122, 192)
+
+brain_weight <- c(465, 423, 119.5, 115, 5.5, 50, 4603, 419, 655, 115, 25.6,
+                 680, 406, 1320, 5712, 70, 179, 56, 1, 0.4, 12.1, 175, 157,
+                 440, 154.5, 3, 180)
+
+datos <- data.frame(animal, body_weight, brain_weight)
+
+# Aplicar transformación logarítmica
+log_cuerpo <- log(body_weight)
+log_cerebro <- log(brain_weight)
+datos <- data.frame(datos, log_cuerpo, log_cerebro)
+
+# Histogramas para el peso cerebral antes y después de la transformación
+# logarítmica.
+g3 <- gghistogram(datos, x = "brain_weight", bins = 10,
+                 xlab = "Peso del cerebro [g]", ylab = "Frecuencia",
+                 color = "red", fill = "red")
+
+g4 <- gghistogram(datos, x = "log_cerebro", bins = 10,
+                 xlab = "Peso del cerebro [log(g)]", ylab = "Frecuencia",
+                 color = "red", fill = "red")
+
+# Crear una única figura con ambos histogramas.
+histograma <- ggarrange(g3, g4, ncol = 2, nrow = 1)
+titulo <- text_grob("Efecto de la transformación logarítmica",
+                  face = "bold", size = 14)
+histograma <- annotate_figure(histograma, top = titulo)
+print(histograma)
+
+# Gráficos de dispersión para la relación entre peso corporal y peso del
+# cerebro, antes y después de aplicar la transformación logarítmica.
+g1 <- ggscatter(datos, x = "body_weight", y = "brain_weight",
+               color = "red", xlab = "Peso corporal [kg]",
+               ylab = "Peso del cerebro [g]") + rotate_x_text(45)
+
+g2 <- ggscatter(datos, x = "log_cuerpo", y = "log_cerebro",
+               color = "red", xlab = "Peso corporal [log(kg)]",
+               ylab = "Peso del cerebro [log(g)]") + rotate_x_text(45)
+
+# Crear una única figura con todos los gráficos de dispersión.
+dispersion <- ggarrange(g1, g2, ncol = 2)
+texto <- "Relación entre el peso corporal y el peso del cerebro"
+titulo <- text_grob(texto, face = "bold", size = 14)
+dispersion <- annotate_figure(dispersion, top = titulo)
+print(dispersion)
+```
+
+### Transformación Box-Cox
+
+```{r}
+library(DescTools)
+
+# Cargar datos
+Year <- c(1610, 1620, 1630, 1640, 1650, 1660, 1670, 1680, 1690, 1700, 1710,
+          1720, 1730, 1740, 1750, 1760, 1770, 1780, 1790, 1800, 1810, 1820,
+          1830, 1840, 1850)
+
+Population <- c(0.00035, 0.002302, 0.004646, 0.026634, 0.050368, 0.075058,
+                0.111935, 0.151507, 0.210372, 0.250888, 0.331711, 0.466185,
+                0.629445, 0.905563, 1.17076, 1.593625, 2.148076, 2.780369,
+                3.929214, 5.308483, 7.239881, 9.638453, 12.86602, 17.069453,
+                23.191876)
+
+datos <- data.frame(Year, Population)
+
+# Buscar la mejor transformación Box-Cox usando funciones de R.
+lambda <- BoxCoxLambda(datos$Population, lower = -4, upper = 4)
+cat("Lambda óptimo:", lambda)
+transformacion <- BoxCox(datos$Population, lambda)
+datos <- data.frame(datos, transformacion)
+
+# Graficar los datos transformados
+g1 <- ggqqplot(transformacion, color = "purple")
+print(g1)
+
+g2 <- gghistogram(datos, bins = 10, x = "transformacion", color = "purple",
+                 fill = "purple", xlab = "Población (Box-Cox)",
+                 ylab = "Frecuencia") + rotate_x_text(45)
+
+# Gráfico de dispersión para la transformación de Box-Cox de la población y
+# el año, usando lambda óptimo.
+g3 <- ggscatter(datos, x = "Year", y = "transformacion", color = "purple",
+               xlab = "Año", ylab = "lambda óptimo") + rotate_x_text(45)
+
+# Crear una única figura con todos los gráficos de dispersión.
+dispersion <- ggarrange(g3, g2, g1, ncol = 3)
+texto <- "Población transformada por año"
+titulo <- text_grob(texto, face = "bold", size = 14)
+dispersion <- annotate_figure(dispersion, top = titulo)
+print(dispersion)
+```

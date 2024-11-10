@@ -1,6 +1,6 @@
 ---
 title: "ANOVA de una vía para muestras independientes"
-author: "Nombre del Autor"
+author: "Jaime Riquelme"
 date: "2023-10-21"
 output: pdf_document
 ---
