@@ -1,0 +1,180 @@
+---
+title: "Pruebas no paramétricas para más de dos muestras"
+author: "Jaime Riquelme"
+date: "2024-11-10"
+output: pdf_document
+---
+
+# Pruebas no paramétricas con más de dos muestras numéricas
+
+Al igual que hay pruebas no paramétricas para una y dos muestras, también existen pruebas no paramétricas para más de dos muestras. En este caso, se utilizan las pruebas de **Kruskal-Wallis** y **Friedman**, siendo estas una alternativa para la prueba de ANOVA.
+
+## Prueba de Kruskal-Wallis
+
+Como se sabe, la prueba de ANOVA para muestras independientes con \(k > 2\), requiere que se cumplan ciertas condiciones:
+
+1. La escala con que se mide la variable dependiente tiene las propiedades de una escala de intervalos iguales.
+2. Las \(k\) muestras son obtenidas de manera aleatoria e independiente desde las poblaciones de origen.
+3. Se puede suponer razonablemente que las poblaciones de origen siguen una distribución normal.
+4. Las \(k\) muestras tienen varianzas aproximadamente iguales.
+
+Cuando no se cumple alguna de estas condiciones, o las muestras no tienen igual tamaño, podemos optar por realizar la prueba de **Kruskal-Wallis**, que es una prueba no paramétrica con las siguientes condiciones:
+
+1. La variable independiente debe tener al menos dos niveles (cuando tiene dos niveles se usa la prueba de Wilcoxon).
+2. La escala de la variable dependiente debe ser al menos ordinal.
+3. Las observaciones son independientes entre sí.
+
+**Ejemplo:**
+
+Un estudiante en informática estudia cuatro criterios diferentes (A, B, C y D) para optimizar una secuencia de operaciones en tablas de base de datos. Para su experimento, consiguió armar un conjunto de 48 bases de datos de tamaños similares donde se requiere realizar una secuencia de 8 operaciones *join* para obtener un reporte. Luego asignó cada base de datos a uno de los cuatro criterios de forma aleatoria y ejecutó consultas en iguales condiciones de hardware y recursos, registrando el tiempo de ejecución en segundos requeridos por cada consulta.
+
+**Datos:**
+
+```{r}
+Criterio_A <- c(21,22,22,23,23,23,23,24,24,24,25,26)
+Criterio_B <- c(15,17,18,18,19,19,20,20,21)
+Criterio_C <- c(9,10,10,10,10,11,11,12,12,12,12,13,14,15)
+Criterio_D <- c(15,15,16,16,16,18,18,18)
+```
+
+**Hipótesis**
+
+H0: No existen diferencias significativas en el tiempo que tardan los diferentes criterios en ejecutar la sentencia de operaciones (\(\mu_A = \mu_B = \mu_C = \mu_D\))
+
+Ha: Existe al menos una diferencia significativa en el tiempo que tardan los diferentes criterios en ejecutar la sentencia de operaciones (\(\mu_A \neq \mu_B \neq \mu_C \neq \mu_D\))
+
+Como podemos ver en los datos, las muestras no tienen la misma cantidad de observaciones, por lo que no podemos realizar una prueba de ANOVA. Por lo que realizaremos una prueba de Kruskal-Wallis.
+
+**Verificamos las condiciones de la prueba Kruskal-Wallis**
+
+1. La variable independiente tiene más de dos niveles, ya que tenemos cuatro criterios.
+2. La variable dependiente es ordinal, ya que se mide en segundos.
+3. Las observaciones son independientes entre sí, ya que es una muestra aleatoria además de que se ejecutaron en iguales condiciones de hardware y recursos.
+
+Como podemos recordar, esta prueba como es una alternativa de ANOVA, es del tipo ómnibus, así que debemos realizar un análisis post-hoc si es necesario.
+
+Para realizar la prueba se usa la función: `kruskal.test(formula, data)` donde:
+
+- formula: `<variable dependiente> ~ <variable independiente (factor)>`
+- data: matriz de datos en formato largo.
+
+Y por otro lado la función `pairwise.wilcox.test(x, g, p.adjust.method, paired = FALSE)` donde:
+
+- x: Vector con la variable dependiente
+- g: factor o agrupamiento
+- p.adjust.method: "holm" o "bonferroni" para corregir el valor p
+- paired: TRUE si los datos son pareados, FALSE si no lo son.
+
+**Prueba de Kruskal-Wallis**
+
+```{r}
+Tiempo <- c(Criterio_A, Criterio_B, Criterio_C, Criterio_D)
+
+Criterio <- c(rep("A", length(Criterio_A)), rep("B", length(Criterio_B)), rep("C", length(Criterio_C)), rep("D", length(Criterio_D)))
+Criterio <- factor(Criterio)
+
+datos5 <- data.frame(Tiempo, Criterio)
+
+# Establecemos el nivel de significancia
+alpha_0.01 <- 0.01
+
+prueba_kruskal <- kruskal.test(Tiempo ~ Criterio, data = datos5)
+
+prueba_kruskal
+```
+
+Como el valor de p obtenido es de 3.249e-08, podemos rechazar la hipótesis nula y concluir que existe al menos una diferencia significativa en el tiempo que tardan los diferentes criterios en ejecutar la sentencia de operaciones.
+
+Debido a esto realizamos un análisis post-hoc para la prueba.
+
+**Análisis post-hoc**
+
+```{r}
+Prueba_posthoc <- pairwise.wilcox.test(datos5$Tiempo, datos5$Criterio, p.adjust.method = "BH", paired = FALSE, exact = FALSE)
+
+print(Prueba_posthoc)
+```
+
+Dado los valores obtenidos al realizar el análisis post-hoc, con un nivel de significancia del 0.01, podemos concluir que existen diferencias significativas en todos los pares de criterios de optimización, con excepción de los criterios B y D.
+
+## Prueba de Friedman
+
+Como se sabe, la prueba de ANOVA con medidas repetidas requiere que se cumplan ciertas condiciones:
+
+1. La escala con que se mide la variable dependiente tiene las propiedades de una escala de intervalos iguales.
+2. Las \(k\) muestras son medidas repetidas u observaciones relacionadas.
+3. Se puede suponer razonablemente que las poblaciones de origen siguen una distribución normal.
+4. Las \(k\) muestras tienen varianzas aproximadamente iguales.
+
+En este caso no podemos realizar la prueba de ANOVA con medidas repetidas ya que al revisar los datos con un análisis exploratorio (histogramas, gráficos Q-Q), se observa que no siguen una distribución normal. Además, al ser una escala de rendimiento del 1-10, no podemos asegurar que sea una escala de intervalos iguales.
+
+Por lo tanto, realizaremos la prueba de **Friedman**, que es una prueba no paramétrica con las siguientes condiciones:
+
+1. La variable independiente debe tener al menos dos niveles (cuando tiene dos niveles se usa la prueba de Wilcoxon).
+2. La escala de la variable dependiente debe ser al menos ordinal.
+3. Las observaciones son relacionadas o apareadas entre sí.
+
+**Ejemplo:**
+
+Un profesor quiere comparar tres métodos diferentes de enseñanza (A, B y C) de programación. Cada método es evaluado por los mismos 10 estudiantes y se registra su rendimiento en una escala del 1 al 10.
+
+**Datos:**
+
+```{r}
+Metodo_A <- c(21,10,7,21,24,27,17)
+Metodo_B <- c(6,21,18,7,24,13,13) 
+Metodo_C <- c(13,25,18,20,24,8,29)
+```
+
+**Hipótesis**
+
+H0: No existen diferencias significativas en el rendimiento entre los diferentes métodos de enseñanza.
+Ha: Existe al menos una diferencia significativa en el rendimiento entre los diferentes métodos de enseñanza.
+
+**Verificamos las condiciones de la prueba Friedman**
+
+1. La variable independiente tiene tres niveles (Método A, B y C).
+2. La variable dependiente (rendimiento) es ordinal.
+3. Las muestras están relacionadas ya que son los mismos estudiantes evaluados con cada método.
+
+Como podemos recordar, esta prueba como es una alternativa de ANOVA con medidas repetidas, es del tipo ómnibus, así que debemos realizar un análisis post-hoc si es necesario.
+
+**Crear el marco de datos con los métodos**
+
+```{r}
+Puntuacion <- c(Metodo_A, Metodo_B, Metodo_C)
+
+Interfaz_puntuacion <- c(rep("A", length(Metodo_A)), rep("B", length(Metodo_B)), rep("C", length(Metodo_C)))
+
+Caso <- rep(1:7, 3)
+
+Interfaz_puntuacion <- factor(Interfaz_puntuacion)
+
+datos6 <- data.frame(Caso, Puntuacion, Interfaz_puntuacion)
+```
+
+```{r}
+# Establecer el nivel de significancia
+alpha <- 0.05
+
+# Realizamos la prueba de Friedman
+prueba_friedman <- friedman.test(Puntuacion ~ Interfaz_puntuacion | Caso, data = datos6)
+print(prueba_friedman)
+```
+
+Con el valor obtenido de p = 0.4378, siendo este mayor al nivel de significancia, no podemos rechazar la hipótesis nula y concluimos que no existen diferencias significativas en el rendimiento entre los diferentes métodos de enseñanza.
+
+Por otro lado, de igual forma realizaremos el análisis post-hoc. 
+
+```{r}
+# Análisis post-hoc
+Prueba_posthoc_friedman <- pairwise.wilcox.test(datos6$Puntuacion, datos6$Interfaz_puntuacion, p.adjust.method = "BH", paired = TRUE, exact = FALSE)
+
+print(Prueba_posthoc_friedman)
+```
+
+Ahora con el análisis post-hoc podemos apreciar que no existe diferencia significativa para los pares de métodos de enseñanza A y B, A y C, B y C.
+
+
+
+

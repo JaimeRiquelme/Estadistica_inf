@@ -1,39 +1,38 @@
 ---
-title: "Pruebas no parametricas con una y dos muestras numericas"
+title: "Pruebas no paramétricas con una y dos muestras numéricas"
 author: "Jaime Riquelme"
 date: "2024-11-10"
 output: pdf_document
 ---
 
-# Pruebas no parametricas con una y dos muestras numericas
+# Pruebas no paramétricas con una y dos muestras numéricas
 
-En este documentos se verán pruebas alternativas no parametricas para las pruebas t de student (para una y dos medias) y ANOVA (para más de dos medias).
+En este documento se verán pruebas alternativas no paramétricas para las pruebas t de Student (para una y dos medias) y ANOVA (para más de dos medias).
 
-## Prueba suma de rangos de Wilcoxon
+## Prueba de suma de rangos de Wilcoxon
 
-Como vimos en la prueba t, si es que un escenario no cumple alguna de sus condiciones, no hay garantias de que el resultado sea valido, y en consecuena las conclusiones que se obtengan podrian ser equivocadas.
+Como vimos en la prueba t, si un escenario no cumple alguna de sus condiciones, no hay garantías de que el resultado sea válido, y en consecuencia las conclusiones que se obtengan podrían ser equivocadas.
 
 Es por eso que existe esta alternativa para el caso que no se cumplan las condiciones de la prueba t, estas condiciones son:
 
-1. Las observaciones son elegidas independientes entre si.
-2. Las observaciones provienen de una poblacion con distribucion cercana a la normal.
+1. Las observaciones son elegidas independientes entre sí.
+2. Las observaciones provienen de una población con distribución cercana a la normal.
 
-y esta prueba se puede extender a diferencia de las medias de dos poblaciones a partir de dos muestras independientes.
+y esta prueba se puede extender a diferencia de las medias de dos poblaciones a partir de dos muestras independientes. 
 
-1.- Cada muestra cumple las condiciones para usar la distribucion t.
-2.- Las dos muestras son independientes entre si.
+1.- Cada muestra cumple las condiciones para usar la distribución t.
+2.- Las dos muestras son independientes entre sí.
 
 Es por eso si el escenario no cumple con alguna de estas condiciones podemos utilizar la prueba de suma de rangos de Wilcoxon.
 
 **Condiciones para usar la prueba de suma de rangos de Wilcoxon**
 
 1. Las observaciones de ambas muestras son independientes.
-2. La escala de medicion empleada debe ser a lo menos ordinal, de modo que tenga sentido hablar de relaciones de orden (igual que, mayor que, menor que)
+2. La escala de medición empleada debe ser al menos ordinal, de modo que tenga sentido hablar de relaciones de orden (igual que, mayor que, menor que).
 
-Ejemplo:
+### Ejemplo
 
-una empresa de desarrollo de software desea evaluar la usabilidad de dos interfaces, A y B. con este fin la empresa selecciona al azar a 23 voluntarios y voluntarias quienes son asignados de manera aleatoria a dos grupos, cada uno de los cuales debe probar una interfaz.
-N_a = 12, N_b = 11. donde cada participante evalua 6 aspectos con nota de 1 a 7, los datos muestran el promedio otorgado por cada participante.
+Una empresa de desarrollo de software desea evaluar la usabilidad de dos interfaces, A y B. Con este fin, la empresa selecciona al azar a 23 voluntarios y voluntarias, quienes son asignados de manera aleatoria a dos grupos, cada uno de los cuales debe probar una interfaz. $N_A = 12$, $N_B = 11$. Cada participante evalúa 6 aspectos con nota de 1 a 7; los datos muestran el promedio otorgado por cada participante.
 
 **Datos del problema**
 
@@ -44,20 +43,20 @@ Interfaz_B <- c(5.0, 1.4, 5.6, 4.6, 6.7, 2.7, 1.3, 6.3, 3.7, 1.3, 6.8)
 
 ```
 
-**Hipotesis**
+**Hipótesis**
 
 H0: No existe diferencia entre la usabilidad de la interfaz A y B.
 Ha: Existe diferencia entre la usabilidad de la interfaz A y B.
 
 
-Como nos pide comparar dos muestras independientes, primero verificaremos las condiciones para utilizar una prueba t de student.
+Como nos pide comparar dos muestras independientes, primero verificaremos las condiciones para utilizar una prueba t de Student.
 
 A primera vista, no podemos asegurar que se sigan intervalos iguales, ya que no será lo mismo evaluar un aspecto con nota 1 y otro nota 2, que para otro nota 3 y 4.
 
-Vericicaremos si las muestras siguen una distribucion normal.
+Verificaremos si las muestras siguen una distribución normal.
 
 ```{r}
-# Verificar si las muestras siguen una distribucion normal realizando un histograma
+# Verificar si las muestras siguen una distribución normal realizando un histograma
 library(ggpubr)
 
 #Realizamos el histograma
@@ -71,23 +70,23 @@ gghistogram(Interfaz_B, bins = 10, fill = "blue", color = "black") +
 
 ```
 
-Como podemos ver en los histogramas, no podemos asegurar que sigan una distribucion normal, por lo que no podemos utilizar la prueba t de student.
+Como podemos ver en los histogramas, no podemos asegurar que sigan una distribución normal, por lo que no podemos utilizar la prueba t de Student.
 
-Dado esto, utilizaremos una prueba de suma de rangos de wilcoxon debido a que no se cumplieron las condiciones para utilizar la prueba Z.
+Dado esto, utilizaremos una prueba de suma de rangos de Wilcoxon debido a que no se cumplieron las condiciones para utilizar la prueba Z.
 
-la estructura de la prueba de suma de rangos de wilcoxon es de la forma: 
+la estructura de la prueba de suma de rangos de Wilcoxon es de la forma: 
 
 wilcox.test(x,y,paired = FALSE, alternative,mu,conf.level)
 
-**vericiacion de condiciones para realizar wilcox.test**
+**Verificación de condiciones para realizar wilcox.test**
 
 1.- Las observaciones son independientes por enunciado.
-2.- La escala de medicion es ordinal.
+2.- La escala de medición es ordinal.
 
-Dado que se cumplen con las condiciones, realizamos la prueba de wilcoxon.
+Dado que se cumplen con las condiciones, realizamos la prueba de Wilcoxon.
 
 ```{r}
-# Realizamos la prueba de suma de rangos de wilcoxon
+# Realizamos la prueba de suma de rangos de Wilcoxon
 
 alpha_0.05 <- 0.05
 
@@ -95,29 +94,28 @@ prueba_wilcoxon <- wilcox.test(Interfaz_A, Interfaz_B, paired = FALSE, alternati
 
 print(prueba_wilcoxon)
 ```
-Con un valor de p obtenido de 0.7816, podemos concluir que no existe evidencia suficiente para rechazar la hipotesis nula, por lo que no podemos afirmar que exista una diferencia entre la usabilidad de la interfaz A y B.
+Con un valor de p obtenido de 0.7816, podemos concluir que no existe evidencia suficiente para rechazar la hipótesis nula, por lo que no podemos afirmar que exista una diferencia entre la usabilidad de la interfaz A y B.
 
 
 ## Prueba de suma de rangos de Wilcoxon para dos muestras pareadas
 
-En el caso de que las muestras no sean independientes, es decir, que provengan de la misma poblacion, podemos utilizar la prueba de suma de rangos de Wilcoxon para dos muestras pareadas.
+En el caso de que las muestras no sean independientes, es decir, que provengan de la misma población, podemos utilizar la prueba de suma de rangos de Wilcoxon para dos muestras pareadas.
 
-Antes para la prueba t de student para dos muestras pareadas, se deben cumplir las siguientes condiciones:
+Antes para la prueba t de Student para dos muestras pareadas, se deben cumplir las siguientes condiciones:
 
 1.- Los pares de observaciones son independientes entre sí
-2.- Las diferencias de observaciones apareadas siguen una distribucion cercana a la normal.
+2.- Las diferencias de observaciones apareadas siguen una distribución cercana a la normal.
 
-en el caso que no se cumpla alguna condicion de la prueba t para muestras apareadas, podemos utilizar la prueba de suma de rangos de Wilcoxon para dos muestras apareadas.
+En el caso que no se cumpla alguna condición de la prueba t para muestras apareadas, podemos utilizar la prueba de suma de rangos de Wilcoxon para dos muestras pareadas.
 
-**Condiciones para usar la prueba de suma de rangos de Wilcoxon para dos muestras apareadas**
+**Condiciones para usar la prueba de suma de rangos de Wilcoxon para dos muestras pareadas**
 
-1.- Los pares de observaciones son independientes entre si.
-2.- La escala de medicion empleada debe ser a lo menos ordinal, de modo que tenga sentido hablar de relaciones de orden (igual que, mayor que, menor que)
+1.- Los pares de observaciones son independientes entre sí.
+2.- La escala de medición empleada debe ser al menos ordinal, de modo que tenga sentido hablar de relaciones de orden (igual que, mayor que, menor que).
 
-Ej:
+### Ejemplo
 
-una empresa de software quiere ver la usabilidad de dos interfaces A y B, en el departamento aseguran que es mejor la A. Para elo se seleccionaron 10 participantes al azar, quienes evaluan 6 aspectos que se mide con una escala de 7 puntos. donde 1 es muy malo y 7 es muy bueno.
-se designó aleatoriamente 5 participantes evaluaron primero la interfaz A y luego la B, y los otros 5 evaluaron primero la interfaz B y luego la A.
+Una empresa de software quiere ver la usabilidad de dos interfaces A y B, en el departamento aseguran que es mejor la A. Para ello se seleccionaron 10 participantes al azar, quienes evalúan 6 aspectos que se mide con una escala de 7 puntos, donde 1 es muy malo y 7 es muy bueno. Se designó aleatoriamente 5 participantes evaluaron primero la interfaz A y luego la B, y los otros 5 evaluaron primero la interfaz B y luego la A.
 
 
 **Datos del problema**
@@ -127,17 +125,17 @@ Interfaz2_A<- c(2.9,6.1,6.7,4.7,6.4,5.7,2.7,6.9,1.7,6.4)
 Interfaz2_B<- c(6.0,2.8,1.3,4.7,3.1,1.8,2.9,4.0,2.3,1.6)
 ```
 
-**Hipotesis**
+**Hipótesis**
 
 H0: Las mismas personas no perciben diferencia entre la usabilidad de la interfaz A y B.
 Ha: Las mismas personas prefieren la interfaz A a la B.
 
-**Verificacion de condiciones para realizar wilcox.test**
+**Verificación de condiciones para realizar wilcox.test**
 
 Primero verificaremos que no se cumplen las condiciones de la prueba t.
 
-1.- las observaciones si son independientes entre si
-2.- Aqui no podemos aseguras que sigue una distribucion normal la diferencia de las observaciones, procederemos a realizar un grafico histograma para verificar esto.
+1.- Las observaciones sí son independientes entre sí.
+2.- Aquí no podemos asegurar que sigue una distribución normal la diferencia de las observaciones, procederemos a realizar un gráfico histograma para verificar esto.
 
 ```{r}
 Diferencias <- Interfaz2_A - Interfaz2_B
@@ -147,12 +145,12 @@ Diferencias <- Interfaz2_A - Interfaz2_B
 gghistogram(Diferencias, bins = 10, fill = "blue", color = "black") +
   ggtitle("Histograma de las diferencias de las interfaces A y B")
 ```
-Dado el histograma obtenido, podemos ver que no podemos asegurar que esta siga una distribucion normal adecuada, por lo no podemos aceptar que se cumpla esta codicion, por otra parte procederemos a verificar las condiciones para realizar una prueba de wilcoxon de signos.
+Dado el histograma obtenido, podemos ver que no podemos asegurar que esta siga una distribución normal adecuada, por lo no podemos aceptar que se cumpla esta condición, por otra parte procederemos a verificar las condiciones para realizar una prueba de Wilcoxon de signos.
 
-1.- Las observaciones si son independente entre sí.
+1.- Las observaciones sí son independientes entre sí.
 2.- La escala con que se miden las observaciones es ordinal.
 
-Dado que se cumplen las condiciones, procederemos a realizar la prueba de wilcoxon de signos.
+Dado que se cumplen las condiciones, procederemos a realizar la prueba de Wilcoxon de signos.
 
 ```{r}
 
@@ -163,4 +161,4 @@ prueba_wilcoxon_pareada <- wilcox.test(Interfaz2_A, Interfaz2_B, paired = TRUE, 
 print(prueba_wilcoxon_pareada)
 
 ```
-Con un valor de p obtenido de 0.03778, rechazamos la hipotesis nula en favor de la alternativa, por lo tanto podemos concluir con un 95% de confianza que las mismas personas prefieren la interfaz A en lugar de la B.
+Con un valor de p obtenido de 0.03778, rechazamos la hipótesis nula en favor de la alternativa, por lo tanto podemos concluir con un 95% de confianza que las mismas personas prefieren la interfaz A en lugar de la B.
