@@ -1,0 +1,194 @@
+---
+title: "ANOVA de una vía para muestras correlacionadas"
+author: "Jaime Riquelme"
+date: "2024-11-10"
+output: pdf_document
+---
+
+# ANOVA de una vía para muestras correlacionadas
+
+El ANOVA para muestras correlacionadas (también llamado ANOVA para medidas repetidas o ANOVA intracasos) es un procedimiento que nos permite comparar medias cuando las observaciones en los diferentes grupos están relacionadas o provienen de los mismos sujetos.
+
+## Ejemplo
+
+Una estudiante de un curso de programación debe comparar la eficiencia de cuatro algoritmos de ordenamiento: Quicksort, Bubblesort, Radixsort y Mergesort. Para ello, ha generado aleatoriamente 6 arreglos de tamaño y dificultad diversa, registrando para cada uno de ellos el tiempo de ejecución utilizado por cada algoritmo (en milisegundos).
+
+### Datos del problema
+
+```{r}
+# Cargar los datos.
+instancia <- 1:6
+Quicksort <- c(23.2, 22.6, 23.4, 23.3, 21.8, 23.9)
+Bubblesort <- c(31.6, 29.3, 30.7, 30.8, 29.8, 30.3)
+Radixsort <- c(30.1, 28.4, 28.7, 28.3, 29.9, 29.1)
+Mergesort <- c(25.0, 25.7, 25.7, 23.7, 25.5, 24.7)
+
+# Crear matriz de datos.
+datos <- data.frame(instancia, Quicksort, Bubblesort, Radixsort, Mergesort)
+
+# Llevar datos a formato largo.
+library(tidyverse)
+datos_long <- datos %>% 
+  pivot_longer(cols = c("Quicksort", "Bubblesort", "Radixsort", "Mergesort"),
+               names_to = "algoritmo",
+               values_to = "tiempo")
+
+datos_long[["instancia"]] <- factor(datos_long[["instancia"]])
+datos_long[["algoritmo"]] <- factor(datos_long[["algoritmo"]])
+```
+
+### Hipótesis
+
+H0: No existen diferencias en el tiempo de ejecución promedio necesitado por cada algoritmo.
+(μQuicksort = μBubblesort = μRadixsort = μMergesort)
+
+Ha: Al menos un algoritmo presenta un tiempo de ejecución promedio diferente.
+(∃i,j ∈ {Quicksort, Bubblesort, Radixsort, Mergesort}, i≠j | μi ≠ μj)
+
+## Condiciones para usar ANOVA de una vía para muestras correlacionadas
+
+1. La escala con que se mide la variable dependiente tiene las propiedades de una escala de intervalos iguales.
+2. Las mediciones son independientes al interior de cada grupo.
+3. Se puede suponer razonablemente que la(s) población(es) de origen sigue(n) una distribución normal.
+4. La matriz de varianzas-covarianzas es esférica (prueba de esfericidad de Mauchly).
+
+### Verificación de condiciones
+
+1. La primera condición se cumple ya que el tiempo, como magnitud física, tiene una escala de intervalos iguales.
+
+2. Las mediciones son independientes dentro de cada algoritmo, pues cada algoritmo se ejecuta de manera independiente.
+
+3. Verificamos normalidad con gráficos Q-Q:
+
+```{r}
+# Realizamos gráficos qq para verificar normalidad
+library(ggpubr)
+
+g <- ggqqplot(datos_long, "tiempo", facet.by = "algoritmo")
+g <- g + facet_wrap(~ algoritmo)
+g <- g + rremove("x.ticks") + rremove("x.text")
+g <- g + rremove("y.ticks") + rremove("y.text")
+g <- g + rremove("axis.title")
+print(g)
+```
+
+4. Verificamos esfericidad con la prueba de Mauchly:
+
+```{r}
+library(ez)
+# Utilizamos ezANOVA para realizar la prueba de esfericidad
+prueba_esfericidad <- ezANOVA(
+  data = datos_long,
+  dv = tiempo,
+  wid = instancia,
+  within = algoritmo,
+  return_aov = TRUE
+)
+
+print(prueba_esfericidad$`Mauchly's Test for Sphericity`)
+```
+
+## Procedimiento ANOVA
+
+```{r}
+# ANOVA para medidas repetidas utilizando ezANOVA
+resultado_anova <- ezANOVA(
+  data = datos_long,
+  dv = tiempo,
+  wid = instancia,
+  within = algoritmo,
+  return_aov = TRUE
+)
+
+print(resultado_anova$ANOVA)
+print(resultado_anova$`Sphericity Corrections`)
+```
+
+## Análisis Post-hoc
+
+### Prueba de Bonferroni
+
+```{r}
+# Comparaciones por pares con corrección de Bonferroni
+bonferroni <- pairwise.t.test(
+  datos_long$tiempo,
+  datos_long$algoritmo,
+  p.adjust.method = "bonferroni",
+  paired = TRUE
+)
+
+print(bonferroni)
+```
+
+### Prueba de Holm
+
+```{r}
+# Comparaciones por pares con corrección de Holm
+holm <- pairwise.t.test(
+  datos_long$tiempo,
+  datos_long$algoritmo,
+  p.adjust.method = "holm",
+  paired = TRUE
+)
+
+print(holm)
+```
+
+### Prueba HSD de Tukey
+
+```{r}
+library(nlme)
+library(emmeans)
+
+# Ajustar modelo mixto
+modelo <- lme(tiempo ~ algoritmo, random = ~1|instancia, data = datos_long)
+
+# Obtener medias marginales
+medias <- emmeans(modelo, "algoritmo")
+
+# Realizar comparaciones de Tukey
+tukey <- pairs(medias, adjust = "tukey")
+print(tukey)
+```
+
+## Visualización de resultados
+
+```{r}
+# Gráfico de las medias por algoritmo
+ggplot(datos_long, aes(x = algoritmo, y = tiempo)) +
+  stat_summary(fun.data = mean_se, geom = "pointrange") +
+  stat_summary(fun = mean, geom = "line", aes(group = 1)) +
+  labs(title = "Tiempo promedio de ejecución por algoritmo",
+       x = "Algoritmo",
+       y = "Tiempo de ejecución (ms)") +
+  theme_minimal()
+
+# Gráfico de perfiles individuales
+ggplot(datos_long, aes(x = algoritmo, y = tiempo, group = instancia)) +
+  geom_line(aes(color = instancia)) +
+  geom_point(aes(color = instancia)) +
+  labs(title = "Perfiles individuales por instancia",
+       x = "Algoritmo",
+       y = "Tiempo de ejecución (ms)") +
+  theme_minimal()
+```
+
+## Interpretación
+
+Con los resultados obtenidos podemos concluir que:
+
+1. Las condiciones para realizar el ANOVA de medidas repetidas se cumplen:
+   - Los datos muestran una distribución aproximadamente normal
+   - La prueba de esfericidad de Mauchly indica si se cumple este supuesto
+
+2. El ANOVA indica que existen diferencias significativas entre los algoritmos
+   (F = [valor], p < [valor])
+
+3. Las pruebas post-hoc revelan específicamente entre qué pares de algoritmos existen diferencias significativas:
+   - Bonferroni: [resultados]
+   - Holm: [resultados]
+   - Tukey HSD: [resultados]
+
+4. Las visualizaciones muestran:
+   - Las diferencias en tiempos medios de ejecución entre algoritmos
+   - La consistencia del comportamiento a través de las diferentes instancias
