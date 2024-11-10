@@ -1,0 +1,214 @@
+---
+title: "ANOVA de una vía para muestras independientes"
+author: "Nombre del Autor"
+date: "2023-10-21"
+output: pdf_document
+---
+
+# ANOVA de una vía para muestras independientes
+
+El test Ómnibus comprueba la igualdad de las medias de los grupos, pero no nos dice dónde están las diferencias.
+
+Este método sirve para comparar las medias de más de dos grupos.
+
+## Condiciones para usar la prueba de ANOVA independiente
+
+1. La escala con que se mide la variable dependiente tiene las propiedades de una escala de intervalos iguales.
+2. Las k muestras son obtenidas de manera aleatoria e independiente desde las poblaciones de origen.
+3. Se puede suponer razonablemente que las poblaciones de origen siguen una distribución normal.
+4. Si las muestras provienen de más de una población, las poblaciones tienen la misma varianza (homogeneidad de varianzas).
+
+## Ejemplo
+
+Una ingeniera tiene un problema de logística en una empresa de transporte, y logró modelarlo como instancias del problema de la mochila 0-1 con capacidad de 1000 y objetos que se distribuyen N(50,16). Ella implementó tres algoritmos (A, B y C) y desea comparar su eficiencia.
+
+Para cada algoritmo generó de forma aleatoria cinco instancias, cada una con 100 objetos. Los resultados obtenidos fueron los siguientes:
+
+### Datos del problema
+
+```{r}
+Algoritmo_A <- c(23,19,25,23,20)
+Algoritmo_B <- c(26,24,28,23,29)
+Algoritmo_C <- c(19,24,20,21,17)
+```
+
+### Hipótesis
+
+H0: El tiempo de ejecución promedio necesitado para resolver instancias del problema enfrentado del tamaño dado es el mismo para los tres algoritmos. (mu_A = mu_B = mu_C)
+
+Ha: El tiempo de ejecución promedio necesitado para resolver instancias del problema enfrentado del tamaño dado es diferente para al menos un algoritmo. (Para i,j = A,B,C mu_i != mu_j)
+
+### Verificar condiciones
+
+1. Se cumple la condición, ya que si para un algoritmo la diferencia entre instancias es 35ms y 45ms, es la misma que si otra instancia tiene una diferencia de 10ms y 20ms.
+2. Por enunciado se cumple la segunda condición de que las muestras son aleatorias.
+3. Se puede suponer que las poblaciones de origen siguen una distribución normal, para eso verificaremos la normalidad de las muestras para realizar esta suposición.
+
+```{r}
+# Realizamos un gráfico qq para verificar normalidad
+
+library(ggpubr)
+
+ggqqplot(Algoritmo_A, main = "Algoritmo A")
+ggqqplot(Algoritmo_B, main = "Algoritmo B")
+ggqqplot(Algoritmo_C, main = "Algoritmo C")
+```
+
+Al realizar los gráficos, podemos ver un pequeño valor atípico, pero podemos suponer que las poblaciones siguen una distribución cercana a la normal. Para estar seguros, utilizaremos un valor de significancia menor de 0.025.
+
+4. Para esta última condición, podemos usar directamente la prueba ezANOVA que nos entrega la prueba de esfericidad de Mauchly, que nos dice si las varianzas son homogéneas o no.
+
+## Prueba ANOVA para muestras independientes
+
+```{r}
+
+library(ez)
+# Creamos un dataframe con los datos
+
+instancias4 <- 1:5
+datos4 <- data.frame(instancias4,Algoritmo_A,Algoritmo_B,Algoritmo_C)
+
+# Llevamos los datos a formato largo
+
+datos4_long <- datos4 %>% pivot_longer(c("Algoritmo_A","Algoritmo_B","Algoritmo_C"),names_to = "Algoritmo",values_to = "Tiempo")
+
+datos4_long[["instancias4"]] <- factor(datos4_long[["instancias4"]])
+datos4_long[["Algoritmo"]] <- factor(datos4_long[["Algoritmo"]])
+
+# Utilizamos la función ezANOVA para calcular ANOVA independiente
+
+prueba_anova_independiente <- ezANOVA(data = datos4_long,dv = Tiempo, wid = instancias4,between = Algoritmo,return_aov = TRUE)
+
+print(prueba_anova_independiente)
+
+# También se puede utilizar la función aov, pero esta no entrega la prueba de esfericidad de Mauchly.
+
+prueba_anova_independiente2 <- aov(Tiempo ~ Algoritmo ,data = datos4_long)
+
+summary(prueba_anova_independiente2)
+```
+
+Con el resultado obtenido, primero podemos confirmar la cuarta condición de homogeneidad de varianzas siendo un valor de p mayor a un nivel de significancia de 0.05, por lo que podemos continuar con la prueba de ANOVA.
+
+Por otro lado, el valor de p obtenido en la prueba de ANOVA es menor a 0.05, por lo que rechazamos la hipótesis nula en favor de la alternativa. Podemos concluir que al menos existe una diferencia en el promedio que tardan los algoritmos en resolver las instancias del problema de la mochila 0-1.
+
+Como rechazamos la hipótesis nula y decimos que hay diferencias, realizamos un análisis **POST-HOC** para verificar dónde se encuentran las diferencias.
+
+## Análisis POST-HOC
+
+Para el análisis post-hoc tenemos dos correcciones: Bonferroni y Holm. Por último, la prueba de HSD Tukey que es más poderosa que las anteriores.
+
+```{r}
+library(tidyverse)
+# Prueba post hoc con Bonferroni
+
+alpha_0.025 <- 0.025
+
+prueba_post_hoc_bonferroni <- pairwise.t.test(datos4_long$Tiempo,
+                                              datos4_long$Algoritmo,
+                                              p.adjust.method = "bonferroni",
+                                              pool.sd = TRUE,
+                                              paired = FALSE,
+                                              conf.level = 1- alpha_0.025)
+print(prueba_post_hoc_bonferroni)
+
+# Prueba post hoc con Holm
+
+prueba_post_hoc_holm <- pairwise.t.test(datos4_long$Tiempo,
+                                        datos4_long$Algoritmo,
+                                        p.adjust.method = "holm",
+                                        pool.sd = TRUE,
+                                        paired = FALSE,
+                                        conf.level = 1- alpha_0.025)
+
+print(prueba_post_hoc_holm)
+```
+
+Con los valores obtenidos y con el valor de significancia de 0.025, podemos concluir que existe una diferencia de tiempo de ejecución entre los algoritmos B y C, pero no entre A y B, ni A y C.
+
+Por último, realizamos la prueba de Tukey, la cual es de la forma siguiente:
+TukeyHSD(x,which,ordered,conf.level)
+
+con x = el resultado de la prueba de ANOVA
+con which = la variable que se está comparando
+con ordered = si los niveles de la variable son ordenados
+con conf.level = nivel de confianza
+
+```{r}
+# Prueba post hoc con Tukey
+
+prueba_post_hoc_tukey <- TukeyHSD(prueba_anova_independiente2,"Algoritmo",ordered = TRUE,conf.level = 1- alpha_0.025)
+print(prueba_post_hoc_tukey)
+```
+
+De esta forma, obtenemos resultados más precisos y podemos concluir que existe una diferencia significativa entre los algoritmos B y C, pero no entre A y B, ni A y C.
+
+## Prueba de comparación de Scheffé
+
+Esta prueba nos sirve para realizar comparaciones adicionales y es más conservadora que la prueba de Tukey. Tras encontrar diferencias con el procedimiento de ANOVA, podríamos plantearnos preguntas como:
+
+1. **¿Existe diferencia entre los tiempos de ejecución de los algoritmos A y B?**
+2. **¿Es el tiempo promedio de ejecución del algoritmo A distinto al tiempo de ejecución promedio de los algoritmos B y C?**
+
+Esta prueba utiliza matrices de contrastes. Por ejemplo, para la primera pregunta, las hipótesis serían:
+
+- **Hipótesis nula (H₀):** \( \mu_A - \mu_B = 0 \)
+- **Hipótesis alternativa (Hₐ):** \( \mu_A - \mu_B \neq 0 \)
+
+La fórmula del contraste es:
+
+$$
+C_1 \mu_A + C_2 \mu_B + C_3 \mu_C = 0
+$$
+
+Como en este caso \( C_3 = 0 \), el vector de coeficientes queda:
+
+$$
+C = [1, -1, 0]
+$$
+
+
+Para la segunda pregunta, las hipótesis son:
+
+- **Hipótesis nula (H₀):** \( \mu_A - \dfrac{\mu_B + \mu_C}{2} = 0 \)
+- **Hipótesis alternativa (Hₐ):** \( \mu_A - \dfrac{\mu_B + \mu_C}{2} \neq 0 \)
+
+La fórmula del contraste es:
+
+$$
+C_1 \mu_A + C_2 \mu_B + C_3 \mu_C = 0
+$$
+
+Y el vector de coeficientes es:
+
+$$
+C = \left[ 1,\ -\dfrac{1}{2},\ -\dfrac{1}{2} \right]
+$$
+
+Supongamos que la ingeniera desea analizar todas las comparaciones por pares y, además, comparar cada algoritmo contra los dos restantes. Podemos representar esto de forma matricial, donde cada fila corresponde a un contraste.
+
+```{r}
+library(tidyverse)
+library(DescTools)
+contrastes <- matrix(c(1,-1,0,
+                       1,0,-1,
+                       0,1,-1,
+                       1,-0.5,-0.5,
+                       -0.5,1,-0.5,
+                       -0.5,-0.5,1),nrow = 6,byrow = TRUE)
+
+# Transponemos la matriz de contrastes
+
+contrastes <- t(contrastes)
+
+# Realizamos la prueba de Scheffé
+
+scheffe <- ScheffeTest(prueba_anova_independiente2,
+                       which = "Algoritmo",
+                       contrast = contrastes,
+                       conf.level = 1- alpha_0.025)
+
+print(scheffe)
+```
+
+Gracias a los resultados obtenidos con esta prueba, podemos responder más preguntas acerca de las diferencias entre los algoritmos.
