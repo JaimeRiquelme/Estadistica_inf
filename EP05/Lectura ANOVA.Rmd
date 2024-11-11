@@ -68,6 +68,8 @@ library(ez)
 instancias4 <- 1:5
 datos4 <- data.frame(instancias4,Algoritmo_A,Algoritmo_B,Algoritmo_C)
 
+datos4
+
 # Llevamos los datos a formato largo
 
 datos4_long <- datos4 %>% pivot_longer(c("Algoritmo_A","Algoritmo_B","Algoritmo_C"),names_to = "Algoritmo",values_to = "Tiempo")

@@ -1,0 +1,71 @@
+---
+title: "Selección de Pruebas Estadísticas"
+author: "Analista de Datos"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+# Selección de Pruebas Estadísticas
+
+## Introducción
+Este script te ayudará a seleccionar la prueba estadística adecuada para tu análisis de datos, siguiendo el modelo proporcionado.
+
+## Paso 1: Tipo de Datos
+¿Tus datos son numéricos o categóricos?
+
+- **Numéricos**: Ve al paso 2.
+- **Categóricos**: Ve al paso 6.
+
+## Paso 2: Número de Grupos o Muestras
+¿Cuántos grupos o muestras estás comparando?
+
+- **Una muestra**: Considera pruebas para una muestra.
+- **Dos muestras**: Ve al paso 3.
+- **Más de dos muestras**: Considera ANOVA o pruebas no paramétricas equivalentes.
+
+## Paso 3: Tipo de Muestras
+¿Las muestras son independientes o pareadas?
+
+- **Dos muestras independientes**: Ve al paso 4.
+- **Dos muestras pareadas**: Ve al paso 5.
+
+## Paso 4: Dos Muestras Independientes
+¿Los datos son normales y las varianzas son iguales?
+
+- **Sí**: Prueba t para muestras independientes.
+- **No**: Prueba t de Welch o prueba de Mann-Whitney U.
+
+## Paso 5: Dos Muestras Pareadas
+¿Las diferencias siguen una distribución normal?
+
+- **Sí**: Prueba t para muestras pareadas.
+- **No**: Prueba de rangos con signo de Wilcoxon.
+
+## Paso 6: Datos Categóricos
+### Evaluando la independencia entre dos variables:
+- **Sí**: Prueba chi-cuadrado de independencia o prueba exacta de Fisher.
+
+### Comparando proporciones en muestras pareadas:
+- **Sí**: Prueba de McNemar.
+
+### Comparando proporciones en más de dos muestras pareadas:
+- **Sí**: Prueba Q de Cochran.
+
+### Evaluando si las frecuencias observadas difieren de las esperadas:
+- **Sí**: Prueba chi-cuadrado de bondad de ajuste.
+
+## Conclusión
+Este script te guía en la selección de la prueba estadística adecuada según tus datos y el tipo de análisis que deseas realizar. Asegúrate de verificar los supuestos de cada prueba antes de aplicarla.
+
+## Referencias
+- **Prueba t para muestras independientes**: Compara las medias de dos grupos independientes.
+- **Prueba t de Welch**: Variante de la prueba t que no asume varianzas iguales.
+- **Prueba de Mann-Whitney U**: Prueba no paramétrica para comparar medianas de dos grupos independientes.
+- **Prueba t para muestras pareadas**: Compara medias de muestras relacionadas.
+- **Prueba de rangos con signo de Wilcoxon**: Prueba no paramétrica para muestras pareadas.
+- **Prueba chi-cuadrado de independencia**: Evalúa la asociación entre dos variables categóricas.
+- **Prueba exacta de Fisher**: Similar al chi-cuadrado pero para muestras pequeñas.
+- **Prueba de McNemar**: Prueba para datos categóricos pareados.
+- **Prueba Q de Cochran**: Extensión de la prueba de McNemar para más de dos grupos.
+- **Prueba chi-cuadrado de bondad de ajuste**: Determina si una distribución observada difiere de una distribución teórica.
+
