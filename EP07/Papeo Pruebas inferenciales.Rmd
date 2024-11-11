@@ -1,0 +1,155 @@
+---
+title: "Pruebas inferenciales"
+author: "Jaime Riquelme"
+date: "2024-11-11"
+output: pdf_document
+---
+
+
+## 1 Pruebas Estadísticas y sus Aplicaciones
+
+### 1.1 Prueba Z para una Muestra
+**Uso:**
+Esta prueba se utiliza cuando se desea verificar si la media de una población tiene un valor específico. Para poder aplicar esta prueba, se debe conocer la desviación estándar poblacional y tener una muestra grande (n≥30) de la población.
+
+**Ejemplo:**
+Un empresario que brinda apoyo a un conjunto de empresas, quiere verificar si las utilidades promedio que obtuvieron el mes pasado fueron realmente de 20 millones de pesos. El empresario conoce que la desviación estándar de las utilidades es de 2.32 millones de pesos. Para ello, revisó los registros de 20 empresas y obtuvo una media muestral de 26.066 millones de pesos.
+
+### 1.2 Prueba t para una Muestra
+**Uso:**
+Esta prueba es similar a la prueba Z, pero se utiliza cuando no se conoce la desviación estándar poblacional o cuando se trabaja con muestras pequeñas (n<30). Es adecuada cuando se desea asegurar o descartar que la media de la población tenga un cierto valor hipotético.
+
+**Ejemplo:**
+Un ingeniero de software ha desarrollado un nuevo algoritmo de ordenamiento y quiere verificar si el tiempo promedio de ejecución del algoritmo para resolver un problema es menor a 500 milisegundos (ms). Para ello, seleccionó aleatoriamente 15 instancias del problema y registró los tiempos de ejecución del algoritmo.
+
+### 1.3 Prueba t para Muestras Pareadas
+**Uso:**
+Esta prueba se utiliza para comparar mediciones antes/después o pares relacionados en las mismas unidades de estudio. Es decir, cuando se tienen dos grupos de observaciones que están emparejados o relacionados entre sí.
+
+**Ejemplo:**
+Un ingeniero de software tiene dos algoritmos de ordenamiento, A y B, que en teoría deberían tardar lo mismo en resolver un problema. Para comprobarlo, probó ambos algoritmos en 35 instancias aleatorias del problema y registró los tiempos de ejecución de cada algoritmo en cada instancia.
+
+### 1.4 Prueba t para Muestras Independientes
+**Uso:**
+Esta prueba se utiliza para comparar las medias entre dos grupos que no están relacionados entre sí. Es decir, cuando se tienen dos muestras independientes que provienen de dos poblaciones diferentes.
+
+**Ejemplo:**
+Un doctor quiere determinar si una nueva vacuna A es más efectiva que otra vacuna B para inmunizar a las personas contra una enfermedad. Para ello, reclutó a 28 voluntarios, 15 de los cuales recibieron la vacuna A y 13 recibieron la vacuna B. Después de un mes, el doctor midió la concentración de anticuerpos en la sangre de cada voluntario.
+
+### 1.5 Método de Wald para Una Proporción
+**Uso:**
+El método de Wald permite construir intervalos de confianza y contrastar hipótesis bajo supuesto de normalidad para una proporción.
+
+**Ejemplo:**
+Aquiles Baeza desea conocer qué proporción de las ejecuciones de un algoritmo de ordenamiento para instancias con 100,000 elementos tardan menos de 25 segundos. Para ello registró tiempos de ejecución de 150 instancias generadas aleatoriamente, encontrando que 64 de ellas tardaron menos de 25 segundos.
+
+### 1.6 Método de Wald para Dos Proporciones
+**Uso:**
+El método de Wald para dos proporciones se utiliza para comparar proporciones entre dos poblaciones independientes.
+
+**Ejemplo:**
+La Facultad de Ingeniería desea determinar si la tasa de reprobación de estudiantes que rinden la asignatura de programación por primera vez es igual para hombres y mujeres. Para ello, se examina la situación final de los estudiantes que rindieron la asignatura durante el segundo semestre de 2017.
+
+### 1.7 Método de Wilson
+**Uso:**
+El método de Wilson es una alternativa más robusta al método de Wald, especialmente útil con muestras pequeñas o proporciones cercanas a 0 o 1.
+
+**Ejemplo:**
+Aquiles Baeza, ingeniero en informática, desea conocer qué proporción de las ejecuciones de un algoritmo de ordenamiento para instancias con 100,000 elementos tardan menos de 25 segundos. Para ello, registró tiempos de ejecución para 150 instancias generadas de manera aleatoria, encontrando que 64 de ellas tardaron menos de 25 segundos.
+
+## 2 Pruebas No Paramétricas con Proporciones
+
+### 2.1 Prueba Chi-Cuadrado de Homogeneidad
+**Uso:**
+La prueba Chi-Cuadrado de Homogeneidad se utiliza para determinar si dos poblaciones (variable dicotómica) presentan las mismas proporciones en los diferentes niveles de una variable categórica.
+
+**Ejemplo:**
+Se hizo una encuesta a 300 programadores con más de 3 años de experiencia de todo el país, escogidos al azar, y se les preguntó su lenguaje de programación favorito. ¿Son similares las preferencias de lenguaje de programación entre hombres y mujeres?
+
+### 2.2 Prueba Chi-Cuadrado de Bondad de Ajuste
+**Uso:**
+La prueba Chi-Cuadrado de Bondad de Ajuste permite comparar si una distribución de frecuencias observadas se asemeja a una distribución de frecuencias esperadas. Usualmente se emplea para comprobar si una muestra es representativa de la población.
+
+**Ejemplo:**
+Una empresa cuenta con una nómina de 660 programadores y programadoras, se selecciona un subconjunto de 55 personas de esta nómina supuestamente aleatoria, pero es acusado de seleccionar con conveniencia, es por eso que se necesita demostrar que el grupo seleccionado es una muestra representativa.
+
+### 2.3 Prueba Chi-Cuadrado de Independencia
+**Uso:**
+La prueba Chi-Cuadrado de Independencia sirve para determinar si dos variables categóricas de una misma población son estadísticamente independientes o están relacionadas.
+
+**Ejemplo:**
+Un micólogo desea determinar si existe relación entre la forma del sombrero de los hongos y si estos son comestibles o no comestibles.
+
+### 2.4 Prueba Exacta de Fisher
+**Uso:**
+La prueba Exacta de Fisher es una alternativa a la prueba Chi-Cuadrado cuando no se tienen al menos 5 observaciones esperadas en cada grupo. Es especialmente útil para variables dicotómicas.
+
+**Ejemplo:**
+Un estudio quiere determinar si dos vacunas, A y B, son igualmente efectivas para inmunizar a la población ante una mordida de vampiro. Para ello reclutaron a 17 voluntarios de todo el mundo.
+
+### 2.5 Prueba de McNemar
+**Uso:**
+La prueba de McNemar se utiliza para analizar frecuencias apareadas cuando una misma característica con respuesta dicotómica se mide en dos ocasiones diferentes para el mismo grupo.
+
+**Ejemplo:**
+Un cientista de datos ha construido modelos para predecir a partir de las notas obtenidas en cursos previos, si sus estudiantes aprobarían o no la asignatura de aprendizaje automático. Al probar sus modelos con los 25 estudiantes del semestre anterior, observó que predijeron el resultado final de cada estudiante.
+
+### 2.6 Prueba de Cochran
+**Uso:**
+La prueba de Cochran es una extensión de la prueba McNemar para cuando la variable de respuesta es dicotómica y la variable independiente tiene más de dos observaciones apareadas.
+
+**Ejemplo:**
+Elsa Capunta, estudiante de algoritmos, tiene como tarea determinar si existe una diferencia significativa en el desempeño de tres metaheurísticas que buscan resolver el problema del vendedor viajero.
+
+## 3 Pruebas ANOVA y No Paramétricas para Muestras Numéricas
+
+### 3.1 ANOVA de una vía para muestras independientes
+**Uso:**
+El ANOVA de una vía para muestras independientes se utiliza para comparar las medias de más de dos grupos independientes.
+
+**Ejemplo:**
+Una ingeniera tiene un problema de logística en una empresa de transporte, y logró modelarlo como instancias del problema de la mochila 0-1 con capacidad de 1000 y objetos que se distribuyen N(50,16). Ella implementó tres algoritmos (A, B y C) y desea comparar su eficiencia.
+
+### 3.2 ANOVA de una vía para muestras correlacionadas
+**Uso:**
+El ANOVA de una vía para muestras correlacionadas (también llamado ANOVA para medidas repetidas) se utiliza para comparar medias cuando las observaciones en los diferentes grupos están relacionadas o provienen de los mismos sujetos.
+
+**Ejemplo:**
+Una estudiante de un curso de programación debe comparar la eficiencia de cuatro algoritmos de ordenamiento: Quicksort, Bubblesort, Radixsort y Mergesort. Para ello, ha generado aleatoriamente 6 arreglos de tamaño y dificultad diversa, registrando para cada uno de ellos el tiempo de ejecución utilizado por cada algoritmo.
+
+### 3.3 Prueba de suma de rangos de Wilcoxon (muestras independientes)
+**Uso:**
+La prueba de suma de rangos de Wilcoxon es una alternativa no paramétrica a la prueba t cuando no se cumplen sus condiciones para dos muestras independientes.
+
+**Ejemplo:**
+Una empresa de desarrollo de software desea evaluar la usabilidad de dos interfaces, A y B. Con este fin, la empresa selecciona al azar a 23 voluntarios y voluntarias, quienes son asignados de manera aleatoria a dos grupos, cada uno de los cuales debe probar una interfaz.
+
+### 3.4 Prueba de suma de rangos de Wilcoxon (muestras pareadas)
+**Uso:**
+La prueba de suma de rangos de Wilcoxon es una alternativa no paramétrica a la prueba t pareada cuando no se cumplen sus condiciones.
+
+**Ejemplo:**
+Una empresa de software quiere ver la usabilidad de dos interfaces A y B, en el departamento aseguran que es mejor la A. Para ello se seleccionaron 10 participantes al azar, quienes evalúan 6 aspectos que se mide con una escala de 7 puntos.
+
+### 3.5 Prueba de Kruskal-Wallis
+**Uso:**
+La prueba de Kruskal-Wallis es una alternativa no paramétrica al ANOVA para más de dos grupos independientes.
+
+**Ejemplo:**
+Un estudiante en informática estudia cuatro criterios diferentes (A, B, C y D) para optimizar una secuencia de operaciones en tablas de base de datos. Para su experimento, consiguió armar un conjunto de 48 bases de datos de tamaños similares donde se requiere realizar una secuencia de 8 operaciones *join* para obtener un reporte.
+
+### 3.6 Prueba de Friedman
+**Uso:**
+La prueba de Friedman es una alternativa no paramétrica al ANOVA para muestras correlacionadas.
+
+**Ejemplo:**
+Un profesor quiere comparar tres métodos diferentes de enseñanza (A, B y C) de programación. Cada método es evaluado por los mismos 10 estudiantes y se registra su rendimiento en una escala del 1 al 10.
+
+## 4 Nota de Selección
+
+La elección de la prueba apropiada depende de:
+* Si las muestras son independientes o correlacionadas
+* Si se cumplen los supuestos de normalidad y homogeneidad de varianzas
+* El número de grupos a comparar
+* La escala de medición de las variables
+```

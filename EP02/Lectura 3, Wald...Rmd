@@ -1,21 +1,21 @@
 ---
-title: "Lectura 3, metodo wald"
+title: "Lectura 3: Método de Wald"
 author: "Jaime Riquelme"
 date: "2024-11-09"
 output: html_document
 ---
 
-# Pruebas de inferencia con proporciones muestrales
+# Pruebas de Inferencia con Proporciones Muestrales
 
-## Método de Wald
+## 1. Método de Wald para Una Proporción
 
-El metodo de wald permite contruir intervalos de confianza y contrastar hipotesis bajo supuesto de normalidad para una proporcion.
+El método de Wald permite construir intervalos de confianza y contrastar hipótesis bajo supuesto de normalidad para una proporción.
 
-Ejemplo: 
+### Ejemplo 1: Tiempo de Ejecución de Algoritmo
 
-Aquiles baeza desea conocer que proporcion de las ejecuones de un algoritmo de ordenamiento para instancias con 100000 elementos tardan menos de 25 segundos, para ellos registro tiempos de ejecucion de 150 instancias generadas aleatoriamente. encontrando que 64% de ellas fueron resueltas en un tiempo menor a 25 segundos.
+Aquiles Baeza desea conocer qué proporción de las ejecuciones de un algoritmo de ordenamiento para instancias con 100,000 elementos tardan menos de 25 segundos. Para ello registró tiempos de ejecución de 150 instancias generadas aleatoriamente, encontrando que 64% de ellas fueron resueltas en un tiempo menor a 25 segundos.
 
-Datos del problema
+#### Datos del Problema
 
 ```{r}
 n <- 150
@@ -23,16 +23,17 @@ p <- 0.64
 alpha <- 0.05
 ```
 
-Para responder podemos calcular el intervalo de confianza para la verdadera proporcion a partir de esta muestra, si es que se cumplen las condiciones para que la distribucion de p sea cercana a la normal.
+Para responder podemos calcular el intervalo de confianza para la verdadera proporción a partir de esta muestra, si es que se cumplen las condiciones para que la distribución de p sea cercana a la normal.
 
 **Condiciones**
 
-1.- Las observaciones de la muestra son independientes.
-2.- Se cumple la condicion de exito-fracaso, que establece que se espera observar al menos 10 observaciones correspondientes a exito y al menos 20 correspondientes a fracaso, matematicamente, np > = 10 y n(1-p) > = 10.
+1. Las observaciones de la muestra son independientes.
+2. Se cumple la condición de éxito-fracaso, que establece que se espera observar al menos 10 observaciones correspondientes a éxito y al menos 10 correspondientes a fracaso, matemáticamente, np >= 10 y n(1-p) >= 10.
 
-Dado la informacion anterior, podemos confirmar que se cumplen ambas condiciones, por lo que podemos proceder a calcular el intervalo de confianza.
+Dado la información anterior, podemos confirmar que se cumplen ambas condiciones, por lo que podemos proceder a calcular el intervalo de confianza.
 
-**Calculo del intervalo de confianza**
+**Cálculo del Intervalo de Confianza**
+
 ```{r}
 error_est <- sqrt((p*(1-p))/n)
 Z_critico <- qnorm(alpha/2, lower.tail = FALSE)
@@ -42,24 +43,23 @@ superior <- p + Z_critico*error_est
 
 print("Intervalo de confianza")
 print(c(inferior,superior))
-
-
 ```
-Este intervalo de confianza significa que tenemos 95% de confianza que la proporcion de instancias del problema que el algoritmo ordena en menor de 25 segundos se encuentra entre 56.31% y 71.69%.
 
-Por otro lado, si queremos una prueba de hipotesis para una proporcion, podemos calcular el valor de p mediante la funcion pnorm.
+Este intervalo de confianza significa que tenemos 95% de confianza que la proporción de instancias del problema que el algoritmo ordena en menos de 25 segundos se encuentra entre 56.31% y 71.69%.
 
-Como baeza le asegura al jefe que mas del 70% se ejecutan en menor de 25 segundos, podemos plantear la hipotesis nula y alternativa de la siguiente forma:
+Por otro lado, si queremos una prueba de hipótesis para una proporción, podemos calcular el valor de p mediante la función pnorm.
+
+Como Baeza le asegura al jefe que más del 70% se ejecutan en menos de 25 segundos, podemos plantear la hipótesis nula y alternativa de la siguiente forma:
 
 **Hipótesis**
 
 H0: La cantidad de instancias que se ejecutan en menos de 25 segundos es igual al 70%. (p = 0.70)
 Ha: La cantidad de instancias que se ejecutan en menos de 25 segundos es mayor al 70%. (p > 0.70)
 
+**Cálculo del p-valor**
 
-**Calculo del p-valor**
 ```{r}
-#Pruena de Hipótesis
+# Prueba de Hipótesis
 
 valor_nulo5 <- 0.7
 
@@ -71,4 +71,150 @@ p <- pnorm(Z_est, lower.tail = FALSE)
 print("P-valor")
 print(p)
 ```
-Como el valor obtenido de p, es mayor al nivel de significancia, no tenemos evidencia suficiente para rechazar la hipotesis nula, por lo que no podemos asegurar que mas del 70% de las instancias se ejecutan en menos de 25 segundos.
+
+Como el valor obtenido de p es mayor al nivel de significancia, no tenemos evidencia suficiente para rechazar la hipótesis nula, por lo que no podemos asegurar que más del 70% de las instancias se ejecutan en menos de 25 segundos.
+
+## 2. Método de Wald para Dos Proporciones
+
+### Ejemplo 2: Tasa de Reprobación por Género
+
+La Facultad de Ingeniería desea determinar si la tasa de reprobación de estudiantes que rinden la asignatura de programación por primera vez es igual para hombres y mujeres. Para ello, se examina la situación final de los estudiantes que rindieron la asignatura durante el segundo semestre de 2017. Para una muestra de 48 hombres (de un total de 632), se encontró que 26 de ellos reprobaron la asignatura. De manera similar, para una muestra de 42 mujeres (de un total de 507), se encontraron 20 reprobaciones.
+
+#### Hipótesis
+
+H0: La tasa de reprobación de hombres es igual a la de mujeres (p1 - p2 = 0)
+Ha: Las tasas de reprobación son diferentes para hombres y mujeres (p1 - p2 ≠ 0)
+
+#### Datos del Problema
+
+```{r}
+n_hombres <- 48
+n_mujeres <- 42
+exitos_hombres <- 26  # reprobados
+exitos_mujeres <- 20  # reprobados
+alpha <- 0.05
+```
+
+Verificamos condiciones:
+1. Cada proporción debe seguir el modelo normal
+2. Las muestras son independientes entre sí
+3. Debe cumplirse condición éxito-fracaso para cada grupo
+
+**Verificación Condición Éxito-Fracaso**
+
+```{r}
+p_hombres <- exitos_hombres / n_hombres
+p_mujeres <- exitos_mujeres / n_mujeres
+
+# Comprobamos np ≥ 10 y n(1-p) ≥ 10 para ambos grupos
+exitos_esperados_h <- p_hombres * n_hombres
+fracasos_esperados_h <- (1 - p_hombres) * n_hombres
+exitos_esperados_m <- p_mujeres * n_mujeres
+fracasos_esperados_m <- (1 - p_mujeres) * n_mujeres
+
+print("Verificación condiciones:")
+print(paste("Éxitos esperados hombres:", exitos_esperados_h))
+print(paste("Fracasos esperados hombres:", fracasos_esperados_h))
+print(paste("Éxitos esperados mujeres:", exitos_esperados_m))
+print(paste("Fracasos esperados mujeres:", fracasos_esperados_m))
+```
+
+**Cálculo del Intervalo de Confianza**
+
+```{r}
+# Calculamos diferencia
+diferencia <- p_hombres - p_mujeres
+
+# Calculamos error estándar
+error_hombres <- (p_hombres * (1 - p_hombres)) / n_hombres
+error_mujeres <- (p_mujeres * (1 - p_mujeres)) / n_mujeres
+error_est <- sqrt(error_hombres + error_mujeres)
+
+# Intervalo de confianza
+Z_critico <- qnorm(alpha/2, lower.tail = FALSE)
+inferior <- diferencia - Z_critico * error_est
+superior <- diferencia + Z_critico * error_est
+
+print("Intervalo de confianza para la diferencia de proporciones")
+print(c(inferior, superior))
+```
+
+**Prueba de Hipótesis**
+
+```{r}
+valor_nulo <- 0
+Z <- (diferencia - valor_nulo) / error_est
+p_valor <- 2 * pnorm(-abs(Z))
+
+print("Estadístico Z")
+print(Z)
+print("P-valor")
+print(p_valor)
+```
+
+## 3. Método de Wilson
+
+### Ejemplo 3: Tiempo de Ejecución de Algoritmo
+
+Aquiles Baeza, ingeniero en informática, desea conocer qué proporción de las ejecuciones de un algoritmo de ordenamiento para instancias con 100,000 elementos tardan menos de 25 segundos. Para ello, registró tiempos de ejecución para 150 instancias generadas de manera aleatoria, encontrando que 64% de dichas instancias fueron resueltas en un tiempo menor al señalado.
+
+#### Hipótesis
+
+H0: La proporción de instancias que se ejecutan en menos de 25 segundos es 70% (p = 0.7)
+Ha: La proporción es menor al 70% (p < 0.7)
+
+#### Datos del Problema
+
+```{r}
+n <- 150
+p <- 0.64
+alpha <- 0.05
+```
+
+Verificamos condiciones:
+1. Las observaciones son independientes (asegurado por muestreo aleatorio)
+2. Condición éxito-fracaso: np ≥ 10 y n(1-p) ≥ 10
+
+**Verificación Condición Éxito-Fracaso**
+
+```{r}
+exitos_esperados <- n * p
+fracasos_esperados <- n * (1-p)
+
+print("Verificación condiciones Wilson:")
+print(paste("Éxitos esperados:", exitos_esperados))
+print(paste("Fracasos esperados:", fracasos_esperados))
+```
+
+**Cálculo del Intervalo de Confianza de Wilson**
+
+```{r}
+# Calculamos intervalo de Wilson
+Z_critico <- qnorm(alpha/2, lower.tail = FALSE)
+
+# Proporción ajustada de Wilson
+p_ajustada <- (p + (Z_critico^2)/(2*n)) / (1 + (Z_critico^2)/n)
+
+# Error estándar de Wilson
+error_est_wilson <- sqrt(p*(1-p)/n + (Z_critico^2)/(4*n^2)) / (1 + (Z_critico^2)/n)
+
+# Intervalo de confianza de Wilson
+inferior_wilson <- p_ajustada - Z_critico * error_est_wilson
+superior_wilson <- p_ajustada + Z_critico * error_est_wilson
+
+print("Intervalo de confianza de Wilson")
+print(c(inferior_wilson, superior_wilson))
+```
+
+**Prueba de Hipótesis**
+
+```{r}
+valor_nulo <- 0.7
+error_est_hip <- sqrt((valor_nulo*(1-valor_nulo))/n)
+Z <- (p - valor_nulo)/error_est_hip
+p_valor_wilson <- pnorm(Z)
+
+print("P-valor método Wilson")
+print(p_valor_wilson)
+```
+

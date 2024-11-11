@@ -1,0 +1,184 @@
+---
+title: "prueba"
+author: "Jaime Riquelme"
+date: "2024-11-11"
+output: html_document
+---
+
+
+## 1. Prueba Z para una Muestra
+**Ejemplo:**
+Un fabricante de electrodomésticos quiere verificar si el tiempo de vida promedio de sus lavadoras es de al menos 10 años. Sabe que la desviación estándar de la vida útil de las lavadoras es de 1.5 años. Selecciona una muestra aleatoria de 40 lavadoras y determina que el tiempo de vida promedio de la muestra es de 10.2 años.
+
+**Datos de ejemplo:**
+- Desviación estándar poblacional: 1.5 años
+- Tamaño de muestra: 40
+- Media muestral: 10.2 años
+- Hipótesis nula: μ = 10 años
+
+## 2. Prueba t para una Muestra
+**Ejemplo:**
+Un fabricante de bicicletas quiere verificar si el peso promedio de sus bicicletas urbanas es menor a 15 kg. Selecciona una muestra aleatoria de 25 bicicletas y obtiene un peso promedio de 14.8 kg, pero no conoce la desviación estándar poblacional.
+
+**Datos de ejemplo:**
+- Tamaño de muestra: 25
+- Media muestral: 14.8 kg
+- Hipótesis nula: μ = 15 kg
+
+## 3. Prueba t para Muestras Pareadas
+**Ejemplo:**
+Un profesor quiere evaluar si una nueva metodología de enseñanza mejora el rendimiento de los estudiantes en un examen. Selecciona una muestra de 20 estudiantes, a quienes les aplica la prueba con el método tradicional y luego con el nuevo método.
+
+**Datos de ejemplo:**
+- Puntajes con método tradicional: 82, 75, 88, 71, 90, 80, 85, 78, 92, 76, 83, 79, 87, 72, 89, 77, 84, 73, 86, 74
+- Puntajes con nuevo método: 85, 78, 90, 74, 92, 82, 87, 80, 94, 79, 86, 81, 89, 75, 91, 79, 87, 76, 88, 77
+
+## 4. Prueba t para Muestras Independientes
+**Ejemplo:**
+Un fabricante de automóviles quiere comparar el consumo de combustible promedio entre sus modelos eléctricos y de combustión interna. Selecciona una muestra aleatoria de 30 vehículos eléctricos y 25 vehículos de combustión interna y mide su consumo de combustible.
+
+**Datos de ejemplo:**
+- Muestra de vehículos eléctricos (30 observaciones): 18.2, 19.1, 17.8, 20.0, 18.5, 19.4, 17.6, 20.2, 18.3, 19.2, 17.9, 19.8, 18.1, 19.6, 18.0, 19.9, 18.4, 20.1, 18.2, 19.5, 17.7, 20.3, 18.6, 19.7, 18.3, 20.0, 18.1, 19.3, 18.0, 19.8
+- Muestra de vehículos de combustión interna (25 observaciones): 24.5, 26.1, 25.0, 27.2, 25.8, 26.5, 24.8, 26.9, 25.3, 26.7, 25.1, 27.0, 25.6, 26.3, 25.2, 26.6, 25.5, 26.8, 25.0, 27.1, 25.4, 26.4, 25.3, 27.0, 25.7
+
+## 5. Método de Wald para Una Proporción
+**Ejemplo:**
+Un equipo de desarrolladores de software quiere determinar la proporción de errores en un nuevo módulo de su aplicación. Revisan 100 ejecuciones del módulo y encuentran 12 ejecuciones con errores.
+
+**Datos de ejemplo:**
+- Tamaño de muestra: 100
+- Número de ejecuciones con errores: 12
+
+## 6. Método de Wald para Dos Proporciones
+**Ejemplo:**
+Una compañía de seguros quiere comparar la tasa de reclamos entre sus pólizas estándar y sus pólizas premium. Para ello, revisa una muestra de 200 pólizas estándar, de las cuales 25 tuvieron reclamos, y una muestra de 150 pólizas premium, de las cuales 15 tuvieron reclamos.
+
+**Datos de ejemplo:**
+- Tamaño de muestra de pólizas estándar: 200
+- Número de pólizas estándar con reclamos: 25
+- Tamaño de muestra de pólizas premium: 150
+- Número de pólizas premium con reclamos: 15
+
+## 7. Método de Wilson
+**Ejemplo:**
+Un investigador quiere determinar la proporción de pacientes que responden positivamente a un nuevo tratamiento. Realiza el tratamiento a 50 pacientes y observa que 3 de ellos respondieron positivamente.
+
+**Datos de ejemplo:**
+- Tamaño de muestra: 50
+- Número de pacientes que respondieron positivamente: 3
+
+## 8. Prueba Chi-Cuadrado de Homogeneidad
+**Ejemplo:**
+Una consultora de recursos humanos quiere determinar si las preferencias de beneficios laborales son iguales entre hombres y mujeres. Encuesta a 120 empleados, de los cuales 60 son hombres y 60 son mujeres, y les pregunta por sus preferencias de beneficios (seguro médico, pensión, días de vacaciones, etc.).
+
+**Datos de ejemplo:**
+- Tamaño de muestra total: 120
+- Número de hombres: 60
+- Número de mujeres: 60
+- Matriz de frecuencias observadas para cada beneficio y género
+
+## 9. Prueba Chi-Cuadrado de Bondad de Ajuste
+**Ejemplo:**
+Una empresa de tecnología tiene una distribución esperada de edades de sus empleados (20-30 años: 40%, 31-40 años: 30%, 41-50 años: 20%, 51-60 años: 10%). Toma una muestra aleatoria de 100 empleados y desea verificar si esta muestra es representativa de la distribución esperada.
+
+**Datos de ejemplo:**
+- Tamaño de muestra: 100
+- Distribución esperada de edades:
+  - 20-30 años: 40%
+  - 31-40 años: 30%
+  - 41-50 años: 20%
+  - 51-60 años: 10%
+- Distribución observada en la muestra
+
+## 10. Prueba Chi-Cuadrado de Independencia
+**Ejemplo:**
+Un investigador quiere determinar si el tipo de vehículo (automóvil, motocicleta, bicicleta) y el tipo de accidente (choque, atropello, caída) son independientes. Recopila datos de 150 accidentes de tráfico.
+
+**Datos de ejemplo:**
+- Tamaño de muestra total: 150
+- Matriz de frecuencias observadas para cada combinación de tipo de vehículo y tipo de accidente
+
+## 11. Prueba Exacta de Fisher
+**Ejemplo:**
+Un farmacéutico quiere comparar la efectividad de dos medicamentos, A y B, para reducir la presión arterial. Recluta a 20 pacientes, 10 reciben el medicamento A y 10 reciben el medicamento B. Después del tratamiento, 8 pacientes que recibieron el medicamento A tuvieron una reducción exitosa de la presión arterial, mientras que solo 5 pacientes que recibieron el medicamento B tuvieron una reducción exitosa.
+
+**Datos de ejemplo:**
+- Tamaño de muestra total: 20
+- Número de pacientes que recibieron el medicamento A: 10
+- Número de pacientes que recibieron el medicamento B: 10
+- Número de pacientes con reducción exitosa en el grupo de medicamento A: 8
+- Número de pacientes con reducción exitosa en el grupo de medicamento B: 5
+
+## 12. Prueba de McNemar
+**Ejemplo:**
+Un psicólogo quiere evaluar si un nuevo tratamiento de terapia cognitiva-conductual es efectivo para reducir los síntomas de ansiedad en sus pacientes. Antes y después del tratamiento, evalúa a cada paciente como "con síntomas" o "sin síntomas".
+
+**Datos de ejemplo:**
+- Tamaño de muestra: 30 pacientes
+- Matriz de frecuencias observadas antes y después del tratamiento (con síntomas/sin síntomas)
+
+## 13. Prueba de Cochran
+**Ejemplo:**
+Un investigador quiere comparar la efectividad de tres métodos de enseñanza (A, B y C) para mejorar la comprensión lectora de estudiantes de secundaria. Selecciona una muestra de 24 estudiantes y aplica los tres métodos, evaluando su desempeño como "aprobado" o "reprobado".
+
+**Datos de ejemplo:**
+- Tamaño de muestra: 24 estudiantes
+- Matriz de frecuencias observadas para cada método de enseñanza (aprobado/reprobado)
+
+## 14. ANOVA de una vía para muestras independientes
+**Ejemplo:**
+Un investigador quiere comparar la eficiencia de tres algoritmos de ordenamiento (quicksort, mergesort y heapsort) en términos del tiempo de ejecución. Genera 30 instancias de prueba de tamaño aleatorio y registra el tiempo de ejecución de cada algoritmo para cada instancia.
+
+**Datos de ejemplo:**
+- Tamaño de muestra: 30 instancias
+- Tiempos de ejecución para cada algoritmo:
+  - Quicksort: 12.5, 14.2, 13.8, 11.9, 13.1, 12.7, 14.0, 13.3, 12.4, 13.6, 12.9, 13.5, 12.2, 13.7, 12.6
+  - Mergesort: 15.1, 16.3, 15.5, 14.8, 15.9, 15.2, 16.1, 15.4, 14.9, 16.0, 15.3, 15.8, 15.0, 15.7, 15.1
+  - Heapsort: 13.8, 14.5, 14.1, 13.6, 14.3, 13.9, 14.4, 14.0, 13.7, 14.2, 14.0, 14.3, 13.8, 14.1, 13.9
+
+## 15. ANOVA de una vía para muestras correlacionadas
+**Ejemplo:**
+Un profesor de informática quiere comparar la eficiencia de cuatro algoritmos de ordenamiento (quicksort, mergesort, bubblesort y insertionsort) en términos del tiempo de ejecución. Para ello, genera 10 arreglos aleatorios y registra el tiempo que tarda cada algoritmo en ordenarlos.
+
+**Datos de ejemplo:**
+- Tamaño de muestra: 10 arreglos
+- Tiempos de ejecución para cada algoritmo:
+  - Quicksort: 12.5, 14.2, 13.8, 11.9, 13.1, 12.7, 14.0, 13.3, 12.4, 13.6
+  - Mergesort: 15.1, 16.3, 15.5, 14.8, 15.9, 15.2, 16.1, 15.4, 14.9, 16.0
+  - Bubblesort: 18.2, 19.1, 17.8, 20.0, 18.5, 19.4, 17.6, 20.2, 18.3, 19.2
+  - Insertionsort: 16.7, 17.5, 16.3, 17.9, 16.9, 17.2, 16.4, 17.8, 16.6, 17.3
+
+## 16. Prueba de suma de rangos de Wilcoxon (muestras independientes)
+**Ejemplo:**
+Un investigador quiere comparar la eficacia de dos tratamientos (A y B) para reducir el dolor en pacientes con artritis. Asigna aleatoriamente a 18 pacientes a cada grupo y mide el nivel de dolor en una escala del 1 al 10 después del tratamiento.
+
+**Datos de ejemplo:**
+- Grupo de tratamiento A (18 pacientes): 5, 7, 4, 6, 8, 3, 6, 5, 7, 4, 6, 5, 7, 6, 4, 5, 6, 7
+- Grupo de tratamiento B (18 pacientes): 7, 5, 8, 6, 4, 7, 5, 6, 8, 5, 7, 6, 4, 7, 5, 6, 8, 7
+
+## 17. Prueba de suma de rangos de Wilcoxon (muestras pareadas)
+**Ejemplo:**
+Un psicólogo quiere evaluar si un nuevo programa de terapia grupal reduce los síntomas de depresión en sus pacientes. Mide los niveles de depresión de 12 pacientes antes y después del programa.
+
+**Datos de ejemplo:**
+- Niveles de depresión antes del programa: 8, 6, 9, 7, 8, 6, 7, 8, 7, 9, 6, 8
+- Niveles de depresión después del programa: 6, 4, 7, 5, 6, 4, 5, 6, 5, 7, 4, 6
+
+## 18. Prueba de Kruskal-Wallis
+**Ejemplo:**
+Un investigador quiere comparar la eficacia de tres medicamentos (A, B y C) para reducir los niveles de colesterol. Selecciona 18 pacientes y les asigna aleatoriamente uno de los tres medicamentos, midiendo sus niveles de colesterol después del tratamiento.
+
+**Datos de ejemplo:**
+- Grupo medicamento A (6 pacientes): 185, 192, 178, 188, 183, 190
+- Grupo medicamento B (6 pacientes): 201, 195, 198, 202, 196, 199
+- Grupo medicamento C (6 pacientes): 174, 182, 177, 180, 175, 181
+
+## 19. Prueba de Friedman
+**Ejemplo:**
+Un profesor de ciencias de la computación quiere comparar el desempeño de tres métodos de enseñanza (A, B y C) en términos de la calificación obtenida por los estudiantes. Selecciona una muestra de 8 estudiantes y les aplica los tres métodos, registrando sus calificaciones.
+
+**Datos de ejemplo:**
+- Calificaciones de los estudiantes:
+  - Método A: 85, 90, 88, 92, 86, 89, 87, 91
+  - Método B: 82, 88, 85, 90, 83, 87, 84, 89
+  - Método C: 92, 88, 90, 86, 91, 87, 89, 85
