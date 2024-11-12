@@ -1,0 +1,243 @@
+---
+title: "PEP1"
+author: "César Rodríguez y Jaime Riquelme"
+date: "2024-11-11"
+output: html_document
+---
+
+##### Importante
+
+Antes de comenzar con el análisis, se hará una importación de las siguientes librerías: *dplyr*, *ggpubr*, *ez* y *tidyr*.
+
+```{r, echo = F, message = F, warning = F}
+library(dplyr)
+library(tidyr)
+library(ggpubr)
+library(ez)
+```
+
+Una vez realizado, se procederá.
+
+##### Contexto
+
+Diversos estudios sugieren que el nivel de peroxido de hidrogeno (H_2O_2) presente en los foliculos pilosos esta implicado en el proceso de encanecimiento del cabello, donde un mayor nivel de H_2_O_2 suele estar asociado a una mayor cantidad de canas. Dado este contexto, un importante laboratorio de productos cosmeticos ha desarrollado ChaoCanas, un shampoo que busca reducir el nivel de H_2O_2 en los foliculos capilares y, en consecuencia, disminuir la cantidad de canas.
+
+Para evaluar el producto, el laboratorio ha reclutado a un grupo aleatorio de personas, quienes deben usar un shampoo específico (ChaoCanas o un placebo) por un periodo de 1 año. La asignación del shampoo a cada participante también se realiza de manera aleatoria. Cada 3 meses, se mide el nivel de H_2O_2 presente en los foliculos pilosos y se evalua la percepcion de los participantes mediante una escala Likert: donde -5 signfifica que la cantidad de canas aumentó enormemente; 0, que no hay cambios en la cantidad de canas; 5, que la cantidad de canas se redujo enormemente.
+
+Los resultaados de esta evaluación están disponibles en el archivo de datos compartido, en donde cada fila corresponde a los resgistros recogidos para cada persona participante de las siguientes variablex, con x perteneciente a {3, 6, 9,12}:
+
+- ID: identificador único.
+- SEXO: sexo (categórica con niveles F: femenino, M: masculino)
+- EDAD: rango de edad (categórica, con niveles 40-49, 50-50, 60-69 y 70 o superior)
+- SHAMPOO: shampoo entregado (categórica, con niveles ChaoCanas y Placebo)
+- NIVEL_X: nivel de H_2O_2 medido en micromolares, presente en los foliculos pilosos al mes X (flotante [1,00, 25,00])
+- PERCEPCION_X: percepcion de la cantidad de canas al mes X (entero entre -5 y 5)
+
+##### Desarrollo
+
+En primer lugar, se hará una lectura de los datos utilizando la función nativa de R, *read.csv2*.
+
+```{r, echo = F}
+data <- read.csv2("Dataset PE1.csv")
+```
+
+Así, las preguntas son las siguientes.
+
+##### Pregunta 1.- El quimico farmaceutico a cargo de las pruebas cree que existen diferencias en los niveles de H_2O2 entre las mujeres de 70 o más años que usaron ChaoCaspa para cada mes registrado. Para confirmar esta creencia se les solicita realizar un análisis inferencial, con 95% de confianza, explicando y justificando paso a paso el procedimiento seguido (hipótesis contrastadas, pruebas estadísticas usadas, verificación de condiciones, etc.), y entregar una respuesta concreta al químico farmacéutico.
+
+R: Analizando la pregunta, podemos obtener diferentes informaciones para seleccionar la prueba estadistica adecuada para poder responder la pregunta solicitada.
+
+Como se nos pide comparar y ver si existen diferencias en niveles de H_2o2, entre las mujeres de 70 o mas años, y además nos comentan que debemos realizar esta comparacion para los 4 diferentes niveles (cada 3 meses), podemos inferir que debemos realizar una prueba ANOVA para muestras correlacionas, ya que para el mismo grupo de personas, se le toma la prueba de los niveles cada 3 meses.
+
+```{r, echo = F}
+# Nivel de significancia
+alpha <- 0.05
+
+#Filtramos los datos a utilizar para responder la pregunta.
+
+datos_filtrados <- data %>% filter(SEXO == "F", EDAD == "70 o superior", SHAMPOO == "ChaoCaspa")
+datos_filtrados2 <- datos_filtrados %>% select(ID,NIVEL_3,NIVEL_6,NIVEL_9,NIVEL_12)
+
+#Convertimos los datos a formato largo
+
+datos_formato_largo <- datos_filtrados2 %>% pivot_longer(c("NIVEL_3","NIVEL_6","NIVEL_9","NIVEL_12"), names_to = "NIVELES", values_to = "Nivel_H2o2")
+
+#Convertimos a factor la variable NIVELES e ID
+
+datos_formato_largo[["NIVELES"]] <- factor(datos_formato_largo[["NIVELES"]])
+datos_formato_largo[["ID"]] <- factor(datos_formato_largo[["ID"]])
+```
+
+Dado la informacion anterior, planteamos las hipotesis nula y alternativa.
+
+- **Hipótesis Nula ($H_{0}$):** No existen diferencias significativas en los niveles de H_2o2 entre las mujeres de 70 o más años que usaron ChaoCaspa para cada mes registrado. (mu1 = mu2 = mu3 = mu4)
+- **Hipótesis Alternativa ($H_{A}$):** Existen diferencias significativas en los niveles de H_2o2 entre las mujeres de 70 o más años que usaron ChaoCaspa para cada mes registrado. $$ \exists i, j \in \{1,2,3,4\} \ni \mu_i \neq \mu_j $$
+
+Ahora, verificamos las condiciones para realizar la prueba estadistica.
+
+- **La escala con que se mide la variable dependiente tiene las propiedades de una escala de intervalos iguales:** Como los valores muestrales son un valor numerico, podemos asumir que se cumple con esta condicion 
+
+- **Las mediciones son independientes al interior de cada grupo:** Como por enunciado nos indican que las muestras fueron seleccionadas aleatoriamente, se cumple la condicion de independencia.
+
+- **Se puede suponer razonablemente que la(s) población(es) de origen sigue(n) una distribución normal:** Para verificar esta condicion, utilizaremos un grafico q-q para verificar esta condicion.
+
+```{r, echo = F}
+#Grafico q-q para NIVEL_3
+
+g1 <- ggqqplot(datos_filtrados2$NIVEL_3, ylab = "NIVEL_3", xlab = "Distribucion Normal", color = "Red")
+
+#Grafico q-q para NIVEL_6
+
+g2 <- ggqqplot(datos_filtrados2$NIVEL_6, ylab = "NIVEL_6", xlab = "Distribucion Normal", color = "Pink")
+
+#Grafico q-q para NIVEL_9
+
+g3 <- ggqqplot(datos_filtrados2$NIVEL_9, ylab = "NIVEL_9", xlab = "Distribucion Normal", color = "Blue")
+
+#Grafico q-q para NIVEL_12
+
+g4 <- ggqqplot(datos_filtrados2$NIVEL_12, ylab = "NIVEL_12", xlab = "Distribucion Normal", color = "Green")
+
+#Mostramos todos los graficos Q-Q
+
+ggarrange(g1,g2,g3,g4, ncol = 2, nrow = 2)
+```
+
+
+Al realizar los graficos Q-Q para verificar la condicion de normalidad de los datos, podemos apreciar que los datos se ajustan a una distribucion normal, por lo que podemos asumir que se cumple con la condicion de normalidad.
+
+Para confirmar esta condicion, realizamos una prueba de Shapiro-Wilk para cada uno de los niveles.
+
+```{r, echo = F}
+
+#Prueba de Shapiro-Wilk para NIVEL_3
+
+testNivel3 <- shapiro.test(datos_filtrados2$NIVEL_3)
+
+#Prueba de Shapiro-Wilk para NIVEL_6
+
+testNivel6 <- shapiro.test(datos_filtrados2$NIVEL_6)
+
+#Prueba de Shapiro-Wilk para NIVEL_9
+
+testNivel9 <- shapiro.test(datos_filtrados2$NIVEL_9)
+
+#Prueba de Shapiro-Wilk para NIVEL_12
+
+testNivel12 <- shapiro.test(datos_filtrados2$NIVEL_12)
+
+```
+
+Finalmente, realizando la verificacion de la normalidad con shapiro test, se obtuvieron los siguientes resultados:
+
+  - **p-value Nivel 3:** `r testNivel3$p.value`
+  - **p-value Nivel 6:** `r testNivel6$p.value`
+  - **p-value Nivel 9:** `r testNivel9$p.value`
+  - **p-value Nivel 12:** `r testNivel12$p.value`
+
+Así, como todos los valores resultantes son mayores a nuestro nivel de significancia, podemos confirmar que se cumple la condicion de normalidad de los datos.
+
+- **La matriz de varianzas-covarianzas es esférica (prueba de esfericidad de Mauchly):** Para verificar esta condicion, utilizaremos la prueba de esfericidad de Mauchly la cual la obtendremos de la misma prueba ANOVA, utilizando la función ezANOVA. 
+
+```{r, echo = F}
+#Realizamos la prueba de ANOVA
+
+Prueba_Anova_Correlacionada <- ezANOVA(data = datos_formato_largo,
+                                       dv = Nivel_H2o2,
+                                       wid = ID, 
+                                       within = NIVELES,
+                                       return_aov = TRUE)
+
+#Mostramos el resultado de la prueba de esfericidad de Mauchly
+print(Prueba_Anova_Correlacionada$`Mauchly's Test for Sphericity`)
+
+```
+
+Como las condiciones  se cumplieron, se afirma en la posibilidad de aplicar la prueba, así, se obtiene el siguiente resultado:
+
+```{r, echo = F}
+#Mostramos el resultado de la prueba de ANOVA
+
+print(Prueba_Anova_Correlacionada$ANOVA)
+```
+
+Luego de realizar la prueba de ANOVA para muestras correlacionadas, primero podemos confirmar la condicion de esfericidad debido a que se ubtuvo un valor de p mayor a un nivel de significancia del 0.05. Por otra parte, al realizar la prueba de anova, con un nivel de significancia del 0.05, se obtuvo un valor de p menor al nivel de significancia, por lo que rechazamos la hipotesis nula en favor de la alternativa y concluimos que existen diferencias significativas en los niveles de H_2o2 entre las mujeres de 70 o más años que usaron ChaoCaspa para cada mes registrado.
+  
+Debido a esta conclusion, procederemos a realizar un analisis post-hoc con la corrección de bonferroni para determinar en que niveles se encuentran las diferencias significativas.
+  
+```{r, echo = F}
+#Prueba post hoc utilizando el ajuste de bonferroni
+
+Prueba_Post_hoc <- pairwise.t.test(datos_formato_largo$Nivel_H2o2,
+                                   datos_formato_largo$NIVELES,
+                                   p.adjust.method = "bonferroni",
+                                   PAIRED = TRUE)
+
+#Mostramos el resultado de la prueba post hoc
+
+print(Prueba_Post_hoc)
+```
+
+Así, como conclusión, luego de inferir que la prueba a realizar es un tipo de ANOVA para muestras correlacionadas, debido a la pregunta a responder, verificar las condiciones de la prueba para su correcto uso, obtuvimos un resultado que nos indicó que existinan diferencias significativas en los niveles de H_2o2 entre las mujeres de 70 o más años que usaron ChaoCaspa para cada mes registrado.
+Debido a esto realizamos un analisis Post_Hoc para determinar en donde encontramos las diferencias, en donde al realizar esta prueba, obtuvimos que se encontró una diferencia entre:
+
+- NIVEL_3 Y NIVEL_12
+- NIVEL 6 Y NIVEL_12
+- NIVEL 9 Y NIVEL_12.
+
+##### Pregunta 2.- El químico farmacéutico sospecha que, para el mes 6, existe diferencia en la percepción de la cantidad de canas entre hombres y mujeres que usaron el placebo. Para confirmar esta creencia, se les solicita realizar un análisis inferencial, con 95% de confianza, explicando y justificando paso a paso el procedimiento seguido (hipótesis contrastadas, pruebas estadísticas usadas, verificación de condiciones, etc.), y entregar una respuesta concreta al químico farmacéutico.
+
+R: En particular, se hace énfasis en que lo solicitado apunta a la verificación de diferencias de percepción para los grupos de hombres y mujeres que usaron el placebo.
+
+Donde lo esperado a verificar, viene dado por las siguientes hipótesis:
+
+- **Hipótesis Nula ($H_{0}$):** No existen diferencias en la percepción de los grupos de hombres y mujeres en el mes 6 en la utilización del shampoo placebo. (Matemáticamente muA - muB = 0)
+- **Hipótesis Alternativa ($H_{A}$):** Existen diferencias en la percepción de los grupos de hombres y mujeres en el mes 6 en la utilización del shampoo placebo. (Matemáticamente muA - muB != 0)
+
+De esa forma, se aplica una comparación directa entre un grupo A (hombres) y B (mujeres) según un criterio dado (uso de Placebo como shampoo), así, según lo planteado por el enunciado se presume aplicar una prueba t de Student para muestras independientes con un nivel de significania del 0,05. 
+
+El trabajo de esta prueba requiere la verificación de las siguientes condiciones:
+
+- **Las observaciones deben ser independientes:** En particular, como se menciona de 2 grupos respectivos que fueron seleccionados de manera aleatoria, la selección de uno/a no influyó en la de otro/a persona, así, podemos suponer que las observaciones son independientes.
+
+- **Los datos provienen de una distribución aproximadamente normal:** Para la verificación de esta condición se aplicará una prueba Shapiro-Wilk para ambos grupos de estudio. Así, se obtienen los siguientes resultados:
+
+```{r, echo = F}
+dataHombres <- data %>% 
+  filter(SEXO == "M") %>%
+  select(PERCEPCION_6)
+
+dataMujeres <- data %>% 
+  filter(SEXO == "F") %>%
+  select(PERCEPCION_6)
+
+testHombres <- shapiro.test(dataHombres$PERCEPCION_6)
+testMujeres <- shapiro.test(dataMujeres$PERCEPCION_6)
+```
+
+  - **p-value Hombres:** `r testHombres$p.value`
+  - **p-value Mujeres:** `r testMujeres$p.value`
+
+Así, los resultaados obtenidos par ambos grupos son menores que nuestor nivel de significancia, se falla en rechazar la hipótesis nula, así, podemos afirmar con un 95% de confianza que los datos *no* provienen de una distribución normal.
+
+
+Al no cumplirse la segunda condición necesaria para la aplicación de la prueba, se presume aplicar su contraparte no-paramétrica, siendo esta la **Prueba de suma de rangos de Wilcoxon**, donde se deben cumplir las siguientes condiciones:
+
+- **Observaciones independientes:** En particular, como se menciona de 2 grupos respectivos que fueron seleccionados de manera aleatoria, la selección de uno/a no influyó en la de otro/a persona, así, podemos suponer que las observaciones son independientes.
+- **Escala de medición a lo menos ordinal:** Se menciona la escala ordinal y esta habla de un orden significativo en la medición, de esa forma, como el estudio de la variable percepcion_x va entre -5 a 5, podemos suponer que sigue esta jerarquía, así, se cumple la segunda condición.
+
+Como ambas condiciones se cumplieron, se afirma en la posibilidad de aplicar la prueba, así, se obtiene el siguiente resultado:
+
+```{r, echo = F}
+testWilcox <- wilcox.test(dataHombres$PERCEPCION_6,
+                    dataMujeres$PERCEPCION_6, 
+                    paired = F,
+                    alternative = "two.sided",
+                    mu = 0,
+                    conf.level = 1 - alpha)
+testWilcox
+```
+
+Donde el p-value obtenido es de aproximadamente `r testWilcox$p.value`, siendo este resultado mayor a nuestro nivel de significancia, por lo que no existen evidencias suficientes para rechazar la hipótesis nula.
+
+En últimas palabras, la evidencia nos sugiere concluir con un 95% de confianza que **no** existen diferencias en la percepción de los grupos de hombres y mujeres en el mes 6 en la utilización del shampoo placebo.
