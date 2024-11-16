@@ -1,0 +1,45 @@
+---
+title: "Ejercicio propuesto L11"
+author: "Jaime Riquelme"
+date: "2024-11-14"
+output: pdf_document
+---
+
+# Ejercicio propuesto L11
+
+## Enunciado
+
+El conjunto de datos diet del paquete WRS2 contiene datos de la perdida de peso conseguida por tres tipos de dietas, Determina si la perdida de peso conseguida por las muejeres con la diertas A y C es la misma.
+
+## Solución
+
+Cargamos los datos
+
+```{r}
+library(WRS2)
+library(dplyr)
+library(ggpubr)
+data(diet)
+
+#Filtramos los datos
+
+datos <- diet %>% filter(diet.type == "A" | diet.type == "C") %>% select(diet.type, weight.loss)
+datos[["diet.type"]] <- factor(datos[["diet.type"]])
+head(datos)
+```
+
+## Hipótesis
+
+H0: Las medias truncadas de pérdida de peso son iguales para las dietas A y C
+Ha: Las medias truncadas de pérdida de peso no son iguales para las dietas A y C
+
+
+```{r}
+#Se utiliza la prueba de Yuen para dos muestras independientes directamente para fines educativos.
+
+prueba_yuen <- yuen(weight.loss ~ diet.type, data = datos, conf.level = 0.95)
+print(prueba_yuen)
+```
+Como conclusion con el valor de p obtenido siendo este de 0.0014, se rechaza la hipótesis nula, en favor de la alternativa y podemos concluir con un 95% de confianza que las medias truncadas de pérdida de peso no son iguales para las dietas A y C.
+
+
