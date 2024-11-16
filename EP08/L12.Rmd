@@ -1,0 +1,270 @@
+---
+title: "Lectura Capítulo 12.2"
+author: "Jaime Riquelme"
+date: "2024-11-15"
+output: pdf_document
+---
+
+# Remuestreo
+
+Los métodos de remuestreo son una buena alternativa para usar cuando necesitas inferir sobre parámetros distintos a la media o la proporción, o cuando no se cumplen las condiciones requeridas por las pruebas ya conocidas.
+
+Además, algunas de estas pruebas son más precisas que las tradicionales.
+
+## Bootstrapping
+
+En estadística lo ideal es contar con varias muestras grandes, pero a veces solo tenemos una muestra pequeña. Sin embargo, si esta muestra es representativa de la población, podemos aplicar bootstrapping.
+
+En general, si queremos inferir el valor de un parámetro de la población, hasta ahora lo hemos hecho a partir de un estimador puntual.
+
+### Proceso de Bootstrapping
+
+El proceso sigue los siguientes pasos:
+
+1. Crear una gran cantidad B de nuevas muestras (cientos de miles) a partir de la muestra original, llamadas remuestras. Cada remuestra debe tener el mismo tamaño que la original y se construye mediante muestreo con reposición. Esto significa que al momento de elegir un elemento de la muestra original, se devuelve para que pueda volver a ser elegido.
+
+2. Calcular el estadístico de interés para cada una de las remuestras; aquí se usa "*" para indicar que corresponde a un estadístico bootstrap, es decir, obtenido desde una remuestra generada con bootstrapping. Estos estadísticos producen una distribución empírica del estadístico, la que se conoce como distribución bootstrap.
+
+### Implementación en R
+
+En R existen funciones para "replicar" operaciones sobre vectores o matrices, por lo que implementar bootstrapping es sencillo. Además, existen muchos paquetes que implementan numerosas funciones wrapper que entregan interfaces específicas, en teoría más simples para usos comunes.
+
+#### Paquete boot
+
+Uno de los más usados es el paquete `boot`, que ofrece las siguientes funciones:
+
+* `boot(data, statistic, R)`: Para generar una distribución bootstrap de un estadístico
+* `boot.ci(boot.out, conf, type)`: Para calcular intervalos de confianza
+
+Parámetros principales:
+
+- `data`: El conjunto de datos. En caso de matrices y data frame se considera cada fila como una observación
+- `statistic`: Función que se aplica a los datos y devuelve un vector con el o los estadísticos de interés
+- `R`: Número de remuestras a generar
+- `boot.out`: Objeto de la clase boot, generado por la función boot()
+- `conf`: Nivel de confianza deseado
+- `type`: String o vector que indica los tipos de intervalo de confianza a construir:
+  - "norm": Basado en la distribución Z
+  - "perc": Basado en los percentiles
+  - "bca": Para el método BCa
+  
+Tambien existe otra alternativa para contruir la distribucion bootstrap, esta vez por medio del paquete bootES, que ofrece la funcion bootES(data,R, ci.type, ci.conf, plot, ...)
+  
+Ejemplo: Una investigadora Helen Chufe quiere evaluar un nuevo algoritmo de clasificacion, y determinar el tiempo promedio de ejecucion en Ms para isntancias de tamaño fijo del problema. para ello ha realizado pruebas con 10 instancias del problema y registrado los tiempos de ejecucion, presentados a continuacion:
+
+Datos del problema: 
+
+```{r}
+tiempos <- c(79,75,84,75,94,82,76,90,79,88)
+
+datos <- data.frame(tiempos)
+
+print(datos)
+
+
+```
+
+Calculamos el intervalo de confianza del 95% para la media de los tiempos de ejecucion:
+
+```{r}
+library(boot)
+library(bootES)
+
+#Establecemos la cantidad de remuestreos y el nivel de significancia
+
+B <- 2000
+alpha <- 0.05
+
+#Funcion para calcular el estadistico: media de la reuestra
+
+media <- function(valores, i){
+  mean(valores[i])
+}
+
+#Contruir la distribucion bootstrap usando el paquete boot.
+
+set.seed(123)
+
+distribucion_b <- boot(tiempos, statistic = media, R = B)
+
+#Mostrar y graficar la distribucion bootstrap
+
+print(distribucion_b)
+plot(distribucion_b)
+
+#Calcular el intervalo de confianza
+
+ics <- boot.ci(distribucion_b, conf = 1 - alpha,
+               type = c("norm", "perc", "bca"))
+
+print(ics)
+
+#Calculamos utilizando la funcion bootES, esta llamada calcula solo un intervalo de confianza y grafica la distribucion bootstrap
+
+set.seed(125)
+distribucion_bEZ <- bootES(tiempos, R = B, ci.type = "bca", ci.conf = 1 - alpha, plot = TRUE)
+
+print(distribucion_bEZ)
+```
+
+Supongamos que Helen ahora quiere hacer una prueba de hipotesis para ver si el tiempo promedio de ejecucion del algoritmo para instancias del tamaño seleccionado es mayor a 75 ms. asi tenemos que:
+
+H0: mu = 75
+Ha: mu > 75
+
+Para este caso, el calculo del valor p se realiza de la siguiente manera:
+
+$$ P = \frac{r+1}{B+1} $$
+
+donde: 
+
+- r:cantidad de observaciones en la distribucion bootstrap (desplazada) a lo menos tan extremas como el estadistico observado
+- B: cantidad de remuestreos
+
+Realizamos la prueba:
+
+```{r}
+library(boot)
+
+tiempo <- c(79,75,84,75,94,82,76,90,79,88)
+valor_observado <- mean(tiempo)
+
+datos <- data.frame(tiempo)
+
+#Contruir dsitribucion bootstrap
+
+B <- 2000
+
+media <- function(valores, i){
+  mean(valores[i])
+}
+
+set.seed(123)
+
+distribucion_b <- boot(tiempo, statistic = media, R = B)
+
+#Desplazar la distribucion bootstrap para que se centre en el valor nulo.
+
+valor_nulo <- 75
+
+desplazamiento <- mean(distribucion_b$t) - valor_nulo
+distribucion_nula <- distribucion_b$t - desplazamiento
+
+
+#Determinamos el valor de P
+
+p <- (sum(distribucion_nula > valor_observado) + 1) / (B + 1)
+
+print(p)
+```
+Tras hacer la prueba, y obtener un valor de p < 0.001, siendo este menor al nivel de significancia, por lo que la evidencia es suficiente para rechazar la hipotesis nula y concluir que el tiempo promedio de ejecucion del algoritmo es mayor a 75 ms.
+
+Aunque por logica, como el intervalo de confianza no incluye el valor nulo, la prueba de hipotesis tambien deberia rechazar la hipotesis nula.
+
+
+
+## Bootstraping para dos muestras independientes
+
+El proceso para comparar dos poblaciones es similar al de una sola poblacion que ya conocemos.
+Si tenemos dos uestras independientes A y B provenientes de dos poblaciones diferentes, de tamaño $$ n_a $$ y $$ n_b $$ respectivamente, el proceso es el siguiente:
+
+1. Fijar la cantidad B de repeticiones de bootstrap.
+2. En cada repeticion:
+  a) hacer un remuestreo con reposicion de tamaño $$n_A$$ a partir de la muestra A
+  b) hacer un remuestreo con reposicion de tamaño $$n_B$$ a partir de la muestra B
+  c) calcular el estadistico de interes con las remuestras conseguidas.
+3. calcular el intervalo de confianza para el estadistico de interes a partir de la distribucion bootstrap generada.
+
+
+Se usa el paquete simpleboot que facilita la contruccion de distribuciones bootstrap para la diferencia de dos parametros por medio de la funcion wrapper two.boot(sample1,sample2,FUN,R) donde:
+
+- sample1 y sample2: muestras originales
+- FUN: funcion que calcula el estadistico de interes para cada muestra.
+- R: cantidad de remuestreos
+
+la funcion genera un remuestreo para cada una de las muestras originales, y caclulando en cada iteracion el estadistico. 
+
+Ejemplo:
+
+Una universidad desea estudiar la diferencia entre calificaciones finales de hombres y mujeres que rinden una asignatura inicial de programacion por primera vez. Para ello, se disponen de las notas en escala del 1,0 al 7,0 de 27 hombres y 19 mujeres.
+
+Datos del problema:
+
+```{r}
+hombres <- c(1.3, 1.5, 1.6, 1.7, 1.7, 1.9, 2.3, 2.4, 2.6, 2.6, 2.7, 2.8, 3.2, 3.7, 4.1, 4.4, 4.5, 4.8, 5.2, 5.2, 5.3, 5.5, 5.5, 5.6, 5.6, 5.7, 5.7)
+
+mujeres <- c(3.5, 3.6, 3.8, 4.3, 4.5, 4.5, 4.9, 5.1, 5.3, 5.3, 5.5, 5.8, 6.0, 6.3, 6.3, 6.4, 6.4, 6.6, 6.7)
+```
+
+Verificamos normalidad de los datos con un test de shapiro-wilk:
+
+```{r}
+shapiro.test(hombres)
+shapiro.test(mujeres)
+```
+Como podemos ver en el test realizado, las notas de los hombres no siguen una distribucion normal, y además hay una diferencia significativa en la cantidad de muestras para cada grupo. es por eso que realizaremos una prueba de bootstraping para dos muestras independientes.
+
+Primero comenzaremos caclulando el intervalo de confianza del 95% para la diferencia de medias de las notas de hombres y mujeres:
+
+```{r}
+library(simpleboot)
+library(boot)
+library(ggpubr)
+
+n_hombres <- length(hombres)
+n_mujeres <- length(mujeres)
+
+#Calculamos y mostramos la diferencia observada entre las medias muestrales
+
+media_hombres <- mean(hombres)
+media_mujeres <- mean(mujeres)
+
+diferencia_observada <- media_hombres - media_mujeres
+
+cat("Media hombres: ", media_hombres, "\n")
+cat("Media mujeres: ", media_mujeres, "\n")
+cat("Diferencia observada: ", diferencia_observada, "\n")
+
+
+#Crear la distribucion de bootstrap para la diferencia de medias
+
+B <- 9999
+
+set.seed(555)
+distribucion_b <- two.boot(hombres,mujeres,mean,B)
+
+#Examinamos la distribucion bootstrap
+
+datos <- data.frame(diferencias = distribucion_b$t)
+
+g_hist <- gghistogram(datos, x = "diferencias", bins = 100,
+                      xlab = "Diferencias medias",
+                      ylab = "Frecuencia")
+
+g_qq <- ggqqplot(datos, x = "diferencias")
+
+g <- ggarrange(g_hist, g_qq)
+
+print(g)
+
+
+media_b <- mean(datos[["diferencias"]])
+sd_b <- sd(datos[["diferencias"]])
+
+cat("Media bootstrap: ", media_b, "\n")
+cat("Desviacion estandar bootstrap: ", sd_b, "\n")
+
+#Contruimos y mostramos los intervalos de confianza
+
+alpha <- 0.05
+
+intervalo_bca <- boot.ci(distribucion_b,conf = 1-alpha, type = "bca")
+
+print(intervalo_bca)
+```
+
+
+
+
+
+
