@@ -7,13 +7,13 @@ output: pdf_document
 
 # Remuestreo
 
-Los métodos de remuestreo son una buena alternativa para usar cuando necesitas inferir sobre parámetros distintos a la media o la proporción, o cuando no se cumplen las condiciones requeridas por las pruebas ya conocidas.
+Los métodos de remuestreo son una buena alternativa cuando necesitas inferir sobre parámetros distintos a la media o la proporción, o cuando no se cumplen las condiciones requeridas por las pruebas ya conocidas.
 
 Además, algunas de estas pruebas son más precisas que las tradicionales.
 
 ## Bootstrapping
 
-En estadística lo ideal es contar con varias muestras grandes, pero a veces solo tenemos una muestra pequeña. Sin embargo, si esta muestra es representativa de la población, podemos aplicar bootstrapping.
+En estadística, lo ideal es contar con varias muestras grandes, pero a veces solo tenemos una muestra pequeña. Sin embargo, si esta muestra es representativa de la población, podemos aplicar bootstrapping.
 
 En general, si queremos inferir el valor de un parámetro de la población, hasta ahora lo hemos hecho a partir de un estimador puntual.
 
@@ -21,85 +21,83 @@ En general, si queremos inferir el valor de un parámetro de la población, hast
 
 El proceso sigue los siguientes pasos:
 
-1. Crear una gran cantidad B de nuevas muestras (cientos de miles) a partir de la muestra original, llamadas remuestras. Cada remuestra debe tener el mismo tamaño que la original y se construye mediante muestreo con reposición. Esto significa que al momento de elegir un elemento de la muestra original, se devuelve para que pueda volver a ser elegido.
+1. Crear una gran cantidad \( B \) de nuevas muestras (cientos o miles) a partir de la muestra original, llamadas remuestras. Cada remuestra debe tener el mismo tamaño que la original y se construye mediante muestreo con reemplazo. Esto significa que al elegir un elemento de la muestra original, se devuelve para que pueda volver a ser elegido.
 
-2. Calcular el estadístico de interés para cada una de las remuestras; aquí se usa "*" para indicar que corresponde a un estadístico bootstrap, es decir, obtenido desde una remuestra generada con bootstrapping. Estos estadísticos producen una distribución empírica del estadístico, la que se conoce como distribución bootstrap.
+2. Calcular el estadístico de interés para cada una de las remuestras; aquí se usa "*" para indicar que corresponde a un estadístico bootstrap, es decir, obtenido desde una remuestra generada con bootstrapping. Estos estadísticos producen una distribución empírica del estadístico, conocida como distribución bootstrap.
 
 ### Implementación en R
 
-En R existen funciones para "replicar" operaciones sobre vectores o matrices, por lo que implementar bootstrapping es sencillo. Además, existen muchos paquetes que implementan numerosas funciones wrapper que entregan interfaces específicas, en teoría más simples para usos comunes.
+En R existen funciones para "replicar" operaciones sobre vectores o matrices, por lo que implementar bootstrapping es sencillo. Además, existen muchos paquetes que implementan numerosas funciones *wrapper* que entregan interfaces específicas, en teoría más simples para usos comunes.
 
-#### Paquete boot
+#### Paquete `boot`
 
 Uno de los más usados es el paquete `boot`, que ofrece las siguientes funciones:
 
-* `boot(data, statistic, R)`: Para generar una distribución bootstrap de un estadístico
-* `boot.ci(boot.out, conf, type)`: Para calcular intervalos de confianza
+- `boot(data, statistic, R)`: Para generar una distribución bootstrap de un estadístico.
+- `boot.ci(boot.out, conf, type)`: Para calcular intervalos de confianza.
 
 Parámetros principales:
 
-- `data`: El conjunto de datos. En caso de matrices y data frame se considera cada fila como una observación
-- `statistic`: Función que se aplica a los datos y devuelve un vector con el o los estadísticos de interés
-- `R`: Número de remuestras a generar
-- `boot.out`: Objeto de la clase boot, generado por la función boot()
-- `conf`: Nivel de confianza deseado
+- `data`: El conjunto de datos. En caso de matrices y data frames se considera cada fila como una observación.
+- `statistic`: Función que se aplica a los datos y devuelve un vector con el o los estadísticos de interés.
+- `R`: Número de remuestras a generar.
+- `boot.out`: Objeto de la clase `boot`, generado por la función `boot()`.
+- `conf`: Nivel de confianza deseado.
 - `type`: String o vector que indica los tipos de intervalo de confianza a construir:
-  - "norm": Basado en la distribución Z
-  - "perc": Basado en los percentiles
-  - "bca": Para el método BCa
-  
-Tambien existe otra alternativa para contruir la distribucion bootstrap, esta vez por medio del paquete bootES, que ofrece la funcion bootES(data,R, ci.type, ci.conf, plot, ...)
-  
-Ejemplo: Una investigadora Helen Chufe quiere evaluar un nuevo algoritmo de clasificacion, y determinar el tiempo promedio de ejecucion en Ms para isntancias de tamaño fijo del problema. para ello ha realizado pruebas con 10 instancias del problema y registrado los tiempos de ejecucion, presentados a continuacion:
+  - `"norm"`: Basado en la distribución Z.
+  - `"perc"`: Basado en los percentiles.
+  - `"bca"`: Para el método BCa.
 
-Datos del problema: 
+También existe otra alternativa para construir la distribución bootstrap, esta vez por medio del paquete `bootES`, que ofrece la función `bootES(data, R, ci.type, ci.conf, plot, ...)`.
+
+**Ejemplo:** Una investigadora, Helen Chufe, quiere evaluar un nuevo algoritmo de clasificación y determinar el tiempo promedio de ejecución en ms para instancias de tamaño fijo del problema. Para ello ha realizado pruebas con 10 instancias del problema y registrado los tiempos de ejecución, presentados a continuación:
+
+Datos del problema:
 
 ```{r}
-tiempos <- c(79,75,84,75,94,82,76,90,79,88)
+tiempos <- c(79, 75, 84, 75, 94, 82, 76, 90, 79, 88)
 
 datos <- data.frame(tiempos)
 
 print(datos)
-
-
 ```
 
-Calculamos el intervalo de confianza del 95% para la media de los tiempos de ejecucion:
+Calculamos el intervalo de confianza del 95% para la media de los tiempos de ejecución:
 
 ```{r}
 library(boot)
 library(bootES)
 
-#Establecemos la cantidad de remuestreos y el nivel de significancia
+# Establecemos la cantidad de remuestreos y el nivel de significancia
 
 B <- 2000
 alpha <- 0.05
 
-#Funcion para calcular el estadistico: media de la reuestra
+# Función para calcular el estadístico: media de la remuestra
 
-media <- function(valores, i){
+media <- function(valores, i) {
   mean(valores[i])
 }
 
-#Contruir la distribucion bootstrap usando el paquete boot.
+# Construir la distribución bootstrap usando el paquete boot.
 
 set.seed(123)
 
 distribucion_b <- boot(tiempos, statistic = media, R = B)
 
-#Mostrar y graficar la distribucion bootstrap
+# Mostrar y graficar la distribución bootstrap
 
 print(distribucion_b)
 plot(distribucion_b)
 
-#Calcular el intervalo de confianza
+# Calcular el intervalo de confianza
 
 ics <- boot.ci(distribucion_b, conf = 1 - alpha,
                type = c("norm", "perc", "bca"))
 
 print(ics)
 
-#Calculamos utilizando la funcion bootES, esta llamada calcula solo un intervalo de confianza y grafica la distribucion bootstrap
+# Calculamos utilizando la función bootES, esta llamada calcula solo un intervalo de confianza y grafica la distribución bootstrap
 
 set.seed(125)
 distribucion_bEZ <- bootES(tiempos, R = B, ci.type = "bca", ci.conf = 1 - alpha, plot = TRUE)
@@ -107,86 +105,83 @@ distribucion_bEZ <- bootES(tiempos, R = B, ci.type = "bca", ci.conf = 1 - alpha,
 print(distribucion_bEZ)
 ```
 
-Supongamos que Helen ahora quiere hacer una prueba de hipotesis para ver si el tiempo promedio de ejecucion del algoritmo para instancias del tamaño seleccionado es mayor a 75 ms. asi tenemos que:
+Supongamos que Helen ahora quiere hacer una prueba de hipótesis para ver si el tiempo promedio de ejecución del algoritmo para instancias del tamaño seleccionado es mayor a 75 ms. Así tenemos que:
 
-H0: mu = 75
-Ha: mu > 75
+H0: \(\mu = 75\)
+Ha: \(\mu > 75\)
 
-Para este caso, el calculo del valor p se realiza de la siguiente manera:
+Para este caso, el cálculo del valor p se realiza de la siguiente manera:
 
 $$ P = \frac{r+1}{B+1} $$
 
-donde: 
+donde:
 
-- r:cantidad de observaciones en la distribucion bootstrap (desplazada) a lo menos tan extremas como el estadistico observado
-- B: cantidad de remuestreos
+- \( r \): cantidad de observaciones en la distribución bootstrap (desplazada) a lo menos tan extremas como el estadístico observado.
+- \( B \): cantidad de remuestreos.
 
 Realizamos la prueba:
 
 ```{r}
 library(boot)
 
-tiempo <- c(79,75,84,75,94,82,76,90,79,88)
-valor_observado <- mean(tiempo)
+tiempos <- c(79, 75, 84, 75, 94, 82, 76, 90, 79, 88)
+valor_observado <- mean(tiempos)
 
-datos <- data.frame(tiempo)
+datos <- data.frame(tiempos)
 
-#Contruir dsitribucion bootstrap
+# Construir distribución bootstrap
 
 B <- 2000
 
-media <- function(valores, i){
+media <- function(valores, i) {
   mean(valores[i])
 }
 
 set.seed(123)
 
-distribucion_b <- boot(tiempo, statistic = media, R = B)
+distribucion_b <- boot(tiempos, statistic = media, R = B)
 
-#Desplazar la distribucion bootstrap para que se centre en el valor nulo.
+# Desplazar la distribución bootstrap para que se centre en el valor nulo.
 
 valor_nulo <- 75
 
 desplazamiento <- mean(distribucion_b$t) - valor_nulo
 distribucion_nula <- distribucion_b$t - desplazamiento
 
-
-#Determinamos el valor de P
+# Determinamos el valor de P
 
 p <- (sum(distribucion_nula > valor_observado) + 1) / (B + 1)
 
 print(p)
 ```
-Tras hacer la prueba, y obtener un valor de p < 0.001, siendo este menor al nivel de significancia, por lo que la evidencia es suficiente para rechazar la hipotesis nula y concluir que el tiempo promedio de ejecucion del algoritmo es mayor a 75 ms.
 
-Aunque por logica, como el intervalo de confianza no incluye el valor nulo, la prueba de hipotesis tambien deberia rechazar la hipotesis nula.
+Tras hacer la prueba, y obtener un valor de p < 0.001, siendo este menor al nivel de significancia, por lo que la evidencia es suficiente para rechazar la hipótesis nula y concluir que el tiempo promedio de ejecución del algoritmo es mayor a 75 ms.
 
+Aunque por lógica, como el intervalo de confianza no incluye el valor nulo, la prueba de hipótesis también debería rechazar la hipótesis nula.
 
+## Bootstrapping para dos muestras independientes
 
-## Bootstraping para dos muestras independientes
+El proceso para comparar dos poblaciones es similar al de una sola población que ya conocemos.
+Si tenemos dos muestras independientes A y B provenientes de dos poblaciones diferentes, de tamaño \( n_A \) y \( n_B \) respectivamente, el proceso es el siguiente:
 
-El proceso para comparar dos poblaciones es similar al de una sola poblacion que ya conocemos.
-Si tenemos dos uestras independientes A y B provenientes de dos poblaciones diferentes, de tamaño $$ n_a $$ y $$ n_b $$ respectivamente, el proceso es el siguiente:
+1. Fijar la cantidad \( B \) de repeticiones de bootstrap.
+2. En cada repetición:
+  a) hacer un remuestreo con reemplazo de tamaño \( n_A \) a partir de la muestra A.
+  b) hacer un remuestreo con reemplazo de tamaño \( n_B \) a partir de la muestra B.
+  c) calcular el estadístico de interés con las remuestras conseguidas.
+3. Calcular el intervalo de confianza para el estadístico de interés a partir de la distribuci��n bootstrap generada.
 
-1. Fijar la cantidad B de repeticiones de bootstrap.
-2. En cada repeticion:
-  a) hacer un remuestreo con reposicion de tamaño $$n_A$$ a partir de la muestra A
-  b) hacer un remuestreo con reposicion de tamaño $$n_B$$ a partir de la muestra B
-  c) calcular el estadistico de interes con las remuestras conseguidas.
-3. calcular el intervalo de confianza para el estadistico de interes a partir de la distribucion bootstrap generada.
+Se usa el paquete `simpleboot` que facilita la construcción de distribuciones bootstrap para la diferencia de dos parámetros por medio de la función *wrapper* `two.boot(sample1, sample2, FUN, R)` donde:
 
+- `sample1` y `sample2`: muestras originales.
+- `FUN`: función que calcula el estadístico de interés para cada muestra.
+- `R`: cantidad de remuestreos.
 
-Se usa el paquete simpleboot que facilita la contruccion de distribuciones bootstrap para la diferencia de dos parametros por medio de la funcion wrapper two.boot(sample1,sample2,FUN,R) donde:
+La función genera un remuestreo para cada una de las muestras originales, y calculando en cada iteración el estadístico.
 
-- sample1 y sample2: muestras originales
-- FUN: funcion que calcula el estadistico de interes para cada muestra.
-- R: cantidad de remuestreos
+**Ejemplo:**
 
-la funcion genera un remuestreo para cada una de las muestras originales, y caclulando en cada iteracion el estadistico. 
-
-Ejemplo:
-
-Una universidad desea estudiar la diferencia entre calificaciones finales de hombres y mujeres que rinden una asignatura inicial de programacion por primera vez. Para ello, se disponen de las notas en escala del 1,0 al 7,0 de 27 hombres y 19 mujeres.
+Una universidad desea estudiar la diferencia entre calificaciones finales de hombres y mujeres que rinden una asignatura inicial de programación por primera vez. Para ello, se disponen de las notas en escala del 1,0 al 7,0 de 27 hombres y 19 mujeres.
 
 Datos del problema:
 
@@ -196,15 +191,16 @@ hombres <- c(1.3, 1.5, 1.6, 1.7, 1.7, 1.9, 2.3, 2.4, 2.6, 2.6, 2.7, 2.8, 3.2, 3.
 mujeres <- c(3.5, 3.6, 3.8, 4.3, 4.5, 4.5, 4.9, 5.1, 5.3, 5.3, 5.5, 5.8, 6.0, 6.3, 6.3, 6.4, 6.4, 6.6, 6.7)
 ```
 
-Verificamos normalidad de los datos con un test de shapiro-wilk:
+Verificamos normalidad de los datos con un test de Shapiro-Wilk:
 
 ```{r}
 shapiro.test(hombres)
 shapiro.test(mujeres)
 ```
-Como podemos ver en el test realizado, las notas de los hombres no siguen una distribucion normal, y además hay una diferencia significativa en la cantidad de muestras para cada grupo. es por eso que realizaremos una prueba de bootstraping para dos muestras independientes.
 
-Primero comenzaremos caclulando el intervalo de confianza del 95% para la diferencia de medias de las notas de hombres y mujeres:
+Como podemos ver en el test realizado, las notas de los hombres no siguen una distribución normal, y además hay una diferencia significativa en la cantidad de muestras para cada grupo. Es por eso que realizaremos una prueba de bootstrapping para dos muestras independientes.
+
+Primero comenzaremos calculando el intervalo de confianza del 95% para la diferencia de medias de las notas de hombres y mujeres:
 
 ```{r}
 library(simpleboot)
@@ -214,7 +210,7 @@ library(ggpubr)
 n_hombres <- length(hombres)
 n_mujeres <- length(mujeres)
 
-#Calculamos y mostramos la diferencia observada entre las medias muestrales
+# Calculamos y mostramos la diferencia observada entre las medias muestrales
 
 media_hombres <- mean(hombres)
 media_mujeres <- mean(mujeres)
@@ -225,15 +221,14 @@ cat("Media hombres: ", media_hombres, "\n")
 cat("Media mujeres: ", media_mujeres, "\n")
 cat("Diferencia observada: ", diferencia_observada, "\n")
 
-
-#Crear la distribucion de bootstrap para la diferencia de medias
+# Crear la distribución de bootstrap para la diferencia de medias
 
 B <- 9999
 
 set.seed(555)
-distribucion_b <- two.boot(hombres,mujeres,mean,B)
+distribucion_b <- two.boot(hombres, mujeres, mean, B)
 
-#Examinamos la distribucion bootstrap
+# Examinamos la distribución bootstrap
 
 datos <- data.frame(diferencias = distribucion_b$t)
 
@@ -247,24 +242,470 @@ g <- ggarrange(g_hist, g_qq)
 
 print(g)
 
-
 media_b <- mean(datos[["diferencias"]])
 sd_b <- sd(datos[["diferencias"]])
 
 cat("Media bootstrap: ", media_b, "\n")
-cat("Desviacion estandar bootstrap: ", sd_b, "\n")
+cat("Desviación estándar bootstrap: ", sd_b, "\n")
 
-#Contruimos y mostramos los intervalos de confianza
+# Construimos y mostramos los intervalos de confianza
 
 alpha <- 0.05
 
-intervalo_bca <- boot.ci(distribucion_b,conf = 1-alpha, type = "bca")
+intervalo_bca <- boot.ci(distribucion_b, conf = 1 - alpha, type = "bca")
 
 print(intervalo_bca)
 ```
 
+Luego de realizar los cálculos utilizando las funciones de R, podemos comprobar que los intervalos de confianza se encuentran entre -2.352 y -0.872.
+
+Por otro lado, si quisiéramos contrastar una prueba de hipótesis, por ejemplo, si queremos comprobar si la diferencia entre calificaciones finales entre hombres y mujeres es mayor a 5 décimas, a favor de las mujeres, sería del tipo
+
+**Hipótesis**
+
+H0 : \( \mu_h - \mu_m = -0.5 \)
+Ha : \( \mu_h - \mu_m < -0.5 \)
+
+Realizamos el cálculo del valor de p.
+
+```{r}
+# Desplazamos la distribución bootstrap para que se centre en el valor nulo
+
+valor_nulo <- -0.5
+
+desplazamiento <- media_b - valor_nulo
+
+distri_nula <- datos[["diferencias"]] - desplazamiento
+
+# Calculamos el valor de p
+
+p <- (sum(distri_nula < diferencia_observada) + 1) / (B + 1)
+
+cat("Valor de p: ", p, "\n")
+```
+
+Luego de calcular el valor de p, siendo este < 0.001, podemos concluir que la evidencia es suficiente para rechazar la hipótesis nula y concluir que la diferencia entre las calificaciones finales de hombres y mujeres es mayor a 5 décimas a favor de las mujeres.
+
+## Bootstrapping para dos muestras apareadas
+
+Para este procedimiento, a partir de las dos muestras, se crea una nueva muestra con la diferencia entre ambas, y luego se realiza el proceso para la construcción de un intervalo de confianza para el caso de una única muestra que ya vimos anteriormente.
+
+**Ejemplo:**
+
+Ahora la universidad del ejemplo anterior desea saber si la diferencia entre las calificaciones obtenidas en la primera y la segunda prueba de un curso inicial de programación es de 5 décimas. Para ello dispone de las siguientes calificaciones en escala de 1 a 8 obtenidas en ambas pruebas para una muestra de 20 estudiantes.
+
+Datos del problema:
+
+```{r}
+# Datos de las pruebas
+prueba_1 <- c(3.5, 2.7, 1.0, 1.8, 1.6, 4.3, 5.8, 6.4, 3.9, 4.3, 3.4, 5.3, 5.8, 5.3, 2.0, 1.3, 4.0, 5.3, 1.6, 3.6)
+prueba_2 <- c(5.2, 5.1, 5.9, 4.8, 1.4, 2.3, 6.8, 5.3, 3.1, 3.8, 4.6, 1.2, 3.9, 2.0, 1.7, 3.3, 6.0, 4.8, 6.9, 1.3)
+```
+
+La prueba se realizará con un nivel de significancia del 0.05.
+Así mismo se forman las siguientes hipótesis.
+
+Sea \( P_1 \) la calificación de la primera prueba y \( P_2 \) la calificación de la segunda prueba, además sea \( D = P_2 - P_1 \) la diferencia de estas calificaciones para cada estudiante, con media \( \mu_D \). Entonces:
+
+H0: \( \mu_D = 0.5 \)
+Ha: \( \mu_D \neq 0.5 \)
+
+Realizamos el cálculo del intervalo de confianza y la prueba de hipótesis.
+
+```{r}
+library(bootES)
+
+set.seed(345)
+
+# Calculamos la diferencia entre las calificaciones
+
+diferencias <- prueba_2 - prueba_1
+
+# Calculamos la media observada de las diferencias
+
+media_observada <- mean(diferencias)
+
+# Generamos la distribución de bootstrap y el intervalo de confianza
+
+B <- 3999
+alpha <- 0.05
+
+# Creamos la distribución bootstrap
+
+distribucion_ES <- bootES(diferencias, R = B,
+                          ci.type = "bca",
+                          ci.conf = 1 - alpha,
+                          plot = FALSE)
+
+# Desplazamos la distribución bootstrap para que se centre en el valor nulo y reflejar la hipótesis nula.
+
+valor_nulo <- 0.5
+desplazamiento <- mean(distribucion_ES$t) - valor_nulo
+distribucion_nula <- distribucion_ES$t - desplazamiento
+
+# Determinamos el valor de p
+
+p <- (sum(abs(distribucion_nula) > abs(media_observada)) + 1) / (B + 1)
+
+# Mostramos los resultados
+
+cat("Media observada: ", media_observada, "\n")
+cat("Distribución bootstrap: ", "\n")
+print(distribucion_ES)
+cat("Valor de p: ", p, "\n")
+```
+
+Luego de realizar los cálculos, obteniendo un valor de p de 0.68825, siendo este mayor al nivel de significancia, por lo cual podemos concluir que no contamos con suficiente evidencia para rechazar la hipótesis nula, y por lo tanto no podemos afirmar que la diferencia entre las calificaciones obtenidas en la primera y segunda prueba sea de 5 décimas.
+
+# Pruebas de permutaciones
+
+Esta prueba pertenece al grupo conocido como pruebas exactas de permutaciones, cuyo único requisito es la intercambiabilidad, donde si se cumple la hipótesis nula, todas las permutaciones pueden ocurrir con igual probabilidad.
+
+Las pruebas exactas de permutaciones para la diferencia entre grupos A y B de tamaño \( n_A \) y \( n_B \) respectivamente, siguen los siguientes pasos:
+
+1. Calcular la diferencia entre el estadístico de interés observado para ambos grupos.
+2. Juntar ambas muestras en una muestra combinada.
+3. Obtener todas las formas de separar la muestra combinada en dos grupos de tamaños \( n_A \) y \( n_B \).
+4. Construir la distribución de las diferencias entre el estadístico de interés obtenido para ambos grupos en cada una de las permutaciones.
+5. Calcular el valor p exacto, dado por la proporción de permutaciones en que el valor (absoluto si es bilateral) de la diferencia calculada es menor/mayor o igual al valor de la diferencia observada.
+
+Como estas pruebas requieren realizar una enorme cantidad de cómputos, en consecuencia, si la muestra es grande, suele tomarse una muestra aleatoria de las permutaciones posibles, y a partir de ella calcular un valor de p aproximado.
+
+Estas pruebas suelen llamarse pruebas de permutaciones o pruebas de permutaciones de Monte Carlo. Estas pruebas son adecuadas para el contraste de hipótesis con dos o más muestras, ya que determinan una significación estadística.
+
+Estas no son muy distintas a las de bootstrapping, aunque hay diferencias fundamentales.
+
+1. Formular las hipótesis a contrastar e identificar el estadístico de interés.
+2. Crear una gran cantidad \( P^3 \) de permutaciones de las muestras originales, usando muestreo sin reemplazo sobre la muestra combinada, y obtener el estadístico para cada permutación.
+3. Generar la distribución del estadístico (bajo el supuesto que la hipótesis nula es cierta).
+4. Determinar la probabilidad de encontrar en la distribución generada un valor de estadístico tan extremo como el observado en las muestras originales.
+
+Importante que a diferencia de bootstrapping, las pruebas de permutaciones usan muestreo sin reposicion.
+
+## Prueba de permutaciones para dos muestras independientes
+
+Consideremos un ejemplo donde un profesor de programación quiere estudiar si existen diferencias en el rendimiento académico entre estudiantes de primer año de Ingeniería (n = 20) y estudiantes de último año de otras carreras (n = 12) que toman su curso como electivo.
+
+### Primera hipótesis: Comparación de medias
+
+Primero, el profesor desea comparar el promedio de calificaciones entre ambos grupos:
+
+H₀: μA - μB = 0
+H₁: μA - μB ≠ 0
+
+Donde:
+- μA = promedio de calificaciones de estudiantes de Ingeniería
+- μB = promedio de calificaciones de otras carreras
+
+Tras verificar que no se cumple la condición de normalidad mediante la prueba de Shapiro-Wilk, procedemos con la prueba de permutaciones usando P = 5999 repeticiones y α = 0.05.
+
+El proceso implica:
+1. Calcular la diferencia de medias observada
+2. Generar permutaciones de la muestra combinada
+3. Calcular el estadístico para cada permutación
+4. Obtener el valor p comparando la distribución generada con el valor observado
+
+```{r}
+library(ggpubr)
+library(ez)
+
+# Datos del ejemplo
+ingenieria <- c(5.4, 4.7, 6.3, 2.9, 5.9, 5.1, 2.1, 6.2, 1.6, 6.7, 3.0, 3.3,
+                5.0, 4.1, 3.3, 3.4, 1.2, 3.8, 5.8, 4.2)
+otras_carreras <- c(4.0, 4.1, 4.3, 4.3, 4.3, 4.2, 4.3, 4.3, 4.4, 4.1, 4.3, 4.0)
+
+# Parámetros generales
+set.seed(432)
+P <- 5999  # Número de permutaciones
+alpha <- 0.05
 
 
 
+# Verificar normalidad
+cat("Test de Shapiro-Wilk para normalidad:\n")
+print(shapiro.test(ingenieria))
+print(shapiro.test(otras_carreras))
+
+# Funciones auxiliares para permutaciones
+obtiene_permutacion <- function(i, muestra_1, muestra_2) {
+  n_1 <- length(muestra_1)
+  combinada <- c(muestra_1, muestra_2)
+  n <- length(combinada)
+  permutacion <- sample(combinada, n, replace = FALSE)
+  nueva_1 <- permutacion[1:n_1]
+  nueva_2 <- permutacion[(n_1+1):n]
+  return(list(nueva_1, nueva_2))
+}
+
+calcular_diferencia <- function(muestras, FUN) {
+  muestra_1 <- muestras[[1]]
+  muestra_2 <- muestras[[2]]
+  diferencia <- FUN(muestra_1) - FUN(muestra_2)
+  return(diferencia)
+}
+
+# Estadístico observado para medias
+media_ing <- mean(ingenieria)
+media_otras <- mean(otras_carreras)
+diferencia_observada <- media_ing - media_otras
+
+cat("\nPrueba para diferencia de medias:")
+cat("\nMedia Ingeniería:", media_ing)
+cat("\nMedia Otras Carreras:", media_otras)
+cat("\nDiferencia observada:", diferencia_observada, "\n")
+
+# Generar distribución de permutaciones para medias
+permutaciones <- lapply(1:P, obtiene_permutacion, ingenieria, otras_carreras)
+distribucion_medias <- sapply(permutaciones, calcular_diferencia, mean)
+
+# Visualización para medias
+datos_dist <- data.frame(valor = distribucion_medias)
+g1 <- gghistogram(datos_dist, x = "valor", 
+                  color = "blue", fill = "blue",
+                  xlab = "Diferencia de medias",
+                  ylab = "Frecuencia",
+                  bins = 30)
+g2 <- ggqqplot(datos_dist, x = "valor")
+figura_medias <- ggarrange(g1, g2, ncol = 2)
+print(figura_medias)
+
+# Valor p para medias
+p_medias <- (sum(abs(distribucion_medias) > abs(diferencia_observada)) + 1) / (P + 1)
+cat("\nValor p para diferencia de medias:", p_medias, "\n")
+```
+
+Tras realizar la prueba, obtenemos p = 0.969 > α, por lo que concluimos con 95% de confianza que no hay evidencia suficiente para creer que existe diferencia entre los promedios de calificaciones de ambos grupos.
 
 
+### Segunda hipótesis: Comparación de varianzas
+
+Intrigado por este resultado, el profesor decide estudiar si existe diferencia en la variabilidad de las calificaciones:
+
+H₀: σ²A - σ²B = 0
+H₁: σ²A - σ²B ≠ 0
+
+Donde:
+- σ²A = varianza de calificaciones de estudiantes de Ingeniería
+- σ²B = varianza de calificaciones de otras carreras
+
+```{r}
+# Estadístico observado para varianzas
+var_ing <- var(ingenieria)
+var_otras <- var(otras_carreras)
+diferencia_observada_var <- var_ing - var_otras
+
+cat("\nPrueba para diferencia de varianzas:")
+cat("\nVarianza Ingeniería:", var_ing)
+cat("\nVarianza Otras Carreras:", var_otras)
+cat("\nDiferencia observada:", diferencia_observada_var, "\n")
+
+# Generar distribución de permutaciones para varianzas
+distribucion_var <- sapply(permutaciones, calcular_diferencia, var)
+
+# Visualización para varianzas
+datos_dist_var <- data.frame(valor = distribucion_var)
+g3 <- gghistogram(datos_dist_var, x = "valor", 
+                  color = "red", fill = "red",
+                  xlab = "Diferencia de varianzas",
+                  ylab = "Frecuencia",
+                  bins = 30)
+g4 <- ggqqplot(datos_dist_var, x = "valor")
+figura_var <- ggarrange(g3, g4, ncol = 2)
+print(figura_var)
+
+# Valor p para varianzas
+p_var <- (sum(abs(distribucion_var) > abs(diferencia_observada_var)) + 1) / (P + 1)
+cat("\nValor p para diferencia de varianzas:", p_var, "\n")
+```
+
+
+Usando el mismo procedimiento pero ahora con la varianza como estadístico de interés, obtenemos p = 0.003 < α, por lo que rechazamos H₀ en favor de H₁. 
+
+Concluimos con 95% de confianza que la variabilidad en las calificaciones es significativamente diferente entre los grupos, siendo mayor en los estudiantes de Ingeniería, lo que confirma la percepción inicial del profesor sobre la mayor dispersión en el rendimiento de este grupo.
+
+
+
+## Prueba de permutaciones para más de dos muestras correlacionadas
+
+En este ejemplo, un estudiante desea evaluar tres algoritmos de ordenamiento (Quicksort, Bubblesort y Mergesort) para determinar el tiempo promedio de ejecución en milisegundos. Ha seleccionado 6 arreglos de igual tamaño y registrado el tiempo de ejecución de cada algoritmo bajo las mismas condiciones.
+
+### Primera hipótesis: Comparación global de medias
+
+Verificamos primero si hay diferencias significativas entre los tiempos promedios de los tres algoritmos:
+
+Sean $$Q_i, B_i, M_i$$ los tiempos de ejecución del i-ésimo arreglo para Quicksort, Bubblesort y Mergesort, respectivamente. Denotamos (Y - X) al conjunto {Y_i - X_i} para cualquier par de algoritmos X e Y.
+
+H₀: En promedio,no hay diferencias en el tiempo de ejecucion necesitado por cada algoritmo de ordenamiento para ordenar las mismas instancias.
+Matematicamente: $$ (Mu)_{B - Q} = (Mu)_{M - Q} = (Mu)_{M - B} = 0 $$
+H₁: La media de las diferencias en el tiempo de ejecucion necesitado para ordenar las mismas instancioas es diferente para al menos un par de alrotimos.
+Matematicamente: $$ E X,Y \in {Q, B, M} (Mu)_{Y - X} \neq 0 $$
+
+Procedimiento:
+1. Calculamos el estadístico F observado (similar a ANOVA)
+2. Para cada permutación:
+   - Permutamos los tiempos dentro de cada instancia
+   - Calculamos el estadístico F
+3. Generamos la distribución del estadístico bajo H₀
+4. Calculamos el valor p
+
+```{r}
+library(ggpubr)
+library(ez)
+library(tidyverse)
+
+# Datos de los tres algoritmos
+quicksort <- c(11.2, 22.6, 23.4, 23.3, 21.8, 40.1)
+bubblesort <- c(15.7, 29.3, 30.7, 30.8, 29.8, 50.3)
+mergesort <- c(12.0, 25.7, 25.7, 23.7, 25.5, 44.7)
+instancia <- factor(1:6)
+
+# Crear dataframe en formato ancho y largo
+datos_anchos <- data.frame(Instancia = instancia, 
+                          Quicksort = quicksort, 
+                          Bubblesort = bubblesort, 
+                          Mergesort = mergesort)
+
+datos_largos <- datos_anchos %>% 
+  pivot_longer(c("Quicksort", "Bubblesort", "Mergesort"),
+              names_to = "Algoritmo",
+              values_to = "Tiempo")
+
+datos_largos$Algoritmo <- factor(datos_largos$Algoritmo)
+
+# Verificar normalidad
+g <- ggqqplot(datos_largos, "Tiempo", facet.by = "Algoritmo",
+              color = "Algoritmo")
+print(g)
+```
+Como se puede apreciar en los graficos, podemos confirmar que no se sigue la condicion de normalidad para los datos, es por eso que se procede a realizar una prueba de permutaciones para más de dos muestras correlacionadas.
+
+```{r}
+# Parámetros
+set.seed(432)
+P <- 2999  # número de permutaciones
+alpha <- 0.01  # nivel de significación
+
+# Obtener el valor observado, correspondiente al estadístico F entregado
+# por ANOVA para la muestra original.
+anova <- ezANOVA(datos_largos, dv = Tiempo, within = Algoritmo,
+                 wid = Instancia)
+valor_observado <- anova[["ANOVA"]][["F"]]
+
+# Función para obtener una permutación.
+# Devuelve una matriz de datos con formato ancho.
+obtiene_permutacion <- function(i, df_ancho) {
+    df_ancho[, 2:4] <- t(apply(df_ancho[, 2:4], 1, sample))
+    return(df_ancho)
+}
+
+# Obtiene permutaciones
+R <- 2999
+set.seed(432)
+permutaciones <- lapply(1:R, obtiene_permutacion, datos_anchos)
+
+# Función para obtener el estadístico F para una matriz de datos con
+# formato ancho.
+obtiene_F <- function(df_ancho) {
+    df_largo <- df_ancho %>%
+        pivot_longer(c("Quicksort", "Bubblesort", "Mergesort"),
+                    names_to = "Algoritmo",
+                    values_to = "Tiempo")
+    
+    df_largo[["Algoritmo"]] <- factor(df_largo[["Algoritmo"]])
+    
+    anova <- ezANOVA(df_largo, dv = Tiempo, within = Algoritmo,
+                     wid = Instancia)
+    
+    return(anova[["ANOVA"]][["F"]])
+}
+
+# Genera distribución de estadísticos F con las permutaciones.
+distribucion <- sapply(permutaciones, obtiene_F)
+
+# Obtener y mostrar el valor p.
+p <- (sum(distribucion > valor_observado) + 1) / (R + 1)
+cat("ANOVA de una vía para muestras pareadas con permutaciones:\n")
+cat("Valor p ómnibus:", p, "\n")
+
+```
+Con P = 2999 permutaciones y α = 0.01, obtenemos p < 0.001, lo que indica que existen diferencias significativas entre los algoritmos. Por lo tanto, rechazamos la hipótesis nula y concluimos que al menos un par de algoritmos difiere en el tiempo de ejecución promedio.
+
+### Análisis post-hoc
+
+Dado que encontramos diferencias significativas, realizamos comparaciones por pares para identificar entre cuáles algoritmos existen estas diferencias:
+
+```{r}
+# Análisis post-hoc.
+
+# Función para calcular la media de las diferencias para dos columnas de una
+# matriz de datos en formato ancho.
+obtiene_media_difs <- function(df_ancho, columna_1, columna_2) {
+    media <- mean(df_ancho[[columna_1]] - df_ancho[[columna_2]])
+    return(media)
+}
+
+# Obtiene las medias de las diferencias observadas
+dif_obs_Q_B <- obtiene_media_difs(datos_anchos, "Quicksort", "Bubblesort")
+dif_obs_Q_M <- obtiene_media_difs(datos_anchos, "Quicksort", "Mergesort")
+dif_obs_B_M <- obtiene_media_difs(datos_anchos, "Bubblesort", "Mergesort")
+
+# Obtiene las distribuciones de las medias de las diferencias permutadas
+dist_medias_difs_Q_B <- sapply(permutaciones, obtiene_media_difs,
+                              "Quicksort", "Bubblesort")
+dist_medias_difs_Q_M <- sapply(permutaciones, obtiene_media_difs,
+                              "Quicksort", "Mergesort")
+dist_medias_difs_B_M <- sapply(permutaciones, obtiene_media_difs,
+                              "Bubblesort", "Mergesort")
+
+# Obtener valores p.
+num <- sum(abs(dist_medias_difs_Q_B) > abs(dif_obs_Q_B)) + 1
+den <- R + 1
+p_Q_B <- num / den
+
+num <- sum(abs(dist_medias_difs_Q_M) > abs(dif_obs_Q_M)) + 1
+den <- R + 1
+p_Q_M <- num / den
+
+num <- sum(abs(dist_medias_difs_B_M) > abs(dif_obs_B_M)) + 1
+den <- R + 1
+p_B_M <- num / den
+
+valores_p <- c(p_Q_B, p_Q_M, p_B_M)
+
+# Ajustar y mostrar valores p
+valores_p_adj <- p.adjust(valores_p, method = "BH")
+
+cat("\n\n")
+cat("Análisis post-hoc (permutaciones) para la diferencia de las medias\n")
+cat("-----------------------------------------------------------\n")
+cat("Valores p ajustados:\n")
+cat(sprintf("Quicksort - Bubblesort: %.3f\n", valores_p_adj[1]))
+cat(sprintf("Quicksort - Mergesort: %.3f\n", valores_p_adj[2]))
+cat(sprintf("Bubblesort - Mergesort: %.3f\n", valores_p_adj[3]))
+
+cat("\nDiferencias observadas:\n")
+cat(sprintf("Quicksort - Bubblesort: %6.3f\n", dif_obs_Q_B))
+cat(sprintf("Quicksort - Mergesort: %6.3f\n", dif_obs_Q_M))
+cat(sprintf("Bubblesort - Mergesort: %6.3f\n", dif_obs_B_M))
+```
+
+
+1. Quicksort vs Bubblesort:
+   - Diferencia observada: -7.367 ms
+   - Valor p: 0.001 < α
+   - Conclusión: Diferencia significativa
+
+2. Quicksort vs Mergesort:
+   - Diferencia observada: -2.483 ms
+   - Valor p: 0.266 > α
+   - Conclusión: No hay diferencia significativa
+
+3. Bubblesort vs Mergesort:
+   - Diferencia observada: 4.883 ms
+   - Valor p: 0.003 < α
+   - Conclusión: Diferencia significativa
+
+Conclusiones:
+- Bubblesort es significativamente más lento que los otros dos algoritmos
+- No hay diferencia significativa entre Quicksort y Mergesort
+- Quicksort y Mergesort son más eficientes que Bubblesort para las instancias probadas
