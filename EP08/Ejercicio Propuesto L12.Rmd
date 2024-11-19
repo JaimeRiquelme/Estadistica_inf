@@ -1,0 +1,85 @@
+---
+title: "Ejercicio practico L12"
+author: "Jaime Riquelme"
+date: "2024-11-16"
+output: pdf_document
+---
+
+## Ejercicio practico 12.10
+
+Enunciado: Considera el conjunto de datos "essays" descrito en la pregunta 12.2, Determina, a traves de remuestro con bootstrapping, si las y los estudiantes del grupo de control pudieron mejorar la tasa de errores cometidos en el tercer ensayo respecto al segundo.
+
+Cargamos los datos
+
+```{r}
+library(WRS2)
+data(essays)
+head(essays)
+```
+Ahora filtramos los datos para obtener solo los estudiantes del grupo control y los ensayos 2 y 3
+
+```{r}
+library(dplyr)
+
+datos_filtrados <- essays %>% filter(group == "Control", essay == "essay2" | essay == "essay3")
+
+ensayo2 <- datos_filtrados %>% filter(essay == "essay2") %>% pull(errorRatio)
+ensayo3 <- datos_filtrados %>% filter(essay == "essay3") %>% pull(errorRatio)
+
+```
+
+Para determinar si los estudiantes del grupo control mejoraron su tasa de errores en el tercer ensayo respecto al segundo, utilizamos una prueba bootstrap para muestras pareadas, ya que:
+
+- Son mediciones del mismo grupo en diferentes momentos
+- No podemos asumir normalidad en las diferencias
+- Las observaciones están naturalmente pareadas
+
+**Hipotesis**
+
+sea Mu_D la media de las diferencias.
+
+H0: La tasa de errores en el tercer ensayo es igual que en el segundo ensayo ( Mu_D = 0)
+Ha: La tasa de errores en el tercer ensayo es menor que en el segundo ensayo ( Mu_D < 0)
+
+```{r}
+library(bootES)
+
+set.seed(123)
+B <- 9999
+alpha <- 0.05
+
+#Calculamos la diferencia entre los ensayos
+diff <- ensayo3 - ensayo2
+
+#Calculamos la media de las diferencias
+media_obs <- mean(diff)
+
+#Creamos la distribucion de bootstrap
+
+distribucion_ES <- bootES(diff, R = B,
+                          ci.type = "bca",
+                          ci.conf = 1 - alpha,
+                          plot = FALSE)
+
+#Desplazamos la distribucion para centrarla en el valor nulo.
+
+valor_nulo <- 0
+desplazamiento <- mean(distribucion_ES$t) - valor_nulo
+distribucion_nula <- distribucion_ES$t - desplazamiento
+
+#Calculamos el valor de p (prueba unilateral)
+
+valor_p <- (sum(distribucion_nula < media_obs) + 1) / (B + 1)
+
+cat("Media ensayo 2:", mean(ensayo2), "\n")
+cat("Media ensayo 3:", mean(ensayo3), "\n")
+cat("Media de las diferencias:", media_obs, "\n")
+cat("distribucion de bootstrap:","\n")
+print(distribucion_ES)
+cat("Valor de p:", valor_p, "\n")
+
+
+```
+**Conclusion**
+Luego de realizar la prueba de bootstrap, y obtiendo un valor de p de 0.0089, siendo este menor al nivel de significancia, rechazamos la hipotesis nula en favor de la alternativa, por lo que podemos concluir con un 95% de confianza que la tasa de errores en el tercer ensayo es menor que en el segundo ensayo.
+

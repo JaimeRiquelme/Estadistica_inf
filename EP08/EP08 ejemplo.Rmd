@@ -1,0 +1,45 @@
+---
+title: "EP08"
+author: "Jaime Riquelme"
+date: "2024-11-16"
+output: pdf_document
+---
+
+Como habíamos visto a comienzos del semestre, la Encuesta de Caracterización Socioeconómica Nacional (Casen) es realizada por el Ministerio de Desarrollo Social de forma periódica para conocer la situación de los hogares chilenos con relación a aspectos demográficos, de educación, salud, vivienda, trabajo e ingresos. Es la principal fuente de información para estimar la magnitud de la pobreza y la distribución del ingreso en el país.
+
+Se tiene a disposición un archivo CSV con un subconjunto de los datos obtenidos en la Casen 2017. El equipo debe revisar las columnas disponibles en este archivo según la descripción en el libro de códigos de la encuesta, que también queda disponible para este ejercicio. Es importante notar que en esta encuesta hay datos de carácter colectivo sobre “el hogar” del entrevistado, pero también hay datos de carácter individual, que se refieren “al jefe o la jefa de hogar” (no al entrevistado).
+
+En el contexto de este estudio, realizaremos las siguientes actividades:
+
+1. Obtener los datos, disponibles en el archivo "EP08 Datos CASEN 2017.csv", desde el directorio compartido correspondiente.
+
+2. Copiar los enunciados de las preguntas asignadas como comentarios de un script R.
+
+3. Familiarizarse con los datos entregados y proponer una pregunta de investigación interesante (= no trivial) de acuerdo a lo solicitado en el enunciado de cada pregunta.
+
+4. Enunciar las hipótesis nula y alternativa que permitan responder las preguntas de investigación planteadas.
+
+5. Argumentar o escribir código R para verificar que no se cumplen las condiciones para pruebas paramétricas con validez para el caso en estudio.
+
+6. Escribir código R para realizar los análisis estadísticos solicitados para cada caso.
+
+7. Redactar la respuesta a la pregunta de investigación planteada en base a los resultados del análisis realizado.
+
+
+Lectura de datos
+
+```{r}
+datos_casen <- read.csv2("EP08 Datos CASEN 2017.csv", fileEncoding = "latin1")
+
+colnames(datos_casen)
+
+```
+¿El acceso a gratuidad en la educación superior es más frecuente en zonas urbanas que en zonas rurales?
+
+```{r}
+#Filtramos los datos para obtener solo los niños
+library(dplyr)
+
+datos_filtrados <- datos_casen %>% filter(e17 == 2)
+```
+
