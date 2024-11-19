@@ -1,0 +1,168 @@
+---
+title: "EP08-Equipo-8"
+author: "Jaime Riquelme"
+date: "2024-11-18"
+output: pdf_document
+---
+
+Como habíamos visto a comienzos del semestre, la Encuesta de Caracterización Socioeconómica Nacional (Casen) es realizada por el Ministerio de Desarrollo Social de forma periódica para conocer la situación de los hogares chilenos con relación a aspectos demográficos, de educación, salud, vivienda, trabajo e ingresos. Es la principal fuente de información para estimar la magnitud de la pobreza y la distribución del ingreso en el país.
+
+
+Cargamos los datos de la encuesta Casen 2017 y los guardamos en un objeto llamado `casen`. Luego, filtramos las columnas de interés para nuestro análisis y guardamos el resultado en un objeto llamado `casen_filtrado`.
+
+```{r}
+casen <- read.csv("EP08 Datos CASEN 2017.csv")
+
+#Mostramos los primeros datos
+head(casen)
+```
+Mostramos todas las variables involucradas para conocer el dataset
+```{r}
+str(casen)
+```
+# Pregunta 1
+
+Propongan una pregunta de investigación original, que involucre la comparación de una frecuencia de un evento o característica en dos grupos independientes (más abajo se dan unos ejemplos). Fijando una semilla propia, seleccionen una muestra aleatoria de hogares (100 < n < 150) y respondan la pregunta propuesta utilizando una prueba de permutaciones Monte Carlo. Indicación: creen su propio código, específicamente para este problema, no usen directamente el script del apunte.
+
+**Pregunta de investigación**
+
+Como estudiantes de ingenieria civil informatica, se nos pidió trabajar con los datos casen del año 2017, en donde al visualizar los datos, nos dimos cuenta que existen diferentes grupos y tipos de datos, siendo un dato importante el ingreso total de cada persona encuestada, es por eso que nos preguntamos lo siguiente:
+¿Existe una diferencia significativa en la proporción de hombres y mujeres que perciben ingresos superiores a $1,000,000 en la Región Metropolitana de Santiago?
+
+Para comenzar a responder esta pregunta, comenzaremos filtrando los datos para obtener las muestras de hombres y mujeres que perciben ingresos superiores a $1,000,000 en la Región Metropolitana de Santiago.
+
+
+```{r}
+library(dplyr)
+#Filtramos los datos para obtener las muestras de hombres y mujeres que perciben ingresos superiores a $1,000,000 en la Región Metropolitana de Santiago.
+
+Datos_filtrados_randoms <- casen %>% filter(ytot > 1000000 & region == "Región Metropolitana de Santiago") %>% sample_n(size = sample(100:150, 1), replace = FALSE)
+
+head(Datos_filtrados_randoms)
+```
+
+**Formulamos las hipótesis**
+
+H0: La proporción de hombres y mujeres que perciben ingresos superiores a $1,000,000 en la Región Metropolitana de Santiago es la misma. 
+
+(Mu_hombres = Mu_mujeres)
+
+Ha: La proporción de hombres y mujeres que perciben ingresos superiores a $1,000,000 en la Región Metropolitana de Santiago es distinta.
+
+(Mu_hombres != Mu_mujeres)
+
+
+Para responder esta pregunta, utilizaremos un remuestreo de la media, utilizando la prueba de permutaciones Monte Carlo.
+
+```{r}
+#Obtenemos los valores de cada muestra obtenida.
+
+hombres <- Datos_filtrados_randoms %>% filter(sexo == "Hombre") %>% select(ytot) %>% unlist()
+
+mujeres <- Datos_filtrados_randoms %>% filter(sexo == "Mujer") %>% select(ytot) %>% unlist()
+```
+
+Luego de obtener la muestra de la poblacion aleatoriamente, procedemos a realizar la prueba de permutaciones Monte Carlo utilizando una cantidad de 9999 permutaciones.
+
+```{r}
+#Cargamos las librerias necesarias
+library(ggpubr)
+library(ggplot2)
+
+#Fijamos la semilla
+set.seed(1234)
+
+#Definimos la cantidad de permutaciones
+B <- 9999
+
+#Creamos las funciones para el cálculo de la diferencia de medias y la prueba de permutaciones Monte Carlo.
+
+Obt_permutacion = function(i, muestra_1, muestra_2) {
+  n_1 = length(muestra_1)
+  combinada = c(muestra_1, muestra_2)
+  n = length(combinada)
+  permutacion = sample(combinada, n, replace = FALSE)
+  nueva_1 = permutacion[1:n_1]
+  nueva_2 = permutacion[(n_1+1):n]
+  return(list(nueva_1, nueva_2))
+}
+
+
+#Función para calcular la diferencia de un estadístico (para nuestro caso FUN = mean) entre dos muestras
+calcular_diferencia = function(muestras, FUN) {
+  muestra_1 = muestras[[1]]
+  muestra_2 = muestras[[2]]
+  diferencia = FUN(muestra_1) - FUN(muestra_2)
+  return(diferencia)
+}
+
+#Función para calcular el p-value, en nuestro caso alternative = two.sided
+calcular_valor_p = function(distribucion, valor_observado ,
+                            repeticiones, alternative) {
+  if(alternative == "two.sided") {    
+    numerador = sum(abs(distribucion) > abs(valor_observado)) + 1
+    denominador = repeticiones + 1
+    valor_p = numerador/denominador
+    }
+  else if(alternative == "greater") {
+    numerador = sum(distribucion > valor_observado) + 1
+    denominador = repeticiones + 1
+    valor_p = numerador/denominador
+    }
+  else {
+    numerador = sum(distribucion < valor_observado) + 1
+    denominador = repeticiones + 1
+    valor_p = numerador/denominador
+    }
+  return(valor_p)
+}
+
+#Función para graficar una distribución
+graficar_distribucion = function(distribucion, ...) {
+  observaciones = data.frame(distribucion)
+  
+  histograma = gghistogram(observaciones, x = "distribucion",
+                           xlab = "Estadístico de interés",
+                           ylab = "Frecuencia", bins = 30, ...)
+  
+  qq = ggqqplot(observaciones, x = "distribucion", ...)
+  
+  figura = ggarrange(histograma, qq, ncol = 2, nrow = 1)
+  print(figura)
+}
+
+
+#Función para hacer la prueba de permutaciones
+contrastar_hipotesis_permutaciones = function(muestra_1, muestra_2,
+                                              repeticiones, FUN,
+                                              alternative, plot, ...) {
+  cat("Prueba de permutaciones\n\n")
+  cat("Hipótesis alternativa: ", alternative, "\n")
+  observado = calcular_diferencia(list(muestra_1, muestra_2), FUN)
+  cat("Valor observado: ", observado, "\n")
+
+  
+  #Generar permutaciones.
+  permutaciones = lapply(1:repeticiones, Obt_permutacion, muestra_1,
+                         muestra_2)
+  
+  #Generar la distribución.
+  distribucion = sapply(permutaciones, calcular_diferencia, FUN)
+  
+  #Graficar la distribución.
+  if(plot) {
+    graficar_distribucion(distribucion, ...)
+    }
+  
+  #Calcular el valor p.
+  valor_p = calcular_valor_p(distribucion, observado, repeticiones,
+                                      alternative)
+  
+  cat("Valor p: ", valor_p, "\n\n")
+}
+
+contrastar_hipotesis_permutaciones(hombres, mujeres, repeticiones = B, FUN = mean, alternative = "two.sided", plot = TRUE, color = "blue", fill = "blue")
+
+```
+**Conclusión**
+Luego de realizar la prueba de permutaciones utilizando el metodo de Monte carlo, se obtuvo un valor de p del 0.0345, siendo este menor al nivel de significancia, por lo que se rechaza la hipotesis nula, en favor de la anternativa y podemos concluir con un 95% de confianza que existe una diferencia significativa en la proporción de hombres y mujeres que perciben ingresos superiores a $1,000,000 en la Región Metropolitana de Santiago.
