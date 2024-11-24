@@ -1,0 +1,371 @@
+---
+title: "Lectura 13"
+author: "Jaime Riquelme"
+date: "2024-11-24"
+output: pdf_document
+---
+
+```{r}
+#Cargamos el conjunto de daots mtcars
+data(mtcars)
+```
+#Correlacion
+
+Verificamos la correlacion entre la variable potencia del motor con volumen util de los cilindros del motor o rendimiento del vehiculo.
+
+```{r}
+library(dplyr)
+
+#Filtramos los datos
+mtcars_filter <- mtcars %>% filter(mtcars$wt >= 2 & mtcars$wt <= 5) %>% select(hp, disp, mpg)
+
+potencia <- mtcars_filter$hp
+volumen <- mtcars_filter$disp
+rendimiento <- mtcars_filter$mpg
+
+#Creamos el grafico de dispersion
+
+plot(volumen, potencia, xlab = "Potencia", ylab = "Volumen", main = "Potencia vs Volumen")
+media_volumen <- mean(volumen)
+sd_volumen <- sd(volumen)
+
+cat("La media del volumen es: ", media_volumen, "\n")
+cat("La desviacion estandar del volumen es: ", sd_volumen, "\n")
+
+#Creamos el grafico de dispersion
+
+plot(rendimiento, potencia, xlab = "Potencia", ylab = "Rendimiento", main = "Potencia vs Rendimiento")
+media_rendimiento <- mean(rendimiento)
+sd_rendimiento <- sd(rendimiento)
+
+cat("La media del rendimiento es: ", media_rendimiento, "\n")
+cat("La desviacion estandar del rendimiento es: ", sd_rendimiento, "\n")
+
+
+```
+En R podemos calcular la correlacion entre las dos variables usando la funcion cor(x,y)
+
+```{r}
+#Calculamos la correlacion entre potencia y volumen
+
+correlacion_potencia_volumen <- cor(potencia, volumen)
+
+cat("La correlacion entre potencia y volumen es: ", correlacion_potencia_volumen, "\n")
+
+#Calculamos la correlacion entre potencia y rendimiento
+
+correlacion_potencia_rendimiento <- cor(potencia, rendimiento)
+
+cat("La correlacion entre potencia y rendimiento es: ", correlacion_potencia_rendimiento, "\n")
+```
+A su vez, si queremos calcular la correlacion entre todas las variables de un conjunto de datos, podemos usar la funcion cor() de la siguiente manera:
+
+```{r}
+correlacion_total <- cor(mtcars)
+
+print(correlacion_total)
+```
+#Regresión lineal mediante minimos cuadrados
+
+Formula:
+
+$$ min \sum_{i=1}^{n} e_i^2 $$
+
+Para aplicar este metodo se deben cumplir las siguientes condiciones:
+
+1.- Las variables presentan una distribucion condicional bivariante, por lo que pra cunmmplir valor fijo de X, los valores de Y se distribuyyen nomralmente con una varianza constante.
+2.- La relacion entre la variable X y las medias de la variable Y es lineal.
+3.- Las observaciones de la muestra son inddependientes entre si. Esto significa ue no se puede usar regresion lineal cons eries de tiempo.
+
+Si estas no se cumplem el metodo de minimos cuadrados pueden generar modelos compeltamente invalidos si nos e cumplen estas condiciones.
+
+R nos permite calcular la regresion lineal mediante minimos cuadrados usando la funcion lm(formula,data) donde:
+
+- formula: <variable respuesta>~<variable predictora>
+- data: matriz de datos
+
+variable de respuesta : variable dependiente
+variable predictora: variable independiente
+
+Ejemplo:
+
+```{r}
+library(dplyr)
+library(ggpubr)
+library(ggplot2)
+
+#Filtramos los datos
+mtcars_filter <- mtcars %>% filter(mtcars$wt >= 2 & mtcars$wt <= 5) 
+
+#Ajustamos modelo con R
+
+modelo <- lm(hp ~ disp, data = mtcars_filter)
+
+print(summary(modelo))
+
+#Graficamos los datos y el modelo obtenido
+
+g1 <- ggscatter(mtcars_filter, x = "disp", y = "hp", 
+                color = "steelblue", fill = "steelblue",
+                ylab = "Potencia [hp]")
+g1 <- g1 + geom_abline(intercept = coef(modelo)[1],
+                       slope = coef(modelo)[2],
+                       color = "red")
+g1 <- g1 + xlab(bquote("Volumen útil de los cilindros" ~ group("[" , "in"^-3, "]")))
+
+# Definir valores del predictor para vehículos no incluidos en el conjunto mtcars
+disp <- c(169.694, 230.214, 79.005, 94.085, 343.085,
+          136.073, 357.305, 288.842, 223.128, 129.217,
+          146.432, 193.474, 376.874, 202.566, 114.928)
+
+# Usar el modelo para predecir el rendimiento de estos modelos
+potencia_est <- predict(modelo, data.frame(disp))
+
+# Graficar los valores predichos
+nuevos <- data.frame(disp, hp = potencia_est)
+g2 <- ggscatter(nuevos, x = "disp", y = "hp",
+                color = "purple", fill = "purple",
+                ylab = "Potencia [hp]")
+g2 <- g2 + xlab(bquote("Volumen útil de los cilindros" ~ group("[" , "in"^-3, "]")))
+
+# Unir los gráficos en uno solo
+g1 <- ggpar(g1, xlim = c(75, 405), ylim = c(60, 340))
+g2 <- ggpar(g2, xlim = c(75, 405), ylim = c(60, 340))
+g <- ggarrange(g1, g2,
+               labels = c("Modelo", "Predicciones"),
+               hjust = c(-1.2, -0.7))
+print(g)
+
+```
+
+#Uso del modelo
+  
+Una vez que hemos ajustado el modelo, podemos usarlo para predecir valores de la variable dependiente para valores de la variable independiente que no estan en el conjunto de datos original.
+
+En R tenemos la siguiente funcion para ello: 
+
+predict(object, newdata) donde:
+
+object: el modelo a emplear
+newdata: Una matriz de datos donde exista una columna con el nombre del predictor usado en la formula del modelo, con los nuevos valores para los que se desea efectuar la prediccion.
+
+Ejemplo:
+Supongamos que queremos predecir que el motor del año 1974 con una cilindrada de 4 litros, es decir, disp = 244.095. para ello basta con reemplazar el valor del predictor en el modelo:
+
+$$ \hat{h}_p = 34,523 + 0,507 * 244,095 = 158,279 $$
+```{r}
+disp_nuevo <- 244.095
+potencia_est <- predict(modelo, data.frame(disp = disp_nuevo))
+
+cat("La potencia estimada para un motor con una cilindrada de 244.095 in^3 es: ", potencia_est, "\n")
+
+```
+
+# Regresion lineal con un predictor categorico
+
+Para ajustar un modelo de regresion lineal con un predictor categorico, se debe convertir la variable categorica en una variable dummy, es decir, una variable binaria que toma el valor de 1 si la categoria se cumple y 0 en caso contrario.
+
+rara vez se hace manualmente, ya que las funciones en R lo realizan automaticamente.
+
+El conjunto de datos mtcars cuenta con un par de variables indicadoras, la transmision am y la forma del mortor vs, de las dos la forma del motor tiene una correlacion mas fuerte con la potencia del motor, por eso que la usaremos como ejmplo para la creacion de un modelo de regresion lineal.
+
+```{r}
+library(ggpubr)
+
+# Obtener los datos.
+datos <- mtcars |> filter(wt > 2 & wt < 5)
+
+# Verificar correlación.
+print(cor(datos[, c("hp", "am", "vs")]))
+
+# Ajustar modelo con R.
+modelo_vs <- lm(hp ~ vs, data = datos)
+print(summary(modelo_vs))
+
+# Graficar el modelo.
+g1 <- ggscatter(datos, x = "vs", y = "hp",
+                color = "steelblue", fill = "steelblue",
+                xlab = "Forma del motor", ylab = "Potencia [hp]",
+                xticks.by = 1)
+g1 <- g1 + geom_abline(intercept = coef(modelo_vs)[1],
+                       slope = coef(modelo_vs)[2],
+                       color = "red")
+print(g1)
+
+# Graficar residuos.
+residuos <- modelo_vs[["residuals"]]
+datos <- cbind(datos, residuos)
+
+g2 <- ggscatter(datos, x = "vs", y = "residuos",
+                color = "steelblue", fill = "steelblue",
+                xlab = "Forma del motor", ylab = "Residuos [hp]",
+                xticks.by = 1)
+g2 <- g2 + geom_hline(yintercept = 0, color = "red")
+print(g2)
+
+# Unir los gráficos en uno solo
+g <- ggarrange(g1, g2,
+               labels = c("Modelo", "Residuos"),
+               hjust = c(-2.5, -2.0))
+print(g)
+
+```
+El análisis muestra que existe una relación significativa entre la forma del motor y su potencia: los motores en V tienden a ser más potentes, con una diferencia promedio de 86.03 hp más que los motores en línea. Sin embargo, el modelo solo explica el 41.44% de la variabilidad en la potencia, lo que sugiere que, aunque la forma del motor es un predictor importante, existen otros factores relevantes que no se están considerando y que influyen en la potencia del motor.
+
+# Distribucion e independencia
+
+Para que los modelos de regresion lineal sean validos, es necesario que los residuos sigan una distribucion normal y que sean independientes entre si.
+
+en general cuando las condiciones se cumplen se observan caracteristicas en el grafico de los residuos: 
+
+1.- se distribuyen aleatoriamente en torno a la liena del valor cero.
+2.- forman una ""banda horizontal"" en torno a la linea del valor cero.
+3. no hay residuos que se alejen del patron que forman los demás
+4.- no forman un patron reconociible.
+
+```{r}
+library(car)
+library(dplyr)
+library(ggpubr)
+
+# Cargar y filtrar los datos. Se usan los datos de mtcars pero solo aquellos con peso entre 2 y 5.
+datos <- mtcars |> filter(wt > 2 & wt < 5)
+
+# Ajustar modelo con R. Se ajusta un modelo de regresión lineal simple donde el rendimiento (hp) 
+# se predice en función del desplazamiento del motor (disp).
+modelo <- lm(hp ~ disp, data = datos)
+
+# Desplegar gráficos de residuos y mostrar pruebas de curvatura.
+# La función `residualPlots()` permite visualizar la relación entre los residuos y las variables para detectar curvaturas.
+# Se especifica que se usen residuos estandarizados y se destacan las posibles curvas en rojo.
+cat("Pruebas de curvatura:\n")
+residualPlots(modelo, type = "rstandard",
+              id = list(method = "r", n = 3, cex = 0.7, location = "lr"),
+              col = "steelblue", pch = 20, col.quad = "red")
+
+# Verificar independencia de los residuos
+# La función `durbinWatsonTest()` verifica la independencia de los residuos, importante para validar la regresión.
+# El valor del estadístico Durbin-Watson indica si hay autocorrelación en los residuos.
+set.seed(19)
+db <- durbinWatsonTest(modelo)
+cat("\nPrueba de independencia:\n")
+print(db)
+
+# Desplegar gráficos marginales.
+# La función `marginalModelPlots()` grafica los predictores frente a los residuos para identificar patrones.
+# Esto ayuda a verificar si la relación entre las variables es realmente lineal.
+marginalModelPlots(modelo, sd = TRUE,
+                   id = list(method = "r", n = 3, cex = 0.7, location = "lr"),
+                   col = "steelblue", pch = 20, col.line = c("steelblue", "red"))
+
+# Prueba de la varianza del error no constante (homocedasticidad).
+# La función `ncvTest()` realiza la prueba de homocedasticidad (Breusch-Pagan), 
+# verificando si la varianza de los residuos es constante.
+cat("\nPrueba de homocedasticidad:\n")
+print(ncvTest(modelo))
+
+# Desplegar gráficos de influencia.
+# La función `influencePlot()` grafica los puntos de datos para identificar observaciones que podrían ser influyentes.
+# Los casos influyentes pueden afectar significativamente la estimación de los parámetros del modelo.
+casos_influyentes <- influencePlot(modelo, id = list(cex = 0.7))
+cat("\nCasos que podrían ser influyentes:\n")
+print(casos_influyentes)
+
+
+```
+
+# Influencia de los valores atípicos
+
+Los valores atipicos, pueden ser sintomas del inclumplimiento de las condiciones para usar RLS. o que esrté influenciad fuertemente por unos cuantos valoresa tipicos, por lo que el modelo se generaliza bien par la poblacion.
+
+Cuando un valor atipico ejerce un desplazamiento de la linea de regrecion basada en la nube principal de puntos, se le llama una **Observacion o un punto influyente**
+
+un valor relacionado a que tan lejos se encunetra un valor x_i respecto a la media muestrar puede utilizar como una medida de l potencial de x_i para influir en el ajuste. donde esta medida se le reconoce como **apalancamiento** o **leverage**. ya que parece tirar la linea hacia ellos.  se conoce como valor hat
+
+para el i-esimo valor del predictor se calcula mediante la ecuacion : 
+
+$$ h_{ii} = \frac{1}{n} + \frac{(x_i - \bar{x})^2}{\sum_{j=1}^{n} (x_j - \bar{x})^2}$$
+Donde:
+
+n es el numero de observaciones
+x_i, x_j son respectivamente el i-esimo y j-esimo valor del predictor
+x_bar es la media de los valores del predictor*
+
+Como regla general lass observaciones con valores de apalancamiento igual o mayores a 2 veces el valor promedio que siempre corresponde a 2/n para la rls, son casos que pdorain ser influyentes pero no siempre indica un problema.
+
+En R podemos calcular el apalancamiento de cada observacion usando la funcion hatvalues(modelo) donde modelo es el modelo de regresion lineal ajustado.
+
+```{r}
+#Prueba de apalancamiento
+
+# Calcular el apalancamiento de cada observación.
+
+apalancamiento <- hatvalues(modelo)
+
+# Calcular el promedio del apalancamiento.
+
+promedio_apalancamiento <- 2 / nrow(datos)
+
+# Identificar observaciones con apalancamiento mayor al doble del promedio.
+
+observaciones_influyentes <- which(apalancamiento > 2 * promedio_apalancamiento)
+
+cat("Observaciones influyentes:\n")
+
+print(observaciones_influyentes)
+print(apalancamiento)
+
+```
+
+```{r}
+# Cargar el conjunto de datos mtcars
+data(mtcars)
+
+# Filtrar los datos según las condiciones
+library(dplyr)
+mtcars_filter <- mtcars %>% filter(mtcars$wt >= 2 & mtcars$wt <= 5)
+
+# Definir variables necesarias
+volumen <- mtcars_filter$disp
+n <- length(volumen)
+
+# Función para calcular el apalancamiento manualmente
+calcular_apalancamiento_manual <- function(x) {
+  x_bar <- mean(x)
+  numerador <- (x - x_bar)^2
+  denominador <- sum((x - x_bar)^2)
+  apalancamiento <- (1 / n) + (numerador / denominador)
+  return(apalancamiento)
+}
+
+# Calcular el apalancamiento usando la función creada
+apalancamiento_manual <- calcular_apalancamiento_manual(volumen)
+
+# Calcular el apalancamiento usando la función hatvalues() en un modelo ajustado
+modelo <- lm(hp ~ disp, data = mtcars_filter)
+apalancamiento_hatvalues <- hatvalues(modelo)
+
+# Comparar ambos métodos
+cat("Apalancamiento calculado manualmente:\n")
+print(apalancamiento_manual)
+
+cat("\nApalancamiento calculado con hatvalues():\n")
+print(apalancamiento_hatvalues)
+
+# Verificar si los valores coinciden
+diferencias <- apalancamiento_manual - apalancamiento_hatvalues
+cat("\nDiferencias entre el apalancamiento manual y hatvalues():\n")
+print(diferencias)
+
+# Mostrar si existen diferencias significativas
+if (all(abs(diferencias) < 1e-10)) {
+  cat("\nLos valores de apalancamiento calculados manualmente y con hatvalues() son iguales.\n")
+} else {
+  cat("\nExisten diferencias entre los valores calculados manualmente y con hatvalues().\n")
+}
+
+```
+
+
+
+
