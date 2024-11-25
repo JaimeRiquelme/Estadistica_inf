@@ -5,6 +5,8 @@ date: "2024-11-24"
 output: pdf_document
 ---
 
+# Configuración Inicial
+
 ```{r}
 #Cargamos el conjunto de daots mtcars
 data(mtcars)
@@ -274,13 +276,13 @@ print(casos_influyentes)
 
 ```
 
-# Influencia de los valores atípicos
+# Influencia de los Valores Atípicos
 
-Los valores atipicos, pueden ser sintomas del inclumplimiento de las condiciones para usar RLS. o que esrté influenciad fuertemente por unos cuantos valoresa tipicos, por lo que el modelo se generaliza bien par la poblacion.
+Los valores atípicos pueden ser síntomas del incumplimiento de las condiciones para usar RLS, o que esté influenciada fuertemente por unos cuantos valores atípicos, por lo que el modelo no se generaliza bien para la población.
 
-Cuando un valor atipico ejerce un desplazamiento de la linea de regrecion basada en la nube principal de puntos, se le llama una **Observacion o un punto influyente**
+Cuando un valor atípico ejerce un desplazamiento de la línea de regresión basada en la nube principal de puntos, se le llama una **Observación o un punto influyente**.
 
-un valor relacionado a que tan lejos se encunetra un valor x_i respecto a la media muestrar puede utilizar como una medida de l potencial de x_i para influir en el ajuste. donde esta medida se le reconoce como **apalancamiento** o **leverage**. ya que parece tirar la linea hacia ellos.  se conoce como valor hat
+Un valor relacionado a qué tan lejos se encuentra un valor x_i respecto a la media muestral puede utilizarse como una medida del potencial de x_i para influir en el ajuste. Esta medida se reconoce como **apalancamiento** o **leverage**, ya que parece tirar la línea hacia ellos. Se conoce como valor hat
 
 para el i-esimo valor del predictor se calcula mediante la ecuacion : 
 
@@ -385,17 +387,17 @@ Podemos usar el error cuadratico medio como una metrica de la calidad de un mode
 Para el ejemplo anterior, se consigue un MSE = 1.914.377, Equivalente a un RMSE = 43,753, En principio es un resultado aceptable, ya que la variable de salida tiene un rango que va de los 62 a los 335 caballos de fuerza.
 
 
-## Generalizacion
+## Generalización
 
-Diremos que un modelo es eneralizable si para un conjutno de datos nuevo consigue predicciones con una calidad similar a la que consigue con los datos usados en su construccion.
+Diremos que un modelo es generalizable si para un conjunto de datos nuevo consigue predicciones con una calidad similar a la que consigue con los datos usados en su construcción.
 
-La estrategia mas frecuente es la validacion cruzada, donde se separa en dos fragmentos:
+La estrategia más frecuente es la validación cruzada, donde se separa en dos fragmentos:
 
-- Conjunto de entrenamiento: suele contener entre el 80 y 90% de las observaciones, escogidas de manera aleatorioa y se emplea para ajustar la recta con el metodo de minimos cuadrados.
+- Conjunto de entrenamiento: suele contener entre el 80% y 90% de las observaciones, escogidas de manera aleatoria y se emplea para ajustar la recta con el método de mínimos cuadrados.
 
-- Conjunto de prueba_ contiene el 10 a 30% restante de la muestra, y se usa para evaluar el modelo con datos nuevos.
+- Conjunto de prueba: contiene el 10% a 30% restante de la muestra, y se usa para evaluar el modelo con datos nuevos.
 
-La idea del modelo es evaluar como se comporta el modelo con datos que no ha visto previamente, en comparacion al comportamiento con el conjunto de entrenamiento.
+La idea del modelo es evaluar cómo se comporta con datos que no ha visto previamente, en comparación al comportamiento con el conjunto de entrenamiento.
 
 ejemplo en R:
 
@@ -435,18 +437,16 @@ rmse_prueba <- sqrt(mean(error^2))
 cat("RMSE para el conjunto de prueba: ", rmse_prueba, "\n")
 ```
 
-Pero puede ocurrir que por cosas randoms, el conjunto de prueba quede con observaciones que no represenan adecuadamente la muestra de datos original, llevando a una estimacion equivocada. es por eso que una manera de mejorar es generalizar la estrategia anterior y usar validacion cruzada de k pliegues.
+Pero puede ocurrir que por situaciones aleatorias, el conjunto de prueba quede con observaciones que no representan adecuadamente la muestra de datos original, llevando a una estimación equivocada. Es por eso que una manera de mejorar es generalizar la estrategia anterior y usar validación cruzada de k pliegues.
 
-la idea es la misma, usar un conjunto de entrenamiento para contruir el modelo y otro de prueba para evaluarlo, pero en lugar de hacerlo una vez, se hace k veces, donde cada vez se elige un subconjunto de observaciones para el conjunto de prueba y el resto para el conjunto de entrenamiento.
-
-obtenemos las estimaciones de error de la sigguiente manera:
+Obtenemos las estimaciones de error de la siguiente manera:
 
 1. Para cada uno de los k subconjuntos:
-  a) tomar uno de los k subconjutnos del conjunto de entreamiento y reservalo como conjunto de prueba.
-  b) ajustar la recta de minimos cuadrados usando para ello los datos combinados de los k-1 subconjuntos restantes.
-  c)Estimar el error cuadratico medio usando para ellos el conjunto de prueba
+   a) Tomar uno de los k subconjuntos del conjunto de entrenamiento y reservarlo como conjunto de prueba.
+   b) Ajustar la recta de mínimos cuadrados usando para ello los datos combinados de los k-1 subconjuntos restantes.
+   c) Estimar el error cuadrático medio usando para ello el conjunto de prueba.
 
-2. Estimar el error cuadratico medio, corresponeidnte a la media de los k MSE obtenidos en el paso 1.
+2. Estimar el error cuadrático medio, correspondiente a la media de los k MSE obtenidos en el paso 1.
 
 En R podemos hacer la contruccion del modelo de RLS usando 5-CV con la funcion train(formula, method = "lm", trControl = trainControl(metrod = "cv", number = 5), data = datos) donde:
 
