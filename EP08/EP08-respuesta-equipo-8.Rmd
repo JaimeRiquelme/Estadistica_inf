@@ -28,10 +28,18 @@ Propongan una pregunta de investigación original, que involucre la comparación
 
 **Pregunta de investigación**
 
+<<<<<<< Updated upstream
 Como estudiantes de ingeniería civil informática, se nos pidió trabajar con los datos Casen del año 2017, en donde al visualizar los datos, nos dimos cuenta que existen diferentes grupos y tipos de datos, siendo un dato importante el ingreso total de cada persona encuestada, es por eso que nos preguntamos lo siguiente: ¿Existe una diferencia significativa en la proporción de hombres y mujeres que perciben ingresos superiores a \$1,000,000 en la Región Metropolitana de Santiago?
 
 Para comenzar a responder esta pregunta, comenzaremos filtrando los datos para obtener las muestras de hombres y mujeres que perciben ingresos superiores a \$1,000,000 en la Región Metropolitana de Santiago.
 
+=======
+Como estudiantes de ingeniería civil informática, se nos pidió trabajar con los datos Casen del año 2017, en donde al visualizar los datos, nos dimos cuenta que existen diferentes grupos y tipos de datos, siendo un dato importante el ingreso total de cada persona encuestada, es por eso que nos preguntamos lo siguiente:
+¿Existe una diferencia significativa en la proporción de hombres y mujeres que perciben ingresos superiores a $1,000,000 en la Región Metropolitana de Santiago?
+
+Para comenzar a responder esta pregunta, comenzaremos filtrando los datos para obtener las muestras de hombres y mujeres que perciben ingresos superiores a $1,000,000 en la Región Metropolitana de Santiago.
+
+>>>>>>> Stashed changes
 ```{r}
 library(dplyr)
 #Filtramos los datos para obtener las muestras de hombres y mujeres que perciben ingresos superiores a $1,000,000 en la Región Metropolitana de Santiago.
@@ -94,12 +102,21 @@ cat("Proporción de mujeres que ganan más de $1,000,000:", mean(mujeres), "\n\n
 
 Luego de obtener la muestra de la población aleatoriamente, procedemos a realizar la prueba de permutaciones Monte Carlo utilizando una cantidad de 9999 permutaciones.
 
+<<<<<<< Updated upstream
 Se elige el método de Monte Carlo porque:
 
 1.  No requiere supuestos sobre la distribución de los datos.
 2.  Es apropiado para comparar proporciones entre grupos independientes.
 3.  Maneja bien muestras pequeñas y desbalanceadas.
 4.  Se pide en el enunciado de la pregunta utilizar este metodo.
+=======
+Se elige el método de Monte Carlo porque: 
+
+1. No requiere supuestos sobre la distribución de los datos.
+2. Es apropiado para comparar proporciones entre grupos independientes.
+3. Maneja bien muestras pequeñas y desbalanceadas.
+4. Se pide en el enunciado de la pregunta utilizar este metodo.
+>>>>>>> Stashed changes
 
 ```{r}
 #Cargamos las librerías necesarias
@@ -176,6 +193,7 @@ contrastar_hipotesis_permutaciones = function(muestra_1, muestra_2,
 
 #Realizamos la prueba de hipótesis
 contrastar_hipotesis_permutaciones(hombres, mujeres, repeticiones = B, alternative = "two.sided",)
+<<<<<<< Updated upstream
 ```
 
 **Conclusión** Luego de realizar la prueba de permutaciones utilizando el método de Monte Carlo, se obtuvo un valor p de 0.4322, lo que nos indica que no existe evidencia suficiente para rechazar la hipótesis nula. Observamos que la proporción de hombres que ganan más de 1,000,000 es 13.11% mientras que en mujeres es 8.8%, pero esta diferencia no es estadísticamente significativa. Por lo tanto, no podemos afirmar que exista una diferencia significativa en la proporción de hombres y mujeres que perciben ingresos superiores a 1,000,000 en la Región Metropolitana de Santiago.
@@ -201,6 +219,32 @@ muestra_2 <- casen %>% filter(provincia %in% c("Maipo", "Cordillera", "Talagante
 ```
 
 Una vez que obtenemos los datos de interés procedemos a graficarlos para revisar su comportamiento.
+=======
+```
+
+**Conclusión**
+Luego de realizar la prueba de permutaciones utilizando el método de Monte Carlo, se obtuvo un valor p de 0.4322, lo que nos indica que no existe evidencia suficiente para rechazar la hipótesis nula. Observamos que la proporción de hombres que ganan más de 1,000,000 es 13.11% mientras que en mujeres es 8.8%, pero esta diferencia no es estadísticamente significativa. Por lo tanto, no podemos afirmar que exista una diferencia significativa en la proporción de hombres y mujeres que perciben ingresos superiores a 1,000,000 en la Región Metropolitana de Santiago.
+
+# Pregunta 2
+
+Propongan una pregunta de investigación original, que involucre la comparación de las medias de más de dos grupos independientes (más abajo se dan unos ejemplos). Fijando una semilla distinta a la anterior, seleccionen una muestra aleatoria de hogares (200 < n < 300) y respondan la pregunta propuesta utilizando bootstrapping. Solo por ejercicio académico, aplique un análisis post-hoc con bootstrapping aunque este no fuera necesario. Indicación: consideren que el análisis post-hoc debe hacerse con las mismas remuestras usadas para la prueba ómnibus.
+Algunos ejemplos (que no pueden ser ocupados en este ejercicio) son:
+
+**Pregunta de investigación**
+
+En este caso, la pregunta que planteamos es: ¿Es igual el ingreso total para hombres y mujeres para las provincias de Maipo, Cordillera y Talagante?
+
+Una vez con la pregunta planteada procedemos a realizar el filtrado de los datos para obtener una muestra aleatoria de hogares con un tamaño de 250 y que pertenezcan a las provincias de Maipo, Cordillera y Talagante.
+
+```{r}
+#Filtrado de datos para cumplir las condiciones y que sean los datos de interés
+set.seed(498)
+tamaño_2 <- 250
+
+muestra_2 <- casen %>% filter(provincia %in% c("Maipo", "Cordillera", "Talagante")) %>% select(ytot, provincia) %>% sample_n(tamaño_2)
+```
+Una vez que obtenemos los datos de interés procedemos a graficarlos para revisar su comportamiento. 
+>>>>>>> Stashed changes
 
 ```{r}
 library(ggplot2)
@@ -218,8 +262,12 @@ ggplot(muestra_2, aes(x = ytot, fill = provincia)) +
   theme_minimal() +
   labs(title = "Distribución de ingresos totales por provincia", x = "Ingresos totales", y = "Frecuencia")
 ```
+<<<<<<< Updated upstream
 
 Vemos que para cada muestra contamos con valores atípicos por lo cual es necesario realizar un remuestreo mediante bootstrapping para que estos valores problemáticos no influyan sobre la certeza de las pruebas. Pero antes de esto presentamos las hipótesis a contrastar:
+=======
+Vemos que para cada muestra contamos con valores atípicos por lo cual es necesario realizar un remuestreo mediante bootstrapping para que estos valores problemáticos no influyan sobre la certeza de las pruebas. Pero antes de esto presentamos las hipótesis a contrastar: 
+>>>>>>> Stashed changes
 
 **Formulación de hipótesis**
 
@@ -229,7 +277,12 @@ H0: La media de los ingresos totales para hombres y mujeres para las provincias 
 
 Ha: Hay al menos una media de los ingresos totales para hombres y mujeres que es diferente a al menos una.
 
+<<<<<<< Updated upstream
 Matemáticamente: H0: $$u1 = u2 = u3$$
+=======
+Matemáticamente:
+H0: $$u1 = u2 = u3$$
+>>>>>>> Stashed changes
 
 Ha: $$ \exists i, j \in \{1,2,3\} \ni \mu_i \neq \mu_j $$
 
@@ -239,6 +292,7 @@ Con lo anterior en mente pasamos a realizar el remuestreo con bootstrapping con 
 
 Se eligió un metodo de bootstrapping porque:
 
+<<<<<<< Updated upstream
 1.  Los datos muestran valores atípicos significativos.
 2.  Las distribuciones son asimétricas.
 3.  El bootstrapping no requiere supuestos de normalidad.
@@ -387,10 +441,62 @@ t1waybt(ytot ~ provincia, data = muestra_2, R = 1000)
 ## Conclusión
 
 Luego de realizar el remuestreo con bootstrapping y aplicar ANOVA, se obtuvo un valor p de 0.124, lo que nos indica que no existe evidencia suficiente para rechazar la hipótesis nula. Por lo tanto, no podemos afirmar que exista una diferencia significativa en las medias de los ingresos totales para hombres y mujeres en las provincias de Maipo, Cordillera y Talagante.
+=======
+1. Los datos muestran valores atípicos significativos.
+2. Las distribuciones son asimétricas.
+3. El bootstrapping no requiere supuestos de normalidad.
+4. Es robusto ante la presencia de valores extremos.
+5. Se pide por enunciado utilizar el metodo de bootstrapping para resolver la pregunta.
+
+```{r}
+library(boot)
+# Modificar la función de estadística para ANOVA con resampleo estratificado
+anova.stat.strat <- function(data, indices) {
+  # Resamplear estratificado
+  provincias <- unique(data$provincia)
+  
+  # Resamplear por cada grupo/provincia
+  resampleado <- do.call(rbind, lapply(provincias, function(prov) {
+    d_prov <- data[data$provincia == prov, ]
+    d_prov[sample(1:nrow(d_prov), nrow(d_prov), replace = TRUE), ]
+  }))
+  
+  # Ajustar el modelo ANOVA al conjunto re-muestreado
+  fit <- aov(ytot ~ provincia, data = resampleado)
+  return(summary(fit)[[1]][1, "F value"])
+}
+
+# Número de remuestras
+B <- 2500
+set.seed(223)
+# Aplicar bootstrapping con función personalizada
+boot.anova.strat <- boot(data = muestra_2, 
+                         statistic = anova.stat.strat, 
+                         R = B)
+
+# Valor observado (ANOVA en la muestra original)
+f_obs <- anova.stat.strat(muestra_2, 1:nrow(muestra_2))
+
+# Intervalo de confianza con remuestreo estratificado
+alfa <- 0.05
+boot.ci(boot.anova.strat, conf = 1 - alfa, type = "bca")
+
+# P-valor basado en distribución nula desplazada
+valor_nulo <- 1
+media_f <- mean(boot.anova.strat$t)
+desplazamiento <- media_f - valor_nulo
+distribucion_nula <- boot.anova.strat$t - desplazamiento
+p <- (sum(distribucion_nula > f_obs) + 1) / (B + 1)
+cat("P-valor:", p, "\n")
+```
+## Conclusión 
+Luego de realizar el remuestreo con bootstrapping y aplicar ANOVA, se obtuvo un valor p de 0.1495, lo que nos indica que no existe evidencia suficiente para rechazar la hipótesis nula. Por lo tanto, no podemos afirmar que exista una diferencia significativa en las medias de los ingresos totales para hombres y mujeres en las provincias de Maipo, Cordillera y Talagante.
+>>>>>>> Stashed changes
 
 Aunque no era necesario, realizamos un análisis post-hoc con bootstrapping para comparar las medias de ingresos entre cada par de provincias.
 
 ```{r}
+<<<<<<< Updated upstream
 #Funcion para la diferencia de medias para el analisis post-hoc
 dif_medias <- function(df, A, B) {
   media_A <- mean(df[A, "ytot"])
@@ -455,5 +561,64 @@ valor_p.A.C <- (sum(abs(boot_dif_Cord_Maipo) > abs(dif_Cord_Maipo)) + 1) / (B + 
 Los intervalos de confianza al 95% para las diferencias de medias entre cada par de provincias son los siguientes:
 
 Cordillera vs Maipo: [ -168167.4 146467.7 ] Cordillera vs Talagante: [ -202795.4 158307.5 ] Maipo vs Talagante: [ -210636.3 180896.6 ]
+=======
+# Función de estadística para comparaciones post-hoc
+post_hoc_diff_strat <- function(data, indices, grupo1, grupo2) {
+  # Resamplear por grupo
+  d_grupo1 <- data[data$provincia == grupo1, ]
+  d_grupo2 <- data[data$provincia == grupo2, ]
+  
+  # Resamplear con reemplazo
+  resampleado_grupo1 <- d_grupo1[sample(1:nrow(d_grupo1), nrow(d_grupo1), replace = TRUE), ]
+  resampleado_grupo2 <- d_grupo2[sample(1:nrow(d_grupo2), nrow(d_grupo2), replace = TRUE), ]
+  
+  # Calcular la diferencia de medias
+  media_grupo1 <- mean(resampleado_grupo1$ytot)
+  media_grupo2 <- mean(resampleado_grupo2$ytot)
+  return(media_grupo1 - media_grupo2)
+}
+
+# Lista de provincias
+provincias <- unique(muestra_2$provincia)
+
+# Generar todas las combinaciones de pares de provincias
+pares <- t(combn(provincias, 2))
+
+# Configurar el número de remuestras
+B_posthoc <- 1000
+alfa <- 0.05
+
+# Análisis post-hoc por pares
+set.seed(456)
+post_hoc_results <- lapply(1:nrow(pares), function(i) {
+  grupo1 <- pares[i, 1]
+  grupo2 <- pares[i, 2]
+  
+  # Realizar bootstrap para la diferencia de medias
+  boot.pair <- boot(data = muestra_2, 
+                    statistic = function(data, indices) post_hoc_diff_strat(data, indices, grupo1, grupo2), 
+                    R = B_posthoc)
+  
+  # Calcular intervalo de confianza
+  ci <- boot.ci(boot.pair, conf = 1 - alfa, type = "perc")
+  
+  return(list(par = paste(grupo1, "vs", grupo2), ci = ci, boot = boot.pair))
+})
+
+# Mostrar resultados del análisis post-hoc
+for (result in post_hoc_results) {
+  cat("Comparación:", result$par, "\n")
+  cat("Intervalo de confianza al 95%: [", result$ci$perc[4], ",", result$ci$perc[5], "]\n\n")
+}
+```
+
+## Conclusión del análisis post-hoc 
+
+Los intervalos de confianza al 95% para las diferencias de medias entre cada par de provincias son los siguientes:
+
+Cordillera vs Maipo: [-54574.72, 178671.5]
+Cordillera vs Talagante: [-412612.5, 92020.19]
+Maipo vs Talagante: [-486701.6, 30081.13]
+>>>>>>> Stashed changes
 
 Dado que todos los intervalos de confianza incluyen el valor 0, no hay evidencia suficiente para afirmar que existen diferencias significativas en las medias de los ingresos totales entre las provincias de Maipo, Cordillera y Talagante. Por lo tanto, concluimos que las medias de los ingresos totales para hombres y mujeres en estas provincias son estadísticamente similares.
