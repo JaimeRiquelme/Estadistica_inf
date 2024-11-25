@@ -366,6 +366,153 @@ if (all(abs(diferencias) < 1e-10)) {
 
 ```
 
+# Calidad predictiva del modelo de RLS
+
+Esto servirá para verificar si las predicciones que podemos obtener con el modelo son de buena calidad.
+
+## Error de un modelo RLS
+
+la calidad del modelo puede asociarse a los errores $$ e_i $$ que comete en las estimaciones  y_i de un conjunto de observaciones, estableciendo una relacion y_i = y_i + e_i
+
+pero usando un modelo más general:
+
+y_1 = mean(y_1) + e_1
+
+En este capitulo el errro que se comete en la estimacion de y_i se le conoce como **error residual** r_i.
+
+Podemos usar el error cuadratico medio como una metrica de la calidad de un modelo de RLS
+
+Para el ejemplo anterior, se consigue un MSE = 1.914.377, Equivalente a un RMSE = 43,753, En principio es un resultado aceptable, ya que la variable de salida tiene un rango que va de los 62 a los 335 caballos de fuerza.
 
 
+## Generalizacion
 
+Diremos que un modelo es eneralizable si para un conjutno de datos nuevo consigue predicciones con una calidad similar a la que consigue con los datos usados en su construccion.
+
+La estrategia mas frecuente es la validacion cruzada, donde se separa en dos fragmentos:
+
+- Conjunto de entrenamiento: suele contener entre el 80 y 90% de las observaciones, escogidas de manera aleatorioa y se emplea para ajustar la recta con el metodo de minimos cuadrados.
+
+- Conjunto de prueba_ contiene el 10 a 30% restante de la muestra, y se usa para evaluar el modelo con datos nuevos.
+
+La idea del modelo es evaluar como se comporta el modelo con datos que no ha visto previamente, en comparacion al comportamiento con el conjunto de entrenamiento.
+
+ejemplo en R:
+
+```{r}
+datos <- mtcars_filter
+n <- nrow(datos)
+
+#Creamos el conjunto de entrenamiento y prueba
+
+set.seed(101)
+
+n_entrenamiento <- floor(0.8 * n)
+i_entrenamiento <- sample.int(n = n, size = n_entrenamiento, replace = FALSE)
+
+entrenamiento <- datos[i_entrenamiento, ]
+prueba <- datos[-i_entrenamiento, ]
+
+#Ajustamos y mostramos el modelo con el conjunto de entrenamiento
+
+modelo <- lm(hp ~ disp, data = entrenamiento)
+
+print(summary(modelo))
+
+#Calculamos el arror cuadrado promedio para el conjunto de entrenamiento
+
+rmse_entrenamiento <- sqrt(mean(resid(modelo)^2))
+cat("RMSE para el conjunto de entrenamiento: ", rmse_entrenamiento, "\n")
+
+#Hacemos las predicciones para el conjunto de prueba
+
+predicciones <- predict(modelo,prueba)
+
+#Calculamos error cuadrado promedio para el conjunto de prueba
+
+error <- prueba[["hp"]] - predicciones
+rmse_prueba <- sqrt(mean(error^2))
+cat("RMSE para el conjunto de prueba: ", rmse_prueba, "\n")
+```
+
+Pero puede ocurrir que por cosas randoms, el conjunto de prueba quede con observaciones que no represenan adecuadamente la muestra de datos original, llevando a una estimacion equivocada. es por eso que una manera de mejorar es generalizar la estrategia anterior y usar validacion cruzada de k pliegues.
+
+la idea es la misma, usar un conjunto de entrenamiento para contruir el modelo y otro de prueba para evaluarlo, pero en lugar de hacerlo una vez, se hace k veces, donde cada vez se elige un subconjunto de observaciones para el conjunto de prueba y el resto para el conjunto de entrenamiento.
+
+obtenemos las estimaciones de error de la sigguiente manera:
+
+1. Para cada uno de los k subconjuntos:
+  a) tomar uno de los k subconjutnos del conjunto de entreamiento y reservalo como conjunto de prueba.
+  b) ajustar la recta de minimos cuadrados usando para ello los datos combinados de los k-1 subconjuntos restantes.
+  c)Estimar el error cuadratico medio usando para ellos el conjunto de prueba
+
+2. Estimar el error cuadratico medio, corresponeidnte a la media de los k MSE obtenidos en el paso 1.
+
+En R podemos hacer la contruccion del modelo de RLS usando 5-CV con la funcion train(formula, method = "lm", trControl = trainControl(metrod = "cv", number = 5), data = datos) donde:
+
+formula = formula que se emplea en las llamadas internas a la funcion lm()
+number: cantidad de pliegues (k).
+
+```{r}
+library(caret)
+library(dplyr)
+
+#Datos
+datos <- mtcars_filter
+n <- nrow(datos)
+
+#Ajustamos y mostramos el modelo usando validacion cruzada de 5 pliegues.
+
+set.seed(111)
+
+entrenamiento <- train(hp ~ disp , data = datos, method = "lm", trControl = trainControl(method = "cv", number = 5))
+
+modelo <- entrenamiento[["finalModel"]]
+
+print(summary(modelo))
+
+#Mostramos los resultados de cada pliegue
+cat("Resultados de cada pliegue:\n")
+print(entrenamiento[["resample"]])
+
+#Mostramos el resultado estimado para el modelo
+
+cat("Error estimado para el modelo \n")
+print(entrenamiento[["results"]])
+
+```
+
+los resultados obtenidos son inquietantes por que tenemos una sd de 21,560, ya que para el pliegue1 el error fue de RMSE =15,162, mientras que para el 3 alcanzo un RMSE = 71,254, entonces sugiere que existe una o más observaciones influyentes en la muestra.
+
+para casos de muestras pequeñas, se recomienda usar validacion cruzada usando tantos pliegues como observaciones, en otras palabras de hacer n modelos distintos, dejando una observacion distinta de la muestra de datos sin ser considerara.
+
+En r podemos hacer el modelo de RLS ejemplo usando LOOCV
+
+```{r}
+
+library(caret)
+library(dplyr)
+
+#Datos
+datos <- mtcars_filter
+n <- nrow(datos)
+
+#Ajustar y mostrar el modelo usando validacion cruzada de 5 pliegues.
+set.seed(111)
+
+entrenamiento <- train(hp ~ disp, data = datos, method = "lm", trControl = trainControl(method = "LOOCV"))
+
+modelo <- entrenamiento[["finalModel"]]
+
+print(summary(modelo))
+
+#Mostrar los errores.
+
+cat("Resultados de cada pliegue:\n")
+print(entrenamiento[["pred"]])
+
+#Mostrar el resultado estimado para el modelo
+cat("Error estimado para el modelo:\n")
+print(entrenamiento[["results"]])
+
+```
