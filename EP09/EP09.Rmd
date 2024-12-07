@@ -1,0 +1,230 @@
+---
+title: "EP09"
+author: "Grupo X"
+date: "2024-12-02"
+output: pdf_document
+---
+Un estudio recolectó medidas anatómicas de 247 hombres y 260 mujeres (Heinz et al., 2003). El estudio incluyó nueve mediciones del esqueleto (ocho diámetros y una profundidad de hueso a hueso) y doce mediciones de grosor (circunferencias) que incluyen el tejido.
+
+
+# Lectura de datos
+```{r}
+#librerias
+library(dplyr)
+library(ggplot2)
+library(car)
+library(ggpubr)
+library(tidyr)
+
+#Leemos los datos a utilizar
+datos <- read.csv2("EP09 Datos.csv")
+
+#Mostramos los primeros datos
+head(datos)
+```
+1.- Definir la semilla a utilizar, que corresponde a los últimos cuatro dígitos del RUN (sin considerar el dígito verificador) del integrante de menor edad del equipo.
+```{r}
+# Definimos la semilla para realizar las preguntas solicitadas.
+set.seed(8603)
+
+
+# 2.- Seleccionar una muestra aleatoria de 100 mujeres (si la semilla es un número par) o 100 hombres (si la semilla es impar), y separar 70 casos para trabajar en la construcción de modelos y 30 para su evaluación en datos no vistos.
+
+
+#Seleccionamos una muestra aleatoria de 100 hombres, dado que la semilla es impar.
+
+#Seleccionamos los hombres
+
+datos_randoms_hombres <- datos %>% filter(Gender == 1) %>% sample_n(100)
+
+#Separamos 70 casos para trabajar en la construcción de modelos y 30 para su evaluación en datos no vistos.
+
+#Creamos un vector con los índices de los datos
+
+indices <- 1:100
+
+#Seleccionamos los primeros 70 datos para trabajar en la construcción de modelos
+
+datos_entrenamiento <- datos_randoms_hombres[indices[1:70],]
+
+
+#Seleccionamos los últimos 30 datos para evaluar en datos no vistos
+
+datos_prueba <- datos_randoms_hombres[indices[71:100],]
+
+
+#3.- Seleccionar de forma aleatoria ocho posibles variables predictoras.
+
+#Obtenemos los nombres de las columnas de nuestros datos y eliminamos la columna Weight y Height
+nombres_columnas <- colnames(datos) %>% setdiff(c("Weight", "Height"))
+
+#Seleccionamos de forma aleatoria ocho posibles variables predictoras.
+
+Col_seleccionadas <- sample(nombres_columnas, 8)
+
+print(Col_seleccionadas)
+
+
+```
+4.- Seleccionar, de las otras variables, una que el equipo considere que podría ser útil para predecir la variable Peso (sin considerar la estatura), justificando bien esta selección.
+
+```{r}
+#Lista con las variables restantes para elegir un predictor
+nombres_columnas_restantes <- nombres_columnas %>% setdiff(Col_seleccionadas)
+
+print(nombres_columnas_restantes)
+```
+La variable seleccionada es "Thigh.Girth", ya que se considera que el grosor del muslo puede ser un buen predictor del peso, ya que a mayor grosor de muslo, mayor cantidad de músculo y grasa en la zona, lo que podría influir en el peso de la persona.
+
+Ahora añadimos la variable peso y thigh.girth a las variables seleccionadas para evaluar el modelo.
+
+```{r}
+Col_seleccionadas <- c(Col_seleccionadas, "Weight", "Thigh.Girth")
+
+# Es la tabla que contiene solo nuestras 8 variables aleatorias predictorias
+
+tabla_va <- datos_entrenamiento %>% select(all_of(Col_seleccionadas))
+
+print(Col_seleccionadas)
+```
+5.- Usando el entorno R y paquetes estándares, construir un modelo de regresión lineal simple con el predictor seleccionado en el paso anterior.
+
+```{r}
+#Generamos al modelo inicial con el predictor elegido en el paso anterior
+
+modelo_inicial <- lm(Weight ~ Thigh.Girth, data = datos_entrenamiento)
+
+#Mostramos el modelo
+
+print(summary(modelo_inicial))
+
+#Mostramos el modelo en un gráfico
+
+grafico_modelo_inicial <- ggplot(datos_entrenamiento, aes(x = Thigh.Girth, y = Weight)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(title = "Modelo de regresión lineal simple", x = "Grosor del muslo", y = "Peso")
+
+print(grafico_modelo_inicial)
+```
+Luego de crear el modelo, verificamos los datos atipicos, influyentes junto con la bondad de ajuste del modelo.
+
+```{r}
+# Análisis de residuos y casos influyentes
+# Identificamos residuos estandarizados fuera del intervalo [-1.96, 1.96]
+residuos_estandarizados <- rstandard(modelo_inicial)
+casos_atipicos <- which(abs(residuos_estandarizados) > 1.96)
+cat("Residuos estandarizados fuera del 95% esperado:\n")
+print(casos_atipicos)
+
+# Análisis de valores influyentes usando la distancia de Cook
+# Usamos el umbral 4/n como es común en la práctica
+dist_cook <- cooks.distance(modelo_inicial)
+n <- nrow(datos_entrenamiento)
+casos_influyentes <- which(dist_cook > 4/n)
+cat("\nCasos influyentes (distancia de Cook > 4/n):\n")
+print(casos_influyentes)
+
+# Análisis de apalancamiento (leverage)
+# Calculamos el valor de corte 2(p+1)/n, donde p es el número de predictores
+p <- 1  # un solo predictor
+h <- hatvalues(modelo_inicial)
+apalancamiento_corte <- 2 * (p + 1) / n
+casos_apalancamiento <- which(h > apalancamiento_corte)
+cat("\nCasos con alto apalancamiento (h > 2(p+1)/n):\n")
+print(casos_apalancamiento)
+
+# Gráficos de diagnóstico
+par(mfrow=c(2,2))
+plot(modelo_inicial)
+```
+6.- Usando herramientas estándares para la exploración de modelos del entorno R, buscar entre dos y cinco predictores de entre las variables seleccionadas al azar en el punto 3, para agregar al modelo de regresión lineal simple obtenido en el paso 5.
+
+```{r}
+#Ajustamos a nuestro modelo del paso 5.
+completo <- lm(Weight ~ ., data = tabla_va)
+print(completo)
+
+opt <- options(digits = 2, width = 52)
+modelo <- step(modelo_inicial, scope = list(lower = modelo_inicial, upper = completo),
+               direction = "both",
+               k = log(nrow(tabla_va)),
+               test = "F",
+               trace = 1)
+options(digits = opt[[1]], width = opt[[2]])
+
+#Mostramos los coeficientes del modelo conseguido
+cat("\nModelo obtenido:\n")
+print(modelo[["coefficients"]])
+
+```
+
+Como nos dieron 4 predictores cumplimos con los solicitado en el enunciado. Por lo tanto comprobaremos las condiciones a continuación:
+
+```{r}
+# comprobar colinealidad
+# primero VIF
+ cat("VIF: \n")
+ print(vif(modelo))
+ 
+ 
+ # Segundo las tolerancias
+ cat("Tolerancias:\n")
+ print(1 / vif(modelo))
+ 
+# Comprobar la independencia de residuos, no autocorrelación entre residuos
+
+cat(" \nPrueba de Durbin-Watson para autocorrelaciones ")
+# Con hipótesis nula = los residuos son independientes  / no hay autocorrelación 
+#Hipótesis alternativa = Los residuos no son independientes.
+print( durbinWatsonTest(modelo))
+
+
+# Comprobamos normalidad de los residuos
+#con Hipótesis nula = Los datos provienen de una distribución normal
+#Hipótesis alternativa = Los datos no siguen una distribución normal.
+cat("\ nPrueba de normalidad para los residuos :\n")
+print(shapiro.test( modelo$residuals))
+
+# Comprobar homocedasticidad de los residuos
+cat("Prueba de homocedasticidad para los residuos:\n")
+print(ncvTest(modelo))
+
+```
+1. Multicolinealidad: No se aprecian VIF mayor a 5 y los estadísticos de tolerancia son mayores a 0.1, lo que indica que no hay problemas de multicolinealidad.    
+
+2. Autocorrelación: El valor estadístico de Durbin-Watson se encuentra cerca de 2 lo que indica que no hay autocorrelación significativa, además el p-value obtenido de 0.18 nos indica que los residuos son independientes.    
+
+3. Normalidad: el p-value de 0.2 entregado por la prueba de Shapiro wilk nos indica que no hay evidencia suficiente para afirmar que los residuos no siguen una distribución normal.   
+
+4. Homocedasticidad: el p-value de 0.2 entregado por la prueba chisquare nos indica que no hay evidencia suficiente para rechazar la hipótesis nula, por lo tanto los datos cumplen con la homocedasticidad.
+
+5. Las variables predictoras cumplen el ser cuantitativas.
+
+6. La variable de respuesta (peso) también cumple la condición de ser cuantitativa.
+
+7.
+
+
+15.2 CONDICIONES PARA USAR RLM
+Llegado este punto, necesitamos examinar con más detalle las condiciones que debemos cumplir para que un
+modelo de regresión lineal sea generalizable:
+1. Las variables predictoras deben ser cuantitativas o dicotómicas (de ahí la necesidad de variables indicadoras para manejar más de dos niveles).
+2. La variable de respuesta debe ser cuantitativa y continua, sin restricciones para su variabilidad.
+
+3. Los predictores deben tener algún grado de variabilidad (su varianza no debe ser igual a cero). En otras
+palabras, no pueden ser constantes. NO SE
+
+4. No debe existir multicolinealidad. Esto signica que no deben existir relaciones lineales fuertes entre
+dos o más predictores (coecientes de correlación altos). hecha
+
+5. Los residuos deben ser homocedásticos (con varianzas similares) para cada nivel de los predictores. hecha
+
+6. Los residuos deben seguir una distribución cercana a la normal centrada en cero. hecha?
+
+7. Los valores de la variable de respuesta son independientes entre sí. hecha
+
+8. Cada predictor se relaciona linealmente con la variable de respuesta NO SE
+
+
+

@@ -1,0 +1,140 @@
+---
+title: "Análisis de Felicidad"
+author: "Jaime Riquelme"
+date: "2024-11-28"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+# Cargar las librerías necesarias
+library(ggpubr)
+library(tidyr)
+library(tidyverse)
+
+# Establecer la semilla para la reproducibilidad
+set.seed(30)
+
+# Leer el archivo CSV
+data <- read.csv("datos-felicidad.csv")  # Asegúrate de que la ruta del archivo sea correcta
+
+# Transformar la variable Sexo a formato numérico
+data$Sexo <- ifelse(data$Sexo == "mujer", 0, 1) # 0 para mujer, 1 para hombre
+
+# Obtener una muestra aleatoria de 70 elementos
+muestra <- data[sample(nrow(data), 70), ]
+
+# Crear el dataframe con las variables de interés
+df <- data.frame(
+  Felicidad = muestra$Felicidad,
+  Edad = muestra$Edad,
+  Amigos = muestra$N_amigos,
+  Mascotas = muestra$N_mascotas
+)
+
+# Convertir a formato largo para crear histogramas
+df_long <- pivot_longer(df, 
+                        cols = everything(),
+                        names_to = "variable", 
+                        values_to = "valor")
+
+# Crear los histogramas para las variables
+p <- gghistogram(
+  df_long,
+  x = "valor",
+  fill = "variable",
+  bins = 9
+) + 
+  facet_grid(~ variable, scales = "free_x") +
+  theme_pubr() +
+  theme(legend.position = "none")
+
+print(p)
+
+print(cor(muestra))
+
+
+```
+
+# Contruccion de los modelos
+
+```{r}
+# Modelo 1: Solo con 'Edad'
+modelo_edad <- lm(Felicidad ~ Edad, data = muestra)
+cat("\n\n")
+cat("Modelo con solo 'Edad' --> 'Felicidad'\n")
+cat("--------------------------------------\n")
+print(summary(modelo_edad))
+
+# Modelo 2: Con 'Edad' + 'N_amigos'
+modelo_amigos <- lm(Felicidad ~ Edad + N_amigos, data = muestra)
+cat("\n\n")
+cat("Modelo con 'Edad' + 'N_amigos' --> 'Felicidad'\n")
+cat("---------------------------------------------\n")
+print(summary(modelo_amigos))
+
+# Modelo 3: Con 'Edad' + 'N_amigos' + 'N_mascotas'
+modelo_completo <- lm(Felicidad ~ Edad + N_amigos + N_mascotas, data = muestra)
+cat("\n\n")
+cat("Modelo con 'Edad' + 'N_amigos' + 'N_mascotas' --> 'Felicidad'\n")
+cat("-----------------------------------------------\n")
+print(summary(modelo_completo))
+
+# Comparar los modelos para ver cuál tiene el mejor ajuste
+cat("\n\n")
+cat("Comparación de modelos jerárquicos\n")
+cat("-------------------------------\n")
+print(anova(modelo_edad, modelo_amigos, modelo_completo))
+
+```
+
+# Evaluacion de los modelos
+
+```{r}
+# Gráficos de dispersión y líneas de regresión
+g_felicidad_amigos <- ggscatter(muestra, x = "N_amigos", y = "Felicidad",
+                                add = "reg.line", conf.int = TRUE)
+print(g_felicidad_amigos)
+
+g_felicidad_mascotas <- ggscatter(muestra, x = "N_mascotas", y = "Felicidad",
+                                  add = "reg.line", conf.int = TRUE)
+print(g_felicidad_mascotas)
+
+```
+
+# Condicion de homocedasticidad
+```{r}
+# Gráfico de residuos vs. valores ajustados
+plot(modelo_completo$fitted.values, modelo_completo$residuals,
+     xlab = "Valores Ajustados", ylab = "Residuos", main = "Residuos vs. Valores Ajustados")
+abline(h = 0, col = "red")
+
+```
+
+# Condicion de normalidad de los errores 
+
+```{r}
+# Gráfico Q-Q de los residuos
+qqnorm(modelo_completo$residuals)
+qqline(modelo_completo$residuals, col = "red")
+
+```
+
+# Evaluacion del poder predictivo del modelo
+
+```{r}
+# Calcular el error cuadrático medio (RMSE) y R²
+rmse <- sqrt(mean(modelo_completo$residuals^2))
+cat("\nRMSE del modelo completo:", rmse, "\n")
+
+# R² (coeficiente de determinación)
+r2 <- summary(modelo_completo)$r.squared
+cat("R² del modelo completo:", r2, "\n")
+
+# Comparar las predicciones del modelo con los valores reales
+predicciones <- predict(modelo_completo, muestra)
+comparacion <- data.frame(Real = muestra$Felicidad, Predicho = predicciones)
+print(comparacion)
+
+```
+
+

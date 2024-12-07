@@ -1,0 +1,45 @@
+---
+title: "Formativo EP09"
+author: "Jaime Riquelme"
+date: "2024-11-25"
+output: pdf_document
+---
+
+# Ejercicio de correlacion
+```{r}
+Ingreso <- c(4250,8500,12800,19800,25500)
+
+Prevalencia <- c(4.12,4.19,4.35,4.66,5.26)
+```
+
+1.- ¿Existe una realción entre la prevalencia de CMP y el ingreso anual de las mujeres estudiadas?
+
+```{r}
+cor(Ingreso,Prevalencia)
+```
+Dado el valor obtenido al realizar la prueba de correlacion, obteniendo un valor de 0.9584311 podemos decir que si existe una relacion entre la prevalencia de CMP y el ingreso anual de las mujeres estudiadas.
+
+¿Que tan fuerte es esta relacion?
+
+Esta relacion es muy fuerte por que el valor obtenido es de 0.9584311 muy cercano a 1.
+
+```{r}
+cor.test(Ingreso,Prevalencia)
+```
+
+
+¿Qué podríamos recomendar a un gobiertno si desea disminuir la prevalencia de este tipo de cancer?
+
+Se podria recomendar que se realicen campañas de prevencion y deteccion temprana de este tipo de cancer, ademas de fomentar la realizacion de examenes de mamografias a mujeres de bajos recursos, ya que la correlacion obtenida nos indica que a mayor ingreso anual mayor es la prevalencia de CMP.
+
+
+Realizamos un grafico.
+
+```{r}
+plot(Ingreso,Prevalencia)
+
+#Añdimos la linea de regresion
+
+abline(lm(Prevalencia~Ingreso))
+```
+
