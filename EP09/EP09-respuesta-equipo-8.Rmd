@@ -1,0 +1,291 @@
+# ---
+title: "EP09"
+author: "Grupo 8"
+date: "2024-12-02"
+output: pdf_document
+---
+Un estudio recolectó medidas anatómicas de 247 hombres y 260 mujeres (Heinz et al., 2003). El estudio incluyó nueve mediciones del esqueleto (ocho diámetros y una profundidad de hueso a hueso) y doce mediciones de grosor (circunferencias) que incluyen el tejido.
+
+# Lectura de datos
+```{r}
+# Librerías
+library(dplyr)
+library(ggplot2)
+library(car)
+library(ggpubr)
+library(tidyr)
+
+# Leemos los datos a utilizar
+datos <- read.csv2("EP09 Datos.csv")
+
+# Mostramos los primeros datos
+head(datos)
+```
+
+# 1. Definir la semilla a utilizar
+Definir la semilla a utilizar, que corresponde a los últimos cuatro dígitos del RUN (sin considerar el dígito verificador) del integrante de menor edad del equipo.
+```{r}
+# Definimos la semilla para realizar las preguntas solicitadas.
+set.seed(8603)
+```
+
+# 2. Seleccionar una muestra aleatoria
+Seleccionar una muestra aleatoria de 100 mujeres (si la semilla es un número par) o 100 hombres (si la semilla es impar), y separar 70 casos para trabajar en la construcción de modelos y 30 para su evaluación en datos no vistos.
+
+```{r}
+# Seleccionamos una muestra aleatoria de 100 hombres, dado que la semilla es impar.
+
+# Seleccionamos los hombres
+datos_randoms_hombres <- datos %>% filter(Gender == 1) %>% sample_n(100)
+
+# Separamos 70 casos para trabajar en la construcción de modelos y 30 para su evaluación en datos no vistos.
+
+# Creamos un vector con los índices de los datos
+indices <- 1:100
+
+# Seleccionamos los primeros 70 datos para trabajar en la construcción de modelos
+datos_entrenamiento <- datos_randoms_hombres[indices[1:70],]
+
+# Seleccionamos los últimos 30 datos para evaluar en datos no vistos
+datos_prueba <- datos_randoms_hombres[indices[71:100],]
+```
+
+# 3. Seleccionar variables predictoras
+Seleccionar de forma aleatoria ocho posibles variables predictoras.
+
+```{r}
+# Obtenemos los nombres de las columnas de nuestros datos y eliminamos la columna Weight y Height
+nombres_columnas <- colnames(datos) %>% setdiff(c("Weight", "Height"))
+
+# Seleccionamos de forma aleatoria ocho posibles variables predictoras.
+Col_seleccionadas <- sample(nombres_columnas, 8)
+
+print(Col_seleccionadas)
+```
+
+# 4. Seleccionar una variable adicional
+Seleccionar, de las otras variables, una que el equipo considere que podría ser útil para predecir la variable Peso (sin considerar la estatura), justificando bien esta selección.
+
+La forma más confiable (Sin requerir de un análisis cualitativo de las variables) para determinar la utilidad de las variables como predictoras es utilizar la matriz de correlación, la cual entregará la correlación entre las distintas variables a comparar.
+
+```{r}
+matriz <- cor(datos_entrenamiento)
+cor_peso <- matriz[, c(1, which(colnames(matriz) == "Weight"))]
+print(cor_peso)
+```
+
+A partir de los datos, la variable con mayor correlación con el peso corresponde a Hip.girth, es decir, el grosor de la cadera, lo que se condice con la hecho de que es una zona con mucha influencia de grasa y masa muscular. Con esto, ya se tiene un buen candidato para la creación del modelo.
+
+```{r}
+# Lista con las variables restantes para elegir un predictor
+nombres_columnas_restantes <- nombres_columnas %>% setdiff(Col_seleccionadas)
+
+print(nombres_columnas_restantes)
+```
+
+Ahora se añaden las variable peso y Hip.girth a las variables seleccionadas para evaluar el modelo.
+
+```{r}
+Col_seleccionadas <- c(Col_seleccionadas, "Weight", "Hip.Girth")
+
+# Es la tabla que contiene solo nuestras 8 variables aleatorias predictorias
+tabla_va <- datos_entrenamiento %>% select(all_of(Col_seleccionadas))
+
+print(Col_seleccionadas)
+```
+
+# 5. Construir un modelo de regresión lineal simple
+Usando el entorno R y paquetes estándares, construir un modelo de regresión lineal simple con el predictor seleccionado en el paso anterior.
+
+```{r}
+# Generamos el modelo inicial con el predictor elegido en el paso anterior
+modelo_inicial <- lm(Weight ~ Hip.Girth, data = datos_entrenamiento)
+
+# Mostramos el modelo
+print(summary(modelo_inicial))
+
+# Mostramos el modelo en un gráfico
+grafico_modelo_inicial <- ggplot(datos_entrenamiento, aes(x = Hip.Girth, y = Weight)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(title = "Modelo de regresión lineal simple", x = "Grosor de la cadera", y = "Peso")
+
+# Mostramos el modelo
+print(summary(modelo_inicial))
+```
+
+Interpretación del modelo simple:
+- El modelo de regresión lineal simple usando el grosor de la cadera como predictor muestra:
+- Un R² múltiple de 0.781, lo que significa que aproximadamente el 78.1% de la 
+  variabilidad en el peso es explicada por el grosor de la cadera.
+- Un R² ajustado de 0.778 implica un buen ajuste del modelo.
+- El coeficiente de Hip.Girth (1.583) es estadísticamente significativo (p < 0.001) 
+  e indica que por cada centímetro adicional de grosor de la cadera, el peso aumenta en 
+  promedio 1.58 kg, manteniendo todo lo demás constante.
+- El error estándar residual de 5.4 kg sugiere una precisión moderada en las predicciones.
+- La significancia global del modelo (F-statistic: 243, p < 2.2e-16) confirma que
+  el grosor de la cadera es un predictor estadísticamente significante del peso corporal.
+
+Luego de crear el modelo, verificamos los datos atípicos, influyentes junto con la bondad de ajuste del modelo.
+
+```{r}
+# Análisis de residuos y casos influyentes
+# Identificamos residuos estandarizados fuera del intervalo [-1.96, 1.96]
+residuos_estandarizados <- rstandard(modelo_inicial)
+casos_atipicos <- which(abs(residuos_estandarizados) > 1.96)
+cat("Residuos estandarizados fuera del 95% esperado:\n")
+print(casos_atipicos)
+
+# Análisis de valores influyentes usando la distancia de Cook
+# Usamos el umbral 4/n como es común en la práctica
+dist_cook <- cooks.distance(modelo_inicial)
+n <- nrow(datos_entrenamiento)
+casos_influyentes <- which(dist_cook > 4/n)
+cat("\nCasos influyentes (distancia de Cook > 4/n):\n")
+print(casos_influyentes)
+
+# Análisis de apalancamiento (leverage)
+# Calculamos el valor de corte 2(p+1)/n, donde p es el número de predictores
+p <- 1  # un solo predictor
+h <- hatvalues(modelo_inicial)
+apalancamiento_corte <- 2 * (p + 1) / n
+casos_apalancamiento <- which(h > apalancamiento_corte)
+cat("\nCasos con alto apalancamiento (h > 2(p+1)/n):\n")
+print(casos_apalancamiento)
+
+# Gráficos de diagnóstico
+par(mfrow=c(2,2))
+plot(modelo_inicial)
+```
+
+# 6. Buscar predictores adicionales
+Usando herramientas estándares para la exploración de modelos del entorno R, buscar entre dos y cinco predictores de entre las variables seleccionadas al azar en el punto 3, para agregar al modelo de regresión lineal simple obtenido en el paso 5.
+
+```{r}
+# Ajustamos a nuestro modelo del paso 5.
+completo <- lm(Weight ~ ., data = tabla_va)
+print(completo)
+
+opt <- options(digits = 2, width = 52)
+modelo <- step(modelo_inicial, scope = list(lower = modelo_inicial, upper = completo),
+               direction = "both",
+               k = log(nrow(tabla_va)),
+               test = "F",
+               trace = 1)
+options(digits = opt[[1]], width = opt[[2]])
+
+# Mostramos los coeficientes del modelo conseguido
+cat("\nModelo obtenido:\n")
+print(modelo[["coefficients"]])
+```
+
+Interpretación de los predictores seleccionados:
+El modelo final incluye cuatro predictores que tienen sentido desde una perspectiva 
+anatómica y fisiológica:
+1. Thigh.Girth (grosor del muslo): Refleja la masa muscular y grasa en las extremidades
+   inferiores
+2. Hip.Girth (grosor de cadera): Indica la estructura ósea general y la distribución
+   de grasa en la región pélvica
+3. Chest.Girth (grosor del pecho): Representa la estructura del tórax y la masa
+   muscular superior
+4. Knees.diameter (diámetro de rodillas): Proporciona información sobre la estructura
+   ósea general
+
+Como se entregaron 4 predictores se cumple con lo solicitado en el enunciado, y como el modelo obtenido ya contiene la variable utilizada en el paso 5, se puede utilizar para reemplazar el anterior modelo.
+
+# 7. Evaluar la bondad de ajuste
+Evaluar la bondad de ajuste (incluyendo el análisis de casos atípicos y casos influyentes) y la generalidad (condiciones para RLM) de los modelos y “arreglarlos” en caso de que presenten algún problema.
+
+```{r}
+# Comprobar colinealidad
+# Primero VIF
+cat("VIF: \n")
+print(vif(modelo))
+ 
+# Segundo las tolerancias
+cat("Tolerancias:\n")
+print(1 / vif(modelo))
+ 
+# Comprobar la independencia de residuos, no autocorrelación entre residuos
+cat("\nPrueba de Durbin-Watson para autocorrelaciones\n")
+# Con hipótesis nula = los residuos son independientes / no hay autocorrelación 
+# Hipótesis alternativa = Los residuos no son independientes.
+print(durbinWatsonTest(modelo))
+
+# Comprobar normalidad de los residuos
+# Con hipótesis nula = Los datos provienen de una distribución normal
+# Hipótesis alternativa = Los datos no siguen una distribución normal.
+cat("\nPrueba de normalidad para los residuos:\n")
+print(shapiro.test(modelo$residuals))
+
+# Comprobar homocedasticidad de los residuos
+cat("Prueba de homocedasticidad para los residuos:\n")
+print(ncvTest(modelo))
+
+# Comprobar variabilidad de los predictores del modelo
+cat("\nPrueba de variabilidad de los predictores:\n")
+print(summary(modelo))
+
+# Comprobar la linealidad con la variable de respuesta del modelo
+cat("\nPrueba de linealidad de la variable respuesta:\n")
+residualPlots(modelo,
+             type = "rstandard",
+             id = list(method = "r", n = 3, cex = 0.7, location = "lr"),
+             col = "red", pch = 20, col.quad = "purple")
+
+# Comprobar las estimaciones de los coeficientes del modelo
+cat("\nPrueba de coeficientes del modelo:\n")
+influencePlot(modelo)
+```
+
+1. Multicolinealidad: No se aprecian VIF mayor a 5 y los estadísticos de tolerancia son mayores a 0.1, lo que indica que no hay problemas de multicolinealidad.
+2. Autocorrelación: El valor estadístico de Durbin-Watson se encuentra cerca de 2 lo que indica que no hay autocorrelación significativa, además el p-value obtenido de 0.18 nos indica que los residuos son independientes.    
+3. Normalidad: el p-value de 0.2 entregado por la prueba de Shapiro-Wilk nos indica que no hay evidencia suficiente para afirmar que los residuos no siguen una distribución normal.   
+4. Homocedasticidad: el p-value de 0.2 entregado por la prueba chi-cuadrado nos indica que no hay evidencia suficiente para rechazar la hipótesis nula, por lo tanto los datos cumplen con la homocedasticidad.   
+5. Cuantitatividad de variables predictoras: Las variables predictoras cumplen el ser cuantitativas.    
+6. Cuantitatividad de la variable de respuesta: La variable de respuesta (peso) también cumple la condición de ser cuantitativa.    
+7. Variabilidad de los predictores: Todos los coeficientes de los predictores son estadísticamente significativos con p-values bajos menores a 0.05 que nos indica que tienen efecto significativo en el peso, por lo tanto sí contribuyen en la variabilidad de la variable dependiente.    
+8. Relación lineal con la variable respuesta: A partir de los gráficos podemos apreciar que los predictores tienen una relación lineal con la respuesta y además Chest Girth posee una curva en la cual si tuviéramos más datos podríamos apreciar mejor la naturaleza de esta curva, mientras que Thigh Girth posee un valor atípico que produce apalancamiento.   
+9. Coeficientes del modelo: Los valores de Hat cumplen el ser menores que 1 por lo cual no hay apalancamiento y la distancia de Cook se puede apreciar que también son valores inferiores a 1, por lo cual no existe problemas en estos datos.
+
+# 8. Evaluar el poder predictivo del modelo
+Evaluar el poder predictivo del modelo con los datos no utilizados para construirlo.
+
+```{r}
+# Calculamos el RMSE para el conjunto de entrenamiento
+rmse_entrenamiento <- sqrt(mean(resid(modelo)^2))
+
+# Hacemos predicciones en el conjunto de prueba
+predicciones <- predict(modelo, newdata = datos_prueba)
+residuos_prueba <- datos_prueba$Weight - predicciones
+rmse_prueba <- sqrt(mean(residuos_prueba^2))
+
+# Calculamos el porcentaje de cambio en el error
+pct_cambio <- ((rmse_prueba - rmse_entrenamiento) / rmse_entrenamiento) * 100
+
+# Calculamos R2 para los datos de prueba
+r2_prueba <- 1 - sum((datos_prueba$Weight - predicciones)^2) / 
+                    sum((datos_prueba$Weight - mean(datos_prueba$Weight))^2)
+
+# Mostramos los resultados
+cat("Rendimiento del modelo:\n")
+cat("RMSE para el conjunto de entrenamiento:", round(rmse_entrenamiento, 3), "\n")
+cat("RMSE para el conjunto de prueba:", round(rmse_prueba, 3), "\n")
+cat("Cambio en el error:", round(pct_cambio, 2), "%\n")
+cat("R² en datos de prueba:", round(r2_prueba, 4), "\n")
+
+# Creamos el gráfico con los datos reales vs los datos predichos.
+ggplot(data = data.frame(reales = datos_prueba$Weight, predichos = predicciones), 
+       aes(x = reales, y = predichos)) +
+  geom_point() +
+  geom_abline(intercept = 0, slope = 1, color = "red", linetype = "dashed") +
+  labs(x = "Valores reales", y = "Valores predichos", 
+       title = "Comparación de valores reales vs predichos en datos de prueba") +
+  theme_minimal()
+```
+
+# Conclusión:
+
+El modelo de regresión lineal múltiple desarrollado demuestra un excelente rendimiento predictivo para el peso corporal. Partiendo de un modelo simple con el grosor de la cadera como único predictor (R² = 77.8%), la inclusión estratégica de tres predictores adicionales (Thigh.Girth, Chest.Girth, Knees.diameter) logró mejorar la capacidad predictiva al mismo tiempo que se aumenta la robustez del modelo, alcanzando un R² de 81.51% en datos no vistos. Las métricas de evaluación respaldan lo anterior: el RMSE en entrenamiento (3.572) y prueba (4.383) muestran un incremento esperado del 22.7%, indicando un balance adecuado sin sobreajuste. El modelo cumple satisfactoriamente todas las condiciones necesarias para la regresión lineal múltiple, incluyendo normalidad de residuos, homocedasticidad y ausencia de multicolinealidad problemática. Si bien se observa una ligera tendencia a subestimar los pesos más altos, la visualización de valores reales versus predichos confirma una buena alineación general con la línea ideal.
+
+Estos resultados sugieren que el modelo es confiable y adecuado para su propósito de predicción del peso corporal en hombres, proporcionando estimaciones precisas basadas en medidas anatómicas fácilmente obtenibles.
