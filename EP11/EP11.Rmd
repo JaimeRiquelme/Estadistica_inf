@@ -1,0 +1,89 @@
+---
+title: "EP11"
+author: "Grupo 8"
+date: "2024-12-16"
+output: pdf_document
+---
+  
+Para este ejercicio usaremos los datos de medidas anatómicas recolectados por Heinz et al. (2003) que ya hemos utilizado en los ejercicios prácticos anteriores (disponibles en el archivo "EP09 Datos.csv"), con la adición de las variables IMC y EN consideradas en el ejercicio práctico anterior.
+
+# 0.-Cargar librerías y base de datos.
+```{r}
+
+#Cargamos las librerías necesarias
+library(leaps)
+library(caret)
+library(pROC)
+library(car)
+
+#Realizamos la lectura de los datos.
+datos <- read.csv2("EP09 Datos.csv")
+
+```
+
+# 1.-Definir la semilla a utilizar, que corresponde a los primeros cinco dígitos del RUN del integrante de mayor edad del equipo.
+
+```{r}
+#Realizamos la lectura de los datos.
+datos <- read.csv2("EP09 Datos.csv")
+
+#Definimos la semilla a utilizar
+
+set.seed(6887)
+```
+
+# 2.-Seleccionar una muestra de 100 personas, asegurando que la mitad tenga estado nutricional “sobrepeso” y la otra mitad “no sobrepeso”.
+
+```{r}
+# Convertimos la altura de centímetros a metros
+datos <- datos %>% mutate(Height = Height / 100)
+
+# Calculamos el IMC 
+datos <- datos %>% mutate(IMC = Weight / (Height^2))
+
+#Segundo creamos la variable EN para cada persona
+datos <- datos %>% mutate(EN = ifelse(IMC >= 23.2, 1, 0)) # 1: Sobrepeso, 0: No sobrepeso
+
+noSobrepeso <- datos %>% filter(EN == 0) %>% sample_n(50)
+sobrepeso <- datos %>% filter(EN == 1) %>% sample_n(50)
+muestra <- rbind(noSobrepeso, sobrepeso)
+
+```
+
+#3.- Usando las herramientas del paquete leaps, realizar una búsqueda exhaustiva para seleccionar entre dos y ocho predictores que ayuden a estimar la variable Peso (Weight), obviamente sin considerar las nuevas variables IMC ni EN, y luego utilizar las funciones del paquete caret para construir un modelo de regresión lineal múltiple con los predictores escogidos y evaluarlo usando bootstrapping.
+
+```{r}
+#Excluimos las variables IMC y EN
+
+variables <- setdiff(names(datos), c("Weight", "IMC", "EN"))
+
+#Seleccionamos los predictores usando regsubsets
+
+leaps_model <- regsubsets(Weight ~ ., data = datos[ , c("Weight", variables)], 
+                          nbest = 1, nvmax = 8, method = "exhaustive")
+
+#Obtenemos los mejores predictores (de 2 a 8 selecciones)
+
+summary_leaps <- summary(leaps_model)
+
+mejores_predictores <- names(coef(leaps_model, which.min(summary_leaps$cp))[-1])
+
+mejores_predictores
+```
+Ahora que tenemos los mejores predictores para el modelo, procedemos a construir el modelo de regresión lineal múltiple y evaluarlo usando bootstrapping.
+
+```{r}
+#Construccion del modelo de rerresión lineal múltiple con caret
+
+control <- trainControl(method = "boot", number = 2999)
+modelo_lm <- train(Weight ~ ., data = datos[ , c("Weight", mejores_predictores)], method = "lm", trControl = control)
+
+summary(modelo_lm$finalModel)
+```
+
+En conclusión, según los datos analizados, la variable "Biiliac.diameter" se encuentra muy cerca del umbral de significancia estadística (0.05), aunque lo supera ligeramente. Sin embargo, el resto de los predictores están claramente por debajo de este umbral, lo que indica que son altamente significativos. Además, los valores de "Multiple R-squared" y "Adjusted R-squared" muestran que el modelo explica aproximadamente el 97% de la variabilidad de los datos, lo que confirma que es un modelo extremadamente preciso y robusto.
+
+# 4.-Haciendo un poco de investigación sobre el paquete caret, en particular cómo hacer Recursive Feature Elimination (RFE), construir un modelo de regresión lineal múltiple para predecir la variable IMC que incluya entre 10 y 20 predictores, seleccionando el conjunto de variables que maximice R2 y que use cinco repeticiones de validación cruzada de cinco pliegues para evitar el sobreajuste (obviamente no se debe considerar las variables Peso, Estatura ni estado nutricional –Weight, Height, EN respectivamente).
+
+
+
