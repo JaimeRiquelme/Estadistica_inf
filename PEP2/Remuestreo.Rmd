@@ -1,0 +1,487 @@
+---
+title: "Cap 12.2"
+author: "Jaime Riquelme"
+date: "2024-12-27"
+output: pdf_document
+---
+
+# Remuestreo
+
+# Bootstrappin
+
+## Bootstrappin para una muestra
+## Intervalos de Confianza mediante Bootstrapping
+
+El bootstrapping es una técnica de remuestreo que permite estimar intervalos de confianza para parámetros poblacionales sin asumir una distribución específica de los datos. Este método es especialmente útil cuando no se cumplen los supuestos de normalidad.
+
+```{r}
+
+library(boot)
+library(bootES)
+
+# Crear muestra inicial y calcular la media
+muestra <- c(79, 75, 84, 75, 94, 82, 76, 90, 79, 88)
+datos <- data.frame(muestra)
+
+# Establecer cantidad de remuestreos y nivel de significación
+B <- 2000
+alfa <- 0.01
+
+# Función para calcular el estadístico: media de la remuestra
+media <- function(valores, i) {
+  mean(valores[i])
+}
+
+# Construir la distribución bootstrap usando el paquete boot
+set.seed(432)
+distribucion_b <- boot(muestra, statistic = media, R = B)
+
+# Mostrar y graficar la distribución bootstrap
+cat("*** Paquete 'boot' ***\n")
+print(distribucion_b)
+plot(distribucion_b)
+
+# Construir y mostrar los intervalos de confianza
+ics <- boot.ci(distribucion_b, conf = 1 - alfa,
+               type = c("norm", "perc", "bca"))
+cat("\n\n")
+print(ics)
+
+# Construir distribución bootstrap usando el paquete bootES
+set.seed(432)
+distribucion_bES <- bootES(muestra, R = B, ci.type = "bca",
+                          ci.conf = 1 - alfa, plot = TRUE)
+
+# Mostrar bootstrap obtenida con bootES
+cat("\n\n*** Paquete 'bootES' ***\n")
+print(distribucion_bES)
+```
+
+## Inferencia sobre la media de una muestra con bootstrapping
+
+## Inferencia sobre la Media con Bootstrapping
+
+Este método utiliza bootstrapping para realizar inferencia sobre la media poblacional, permitiendo contrastar hipótesis sin asumir normalidad en los datos. La técnica implica desplazar la distribución bootstrap para centrarla en el valor nulo de la hipótesis.
+
+```{r}
+library(boot)
+
+# Crear muestra inicial y calcular la media
+muestra <- c(79, 75, 84, 75, 94, 82, 76, 90, 79, 88)
+valor_observado <- mean(muestra)
+datos <- data.frame(muestra)
+
+# Construir distribución bootstrap
+B <- 2000
+
+media <- function(valores, i) {
+  mean(valores[i])
+}
+
+set.seed(432)
+distribucion_b <- boot(muestra, statistic = media, R = B)
+
+# Desplazar la distribución bootstrap para que se centre en
+# el valor nulo
+valor_nulo <- 75
+desplazamiento <- mean(distribucion_b[["t"]]) - valor_nulo
+distribucion_nula <- distribucion_b[["t"]] - desplazamiento
+
+# Determinar el valor p
+p <- (sum(distribucion_nula > valor_observado) + 1) / (B + 1)
+cat("Valor p:", p)
+```
+
+## Bootstrappin para dos muestras independientes
+
+## Bootstrapping para la Diferencia de Medias
+
+Este método utiliza bootstrapping para comparar las medias de dos grupos independientes, permitiendo realizar inferencia estadística sin asumir normalidad en los datos. Es especialmente útil cuando tenemos muestras pequeñas o cuando los datos no siguen una distribución normal.
+
+```{r}
+library(boot)
+library(ggpubr)
+library(simpleboot)
+
+# Ingresar datos originales
+hombres <- c(-1.3, 1.5, 1.6, 1.7, 1.7, 1.9, 2.3, 2.4, 2.6, 2.6, 2.7,
+             2.8, 3.2, 3.7, 4.1, 4.4, 4.5, 4.8, 5.2, 5.2, 5.3, 5.5,
+             5.5, 5.6, 5.6, 5.7, 5.7)
+
+mujeres <- c(3.5, 3.6, 3.8, 4.3, 4.5, 4.5, 4.9, 5.1, 5.3, 5.3, 5.5,
+             5.8, 6.0, 6.3, 6.3, 6.4, 6.4, 6.6, 6.7)
+
+n_hombres <- length(hombres)
+n_mujeres <- length(mujeres)
+
+# Comprobar normalidad de las muestras
+print(shapiro.test(hombres))
+print(shapiro.test(mujeres))
+
+# Calcular y mostrar la diferencia observada entre las medias muestrales
+media_hombres <- mean(hombres)
+media_mujeres <- mean(mujeres)
+diferencia_obs <- media_hombres - media_mujeres
+
+cat("Media hombres:", round(media_hombres,3), "\n")
+cat("Media mujeres:", round(media_mujeres,3), "\n")
+cat("Diferencia observada:", round(diferencia_obs, 3), "\n")
+cat("\n")
+
+# Crear la distribución bootstrap
+B <- 9999
+set.seed(432)
+distribucion_b <- two.boot(hombres, mujeres, FUN = mean, R = B)
+
+# Examinar la distribución bootstrap
+datos <- data.frame(diferencias = distribucion_b[["t"]])
+g_hist <- gghistogram(datos, x = "diferencias", bins = 100,
+                     xlab = "Diferencia de medias",
+                     ylab = "Frecuencia")
+g_qq <- ggqqplot(datos, x = "diferencias")
+
+g <- ggarrange(g_hist, g_qq)
+print(g)
+
+media_b <- mean(datos[["diferencias"]])
+sd_b <- sd(datos[["diferencias"]])
+
+cat("Distribución bootstrap:\n")
+cat("\tMedia:", round(media_b, 3), "\n")
+cat("\tDesviación estándar:", round(sd_b, 3), "\n\n")
+
+# Construir y mostrar los intervalos de confianza
+alfa <- 0.05
+intervalo_bca <- boot.ci(distribucion_b, conf = 1 - alfa,
+                        type = "bca")
+print(intervalo_bca)
+
+# Desplazar la distribución bootstrap para reflejar la hipótesis nula
+valor_nulo <- -0.5
+desplazamiento <- media_b - valor_nulo
+distribucion_nula <- datos[["diferencias"]] - desplazamiento
+
+# Determinar el valor p
+p <- (sum(distribucion_nula < diferencia_obs) + 1) / (B + 1)
+cat("\nValor p:", p, "\n")
+```
+
+## Bootstrappin para dos muestras apareadas
+
+## Bootstrapping para la Media de las Diferencias
+
+Este método utiliza bootstrapping para analizar las diferencias entre observaciones pareadas, permitiendo realizar inferencia sobre la media de las diferencias sin asumir normalidad en los datos.
+
+```{r}
+library(bootES)
+
+set.seed(432)
+
+# Ingresar datos originales
+prueba_1 <- c(3.5, 2.7, 1.0, 1.8, 1.6, 4.3, 5.8, 6.4, 3.9, 4.3, 3.4,
+              5.3, 5.8, 5.3, 2.0, 1.3, 4.0, 5.3, 1.6, 3.6)
+
+prueba_2 <- c(5.2, 5.1, 5.9, 4.8, 1.4, 2.3, 6.8, 5.3, 3.1, 3.8, 4.6,
+              1.2, 3.9, 2.0, 1.7, 3.3, 6.0, 4.8, 6.9, 1.3)
+
+# Calcular la diferencia entre ambas observaciones
+diferencia <- prueba_2 - prueba_1
+
+# Calcular la media observada de las diferencias
+valor_observado <- mean(diferencia)
+
+# Generar la distribución bootstrap y su intervalo de confianza
+B <- 3999
+alfa <- 0.05
+
+distribucion_bES <- bootES(diferencia, R = B, ci.type = "bca",
+                         ci.conf = 1 - alfa, plot = TRUE)
+
+# Desplazar la distribución bootstrap para reflejar la hipótesis nula
+valor_nulo <- 0.5
+desplazamiento <- mean(distribucion_bES[["t"]]) - valor_nulo
+distribucion_nula <- distribucion_bES[["t"]] - desplazamiento
+
+# Determinar el valor p
+p <- (sum(abs(distribucion_nula) > abs(valor_observado)) + 1) / (B + 1)
+
+# Mostrar los resultados
+cat("Media de la diferencia observada:", round(valor_observado, 3), "\n\n")
+cat("Distribución bootstrap e intervalo de confianza:\n")
+print(distribucion_bES)
+cat("Valor p:", round(p, 3), "\n")
+
+```
+
+# Pruebas de permutaciones
+
+## Pruebas de permutaciones para dos muestras independientes
+
+## Pruebas de Permutaciones
+
+Las pruebas de permutaciones son métodos no paramétricos que permiten realizar inferencia estadística sin asumir una distribución específica de los datos. Se basan en recalcular el estadístico de interés para todas las posibles permutaciones de los datos.
+
+```{r}
+# Crear muestras iniciales
+a <- c(5.4, 4.7, 6.3, 2.9, 5.9, 5.1, 2.1, 6.2, 1.6, 6.7, 3.0, 3.3,
+       5.0, 4.1, 3.3, 3.4, 1.2, 3.8, 5.8, 4.2)
+b <- c(4.0, 4.1, 4.3, 4.3, 4.3, 4.2, 4.3, 4.3, 4.4, 4.1, 4.3, 4.0)
+
+# Establecer semilla y cantidad de repeticiones
+R <- 5999
+set.seed(432)
+
+# Función para obtener una permutación
+# Argumentos:
+# - i: iterador (para llamadas posteriores)
+# - muestra_1, muestra_2: muestras
+# Valor:
+# - lista con las muestras resultantes tras la permutación
+obtiene_permutacion <- function(i, muestra_1, muestra_2) {
+  n_1 <- length(muestra_1)
+  combinada <- c(muestra_1, muestra_2)
+  n <- length(combinada)
+  permutacion <- sample(combinada, n, replace = FALSE)
+  nueva_1 <- permutacion[1:n_1]
+  nueva_2 <- permutacion[(n_1+1):n]
+  return(list(nueva_1, nueva_2))
+}
+
+# Función para calcular la diferencia de un estadístico de interés entre las
+# dos muestras
+# Argumentos:
+# - muestras: lista con las muestras
+# - FUN: nombre de la función que calcula el estadístico de interés
+# Valor:
+# - diferencia de un estadístico para dos muestras
+calcular_diferencia <- function(muestras, FUN) {
+  muestra_1 <- muestras[[1]]
+  muestra_2 <- muestras[[2]]
+  diferencia <- FUN(muestra_1) - FUN(muestra_2)
+  return(diferencia)
+}
+
+# Función para calcular el valor p
+# Argumentos:
+# - distribucion: distribución nula del estadístico de interés
+# - valor_observado: valor del estadístico de interés para las muestras
+#   originales
+# - repeticiones: cantidad de permutaciones a realizar
+# - alternative: tipo de hipótesis alternativa. "two.sided" para
+#   hipótesis bilateral, "greater" o "less" para hipótesis unilaterales
+# Valor:
+# - el valorp calculado
+calcular_valor_p <- function(distribucion, valor_observado,
+                           repeticiones, alternative) {
+  if(alternative == "two.sided") {
+    numerador <- sum(abs(distribucion) > abs(valor_observado)) + 1
+    denominador <- repeticiones + 1
+    valor_p <- numerador / denominador
+  } else if(alternative == "greater") {
+    numerador <- sum(distribucion > valor_observado) + 1
+    denominador <- repeticiones + 1
+    valor_p <- numerador / denominador
+  } else {
+    numerador <- sum(distribucion < valor_observado) + 1
+    denominador <- repeticiones + 1
+    valor_p <- numerador / denominador
+  }
+  return(valor_p)
+}
+
+# Función para graficar una distribución
+# Argumentos:
+# - distribucion: distribución nula del estadístico de interés
+# - ...: otros argumentos a ser entregados a gghistogram y ggqqplot
+graficar_distribucion <- function(distribucion, ...) {
+  observaciones <- data.frame(distribucion)
+  
+  histograma <- gghistogram(observaciones, x = "distribucion",
+                           xlab = "Estadístico de interés",
+                           ylab = "Frecuencia", bins = 30, ...)
+  
+  qq <- ggqqplot(observaciones, x = "distribucion", ...)
+  
+  # Crear una única figura con todos los gráficos de dispersión
+  figura <- ggarrange(histograma, qq, ncol = 2, nrow = 1)
+  print(figura)
+}
+
+# Función para hacer la prueba de permutaciones
+# Argumentos:
+# - muestra_1, muestra_2: vectores numéricos con las muestras a comparar
+# - repeticiones: cantidad de permutaciones a realizar
+# - FUN: función del estadístico F para el que se calcula la diferencia
+# - alternative: tipo de hipótesis alternativa. "two.sided" para
+#   hipótesis bilateral, "greater" o "less" para hipótesis unilaterales
+# - plot: si TRUE, construye el gráfico de la distribución
+# - ...: otros argumentos a ser entregados a graficar_distribucion
+contrastar_hipotesis_permutaciones <- function(muestra_1, muestra_2,
+                                             repeticiones, FUN,
+                                             alternative, plot, ...) {
+  cat("Prueba de permutaciones\n\n")
+  cat("Hipótesis alternativa:", alternative, "\n")
+  observado <- calcular_diferencia(list(muestra_1, muestra_2), FUN)
+  cat("Valor observado:", observado, "\n")
+  
+  n_1 <- length(muestra_1)
+  
+  # Generar permutaciones
+  permutaciones <- lapply(1:repeticiones, obtiene_permutacion, muestra_1,
+                         muestra_2)
+  
+  # Generar la distribución
+  distribucion <- sapply(permutaciones, calcular_diferencia, FUN)
+  
+  # Graficar la distribución
+  if(plot) {
+    graficar_distribucion(distribucion, ...)
+  }
+  
+  # Calcular el valor p
+  valor_p <- calcular_valor_p(distribucion, observado, repeticiones,
+                             alternative)
+  
+  cat("Valor p:", valor_p, "\n\n")
+}
+
+# Hacer pruebas de permutaciones para la media y la varianza
+contrastar_hipotesis_permutaciones(a, b, repeticiones = R, FUN = mean,
+                                 alternative = "two.sided", plot = TRUE,
+                                 color = "blue", fill = "blue")
+
+contrastar_hipotesis_permutaciones(a, b, repeticiones = R, FUN = var,
+                                 alternative = "two.sided", plot = FALSE)
+
+```
+
+## Prueba de permutaciones para comparar mas de dos muestras relacionadas
+
+## Prueba de Permutaciones para Muestras Correlacionadas
+
+Este método implementa pruebas de permutaciones para comparar algoritmos de ordenamiento, donde las mediciones están correlacionadas por instancia. Permite realizar comparaciones múltiples sin asumir normalidad en los datos.
+
+```{r}
+library(ez)
+library(ggpubr)
+library(tidyr)
+
+# Crear la matriz de datos
+Algoritmos <- c("Quicksort", "Bubblesort", "Mergesort")
+Quicksort <- c(14.1, 22.6, 23.4, 23.3, 21.8, 40.1)
+Bubblesort <- c(15.7, 29.3, 30.7, 30.8, 29.8, 50.3)
+Mergesort <- c(14.0, 25.7, 25.7, 23.7, 25.5, 44.7)
+Instancia <- factor(1:6)
+datos_anchos <- data.frame(Instancia, Quicksort, Bubblesort, Mergesort)
+
+datos_largos <- datos_anchos |>
+  pivot_longer(all_of(Algoritmos),
+              names_to = "Algoritmo",
+              values_to = "Tiempo")
+
+datos_largos[["Algoritmo"]] <- factor(datos_largos[["Algoritmo"]],
+                                    levels = Algoritmos)
+
+# Verificar la condición de normalidad
+g <- ggqqplot(datos_largos, "Tiempo", facet.by = "Algoritmo",
+              color = "Algoritmo")
+print(g)
+
+# Establecer nivel de significación
+alfa <- 0.01
+
+# Obtener el valor observado, correspondiente al estadístico F entregado
+# por ANOVA para la muestra original
+anova <- ezANOVA(datos_largos, dv = Tiempo, within = Algoritmo,
+                 wid = Instancia)
+valor_observado <- anova[["ANOVA"]][["F"]]
+
+# Función para obtener una permutación
+# Devuelve una matriz de datos con formato ancho
+obtiene_permutacion <- function(i, df_ancho) {
+  df_ancho[, 2:4] <- t(apply(df_ancho[, 2:4], 1, sample))
+  return(df_ancho)
+}
+
+# Obtiene permutaciones
+R <- 2999
+set.seed(432)
+permutaciones <- lapply(1:R, obtiene_permutacion, datos_anchos)
+
+# Función para obtener el estadístico F para una matriz de datos con
+# formato ancho
+obtiene_F <- function(df_ancho) {
+  df_largo <- df_ancho |>
+    pivot_longer(c("Quicksort", "Bubblesort", "Mergesort"),
+                names_to = "Algoritmo",
+                values_to = "Tiempo")
+  
+  df_largo[["Algoritmo"]] <- factor(df_largo[["Algoritmo"]])
+  
+  anova <- ezANOVA(df_largo, dv = Tiempo, within = Algoritmo,
+                   wid = Instancia)
+  
+  return(anova[["ANOVA"]][["F"]])
+}
+
+# Genera distribución de estadísticos F con las permutaciones
+distribucion <- sapply(permutaciones, obtiene_F)
+
+# Obtener y mostrar el valor p
+p <- (sum(distribucion > valor_observado) + 1) / (R + 1)
+cat("ANOVA de una vía para muestras pareadas con permutaciones:\n")
+cat("Valor p ómnibus:", p, "\n\n")
+
+# Análisis post-hoc
+
+# Función para calcular la media de las diferencias para dos columnas de una
+# matriz de datos en formato ancho
+obtiene_media_difs <- function(df_ancho, columna_1, columna_2) {
+  media <- mean(df_ancho[[columna_1]] - df_ancho[[columna_2]])
+  return(media)
+}
+
+# Obtiene las las medias de las diferencias observadas
+dif_obs_Q_B <- obtiene_media_difs(datos_anchos, "Quicksort", "Bubblesort")
+dif_obs_Q_M <- obtiene_media_difs(datos_anchos, "Quicksort", "Mergesort")
+dif_obs_B_M <- obtiene_media_difs(datos_anchos, "Bubblesort", "Mergesort")
+
+# Obtiene las distribuciones de las medias de las diferencias permutadas
+dist_medias_difs_Q_B <- sapply(permutaciones, obtiene_media_difs,
+                              "Quicksort", "Bubblesort")
+dist_medias_difs_Q_M <- sapply(permutaciones, obtiene_media_difs,
+                              "Quicksort", "Mergesort")
+dist_medias_difs_B_M <- sapply(permutaciones, obtiene_media_difs,
+                              "Bubblesort", "Mergesort")
+
+# Obtener valores p
+num <- sum(abs(dist_medias_difs_Q_B) > abs(dif_obs_Q_B)) + 1
+den <- R + 1
+p_Q_B <- num / den
+
+num <- sum(abs(dist_medias_difs_Q_M) > abs(dif_obs_Q_M)) + 1
+den <- R + 1
+p_Q_M <- num / den
+
+num <- sum(abs(dist_medias_difs_B_M) > abs(dif_obs_B_M)) + 1
+den <- R + 1
+p_B_M <- num / den
+
+valores_p <- c(p_Q_B, p_Q_M, p_B_M)
+
+# Ajustar y mostrar valores p
+valores_p_adj <- p.adjust(valores_p, method = "BH")
+
+cat("\n\n")
+cat("Análisis post-hoc (permutaciones) para la diferencia de las medias\n")
+cat("=============================================================\n")
+cat("Valores p ajustados:\n")
+cat(sprintf("Quicksort - Bubblesort: %.3f\n", valores_p_adj[1]))
+cat(sprintf("Quicksort - Mergesort: %.3f\n", valores_p_adj[2]))
+cat(sprintf("Bubblesort - Mergesort: %.3f\n", valores_p_adj[3]))
+
+cat("\nDiferencias observadas:\n")
+cat(sprintf("Quicksort - Bubblesort: %6.3f\n", dif_obs_Q_B))
+cat(sprintf("Quicksort - Mergesort: %6.3f\n", dif_obs_Q_M))
+cat(sprintf("Bubblesort - Mergesort: %6.3f\n", dif_obs_B_M))
+```
