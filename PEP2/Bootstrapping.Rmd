@@ -1,0 +1,261 @@
+---
+title: "Bootstrapping"
+author: "Jaime Riquelme"
+date: "2024-12-28"
+output: pdf_document
+---
+
+#Bootstrapping para una muestra
+Considewra el conjunto de datos essays.
+Determina usando bootstrapping un intervalo con 95% de confianza para la probabilidad que un/a estudiante del grupo de control obtenga una tasa de errores menor a 1.5.
+
+```{r}
+library(boot)
+library(dplyr)
+
+
+#El conjunto de datos es de R, no es necesario cargarlo
+head(essays)
+
+#Filtramos los datos para obtener solo el grupo de control
+
+datos_filtrados <- essays %>%
+  filter(group == "Control") %>%
+  select(errorRatio)
+
+# Crear muestra inicial, mostrar su histograma y calcular la media
+errores <- datos_filtrados$errorRatio
+
+#vemos normalidad
+shapiro.test(errores)
+
+# Función para calcular el estadístico: proporción de errores < 1.5
+proporcion_menor <- function(valores, i) {
+    mean(valores[i] < 1.5)  # Retorna la proporción de valores menores a 1.5
+}
+
+# Establecer cantidad de remuestreos y nivel de significación
+B <- 2000
+alfa <- 0.05
+
+# Construir la distribución bootstrap usando el paquete boot
+set.seed(432)  # Para reproducibilidad, como en el ejemplo
+distribucion_b <- boot(errores, statistic = proporcion_menor, R = B)
+
+# Mostrar y graficar la distribución bootstrap
+cat("*** Paquete 'boot' ***\n")
+print(distribucion_b)
+
+# Examinar la distribución bootstrap
+datos <- data.frame(distribucion = distribucion_b$t)
+g_hist <- gghistogram(datos, x = "distribucion", bins = 100,
+                     xlab = "Proporción de errores < 1.5",
+                     ylab = "Frecuencia")
+g_qq <- ggqqplot(datos, x = "distribucion")
+g <- ggarrange(g_hist, g_qq)
+print(g)
+
+# Calcular estadísticos de la distribución bootstrap
+media_b <- mean(datos$distribucion)
+sd_b <- sd(datos$distribucion)
+
+cat("\nDistribución bootstrap:\n")
+cat("\tMedia:", round(media_b, 3), "\n")
+cat("\tDesviación estándar:", round(sd_b, 3), "\n")
+
+# Construir y mostrar los intervalos de confianza
+ics <- boot.ci(distribucion_b, conf = 1 - alfa, 
+               type = c("norm", "perc", "bca"))
+print(ics)
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#Bootstrapping para dos muestras independientes
+El conjunto de datos diet del paquete WRS2 contiene datos de la pérdida de peso conseguida por tres tipos de dietas. Usando bootstrapping, determina si la pérdida de peso conseguida por las mujeres con las dietas A y C es la misma.
+
+```{r}
+library(WRS2)
+library(boot)
+#Cargamos el conjunto de datos diet
+data(diet)
+# Cargar las bibliotecas necesarias
+library(boot)
+library(dplyr)
+# Preparar los datos
+# Filtrar solo las mujeres con dieta A y C
+datos_filtrados <- diet %>%
+  filter(gender == "Female" & diet.type %in% c("A", "C")) %>%
+  select(diet.type, weight.loss)
+# Función para calcular la diferencia de medias en el bootstrap
+diferencia_medias <- function(diet, indices) {
+    # Extraer los datos remuestreados
+    muestra <- diet[indices, ]
+
+    # Calcular medias por grupo
+    media_A <- mean(muestra$weight.loss[muestra$diet.type == "A"])
+    media_C <- mean(muestra$weight.loss[muestra$diet.type == "C"])
+
+    # Retornar la diferencia
+    return(media_A - media_C)
+}
+# Realizar el bootstrap
+set.seed(123) # Para reproducibilidad
+resultados_boot <- boot(data = datos_filtrados, 
+                       statistic = diferencia_medias, 
+                       R = 2000)
+# Calcular intervalos de confianza
+ic_boot <- boot.ci(resultados_boot, 
+                  type = "bca",
+                  conf = 0.95)
+# Mostrar los resultados
+print(ic_boot)
+# Estadísticas descriptivas por grupo
+datos_filtrados %>%
+  group_by(diet.type) %>%
+  summarise(
+    n = n(),
+    media_perdida = mean(weight.loss),
+    sd_perdida = sd(weight.loss)
+  )
+# Crear histograma de las diferencias bootstrap
+hist(resultados_boot$t, 
+     main = "Distribución Bootstrap de la Diferencia de Medias",
+     xlab = "Diferencia en pérdida de peso (A - C)",
+     col = "lightblue",
+     breaks = 50)
+abline(v = 0, col = "red", lty = 2)
+```
+```{r}
+#Cargamos las librerias necesarias
+library(WRS2)
+library(boot)
+library(dplyr)
+library(ggplot2)
+library(rcompanion)
+library(simpleboot)
+library(ggpubr)
+
+# Preparación de datos
+datos_filtrados <- diet %>%
+  filter(gender == "Female" & diet.type %in% c("A", "C")) %>%
+  select(diet.type, weight.loss)
+
+dieta_A <- datos_filtrados %>%
+  filter(diet.type == "A") %>%
+  pull(weight.loss)
+
+dieta_C <- datos_filtrados %>%
+  filter(diet.type == "C") %>%
+  pull(weight.loss)
+
+# Verificar normalidad
+print(shapiro.test(dieta_A))
+print(shapiro.test(dieta_C))
+
+# Calcular estadísticos iniciales
+media_A <- mean(dieta_A)
+media_C <- mean(dieta_C)
+diferencia_obs <- media_A - media_C
+
+cat("Media dieta A:", round(media_A, 3), "\n")
+cat("Media dieta C:", round(media_C, 3), "\n")
+cat("Diferencia observada:", round(diferencia_obs, 3), "\n")
+
+# Crear distribución bootstrap
+B <- 9999
+set.seed(432) # Mismo seed que en la lectura
+distribucion_b <- two.boot(dieta_A, dieta_C, FUN = mean, R = B)
+
+# Visualización
+datos <- data.frame(diferencias = distribucion_b$t)
+g_hist <- gghistogram(datos, x = "diferencias", bins = 100,
+                     xlab = "Diferencia de medias",
+                     ylab = "Frecuencia") 
+g_qq <- ggqqplot(datos, x = "diferencias")
+g <- ggarrange(g_hist, g_qq)
+print(g)
+
+# Calcular estadísticos bootstrap
+media_b <- mean(datos$diferencias)
+sd_b <- sd(datos$diferencias)
+
+# Construir intervalo de confianza
+alpha <- 0.05
+intervalo_bca <- boot.ci(distribucion_b, conf = 1 - alpha, type = "bca")
+print(intervalo_bca)
+
+# Desplazar la distribución bootstrap para reflejar la hipótesis nula
+valor_nulo <- 0
+desplazamiento <- media_b - valor_nulo
+distribucion_nula <- datos$diferencias - desplazamiento
+
+# Calcular el valor p siguiendo la lógica del ejemplo
+# Notar que usamos abs() para hacer la prueba bilateral
+p <- (sum(abs(distribucion_nula) >= abs(diferencia_obs)) + 1) / (B + 1)
+cat("\nValor p:", round(p, 4), "\n")
+
+
+```
+# Bootstrapping para dos muestras relacionadas
+
+```{r}
+# Creamos la muestra inicial con las calificaciones en las dos pruebas
+prueba_1 <- c(3.5, 2.7, 1.0, 1.8, 1.6, 4.3, 5.8, 6.4, 3.9, 4.3, 3.4, 
+              5.3, 5.8, 5.3, 2.0, 1.3, 4.0, 5.3, 1.6, 3.6)
+
+prueba_2 <- c(5.2, 5.1, 5.9, 4.8, 1.4, 2.3, 6.8, 5.3, 3.1, 3.8, 4.6,
+              1.2, 3.9, 2.0, 1.7, 3.3, 6.0, 4.8, 6.9, 1.3)
+
+# Calcular la diferencia entre ambas observaciones
+diferencia <- prueba_2 - prueba_1
+valor_observado <- mean(diferencia)
+
+# Función para calcular la media de las diferencias
+media_diferencias <- function(valores, i) {
+    mean(valores[i])
+}
+
+# Establecer cantidad de remuestreos y nivel de significación
+B <- 3999  # Como en el ejemplo del PDF
+alfa <- 0.05
+
+# Generar la distribución bootstrap
+set.seed(432)
+distribucion_b <- boot(diferencia, 
+                      statistic = media_diferencias, 
+                      R = B)
+
+# Construir y mostrar los intervalos de confianza
+intervalo_bca <- boot.ci(distribucion_b, conf = 1 - alfa,
+                        type = "bca")
+
+# Mostrar los resultados
+cat("Media de las diferencia observada:", round(valor_observado, 3), "\n\n")
+cat("Distribución bootstrap e intervalo de confianza:\n")
+print(intervalo_bca)
+
+# Graficar la distribución bootstrap
+datos <- data.frame(diferencias = distribucion_b$t)
+g_hist <- gghistogram(datos, x = "diferencias", bins = 100,
+                     xlab = "Diferencia de medias",
+                     ylab = "Frecuencia")
+g_qq <- ggqqplot(datos, x = "diferencias")
+g <- ggarrange(g_hist, g_qq)
+print(g)
+```
+
