@@ -484,4 +484,83 @@ cat("\nDiferencias observadas:\n")
 cat(sprintf("Quicksort - Bubblesort: %6.3f\n", dif_obs_Q_B))
 cat(sprintf("Quicksort - Mergesort: %6.3f\n", dif_obs_Q_M))
 cat(sprintf("Bubblesort - Mergesort: %6.3f\n", dif_obs_B_M))
+
 ```
+
+
+#Ejercicio 12.2
+```{r}
+library(dplyr)
+library(WRS2)
+library(simpleboot)
+library(ggpubr)
+
+data("essays")
+head(essays)
+
+library(boot)
+library(simpleboot)
+library(tidyr)
+
+# Preparar los datos
+essay3 <- essays %>%
+  filter(group == "Direct", essay == "essay3") %>%
+  pull(errorRatio)
+
+essay4 <- essays %>%
+  filter(group == "Direct", essay == "essay4") %>%
+  pull(errorRatio)
+
+# Convertir a numérico explícitamente
+essay3 <- as.numeric(essay3)
+essay4 <- as.numeric(essay4)
+
+# Función para calcular la diferencia entre medias
+calcular_diferencia <- function(muestra1, muestra2) {
+  return(mean(muestra2) - mean(muestra1))
+}
+
+# Calcular diferencia observada
+diferencia_obs <- calcular_diferencia(essay3, essay4)
+
+# Configurar parámetros
+R <- 5999  # Número de permutaciones
+set.seed(432)
+
+# Combinar datos para permutaciones
+datos_combinados <- c(essay3, essay4)
+n1 <- length(essay3)
+n2 <- length(essay4)
+n <- n1 + n2
+
+# Realizar permutaciones
+difs_permutadas <- numeric(R)
+
+for(i in 1:R) {
+  # Permutar los datos combinados
+  indices_perm <- sample(n)
+  muestra1_perm <- datos_combinados[indices_perm[1:n1]]
+  muestra2_perm <- datos_combinados[indices_perm[(n1+1):n]]
+  
+  # Calcular y almacenar la diferencia
+  difs_permutadas[i] <- calcular_diferencia(muestra1_perm, muestra2_perm)
+}
+
+# Calcular valor p bilateral
+valor_p <- (sum(abs(difs_permutadas) >= abs(diferencia_obs)) + 1) / (R + 1)
+
+# Imprimir resultados
+cat("\nPrueba de permutaciones para tasas de error\n")
+cat("----------------------------------------\n")
+cat("Diferencia observada:", round(diferencia_obs, 4), "\n")
+cat("Valor p:", round(valor_p, 4), "\n\n")
+cat("Si p < 0.05: rechazamos H0 (las tasas son diferentes)\n")
+cat("Si p >= 0.05: no podemos rechazar H0 (las tasas podrían ser iguales)\n")
+
+# Visualización
+hist(difs_permutadas, breaks = 50, 
+     main = "Distribución de diferencias permutadas",
+     xlab = "Diferencia en tasas de error (Essay4 - Essay3)",
+     ylab = "Frecuencia")
+abline(v = diferencia_obs, col = "red", lwd = 2, lty = 2)
+```   
