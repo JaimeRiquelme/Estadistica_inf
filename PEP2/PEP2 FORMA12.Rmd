@@ -1,0 +1,353 @@
+---
+title: "PEP2"
+author: "Dupla 12"
+date: "2024-12-30"
+output: html_document
+---
+
+##### Importante
+
+Antes de comenzar con el análisis, se hará una importación de las siguientes librerías: *dplyr*, *ggpubr*, *car*, *caret*, *leaps* y *psych*.
+
+```{r, echo = F, message = F, warning = F}
+library(dplyr)
+library(ggpubr)
+library(car)
+library(caret)
+library(leaps)
+library(psych)
+```
+
+
+Una vez realizado, se procederá.
+
+##### Contexto
+
+El gobierno realizó un estudio paqra conocer el consumo de energía eléctica promedio de los hogares chilenos- Con la intensión  de determinar la cobertura del subsidio de ener´gia eléctica que se discute en el Congreso, el Gobierno necesita saber si la proporción de viviendas DFL2 (es decir de hasta 120 m2) que pagan el temido "cargo por sobreconsumo" de la macrozona norte es similar al de la macrozona centro. Con este fin, ha proporcionado una muestra aleatoria de 100 hogares estudiados con las siguientes variables:
+
+
+
+##### Desarrollo
+
+En primer lugar, se hará una lectura de los datos utilizando la función nativa de R, *read.csv2*.
+
+```{r, echo = F}
+datos <- read.csv("EI-2024-2-PE2-Datos-Forma12.csv")
+```
+
+Así, las preguntas vienen dadas por:
+
+##### Pregunta 1.-
+
+Para responder esta pregunta, se pide realizar un análisis inferencial usando remuestreo con permutaciones (100 repeticiones) y 95% confianza, explicando y justificando paso a paso el procedimiendo seguido, incluyendo las hipótesis contrastadas y la interpretación de los resultados obtenidos para la pregunta del Gobierno.
+
+Solución:
+
+
+Para responder esta pregunta, se pide realizar un análisis inferencial usando remuestreo con permutaciones (100 repeticiones) y 95% confianza, explicando y justificando paso a paso el procedimiendo seguido, incluyendo las hipótesis contrastadas y la interpretación de los resultados obtenidos para la pregunta del Gobierno.
+
+para continuar con el desarrollo, se procede a formular las siguientes hipótesis nulas y alternativas:
+
+*H0: La proporción de viviendas DFL2 en la macrozona norte es igual a la proporción de viviendas DFL2 en la macrozona centro.*
+
+*H1: La proporción de viviendas DFL2 en la macrozona norte es distinta a la proporción de viviendas DFL2 en la macrozona centro.*
+
+por otra parte, en fórmula matemática, se tiene que:
+
+sea mu_norte la proporción de viviendas DFL2 en la macrozona norte y mu_centro la proporción de viviendas DFL2 en la macrozona centro, entonces:
+
+*H0: mu_norte = mu_centro*
+
+*H1: mu_norte != mu_centro*
+
+por otra parte, como la pregunta nos indica que se quiere realizar un análisis inferencial, junto con los datos, siendo estos independientes entre si, debido a que son diferentes hogares a los que se les ha medido diferentes hogares, asi como la pregunta lo menciona, se eligen la variable superficie como la variable de interés, ya que esta nos indica la superficie de las viviendas, y se quiere saber si la proporción de viviendas DFL2 en la macrozona norte es similar a la de la macrozona centro, por lo que se procede a realizar la prueba de permutaciones.
+
+se nos pide utilizar una cantidad de repeticiones de 100 y un alpha de 0.05, por lo que se procede a realizar la prueba de permutaciones.
+
+```{r}
+library(dplyr)
+library(ggpubr)
+library(ggplot2)
+
+#Filtramos los datos
+norte <- datos %>% filter(macro_zona == "norte")
+centro <- datos %>% filter(macro_zona == "centro")
+
+# Establecer semilla, cantidad de repeticiones y alpha a utilizar
+R = 100
+set.seed(4708)
+alpha = 0.05
+
+# Función para obtener una permutación
+obtiene_permutacion <- function(i, muestra_1, muestra_2) {
+  n_1 <- length(muestra_1)
+  combinada <- c(muestra_1, muestra_2)
+  n <- length(combinada)
+  permutacion <- sample(combinada, n, replace = FALSE)
+  nueva_1 <- permutacion[1:n_1]
+  nueva_2 <- permutacion[(n_1+1):n]
+  return(list(nueva_1, nueva_2))
+}
+
+# Función para calcular la diferencia de un estadístico de interés entre dos muestras.
+calcular_diferencia <- function(muestras, FUN) {
+  muestra_1 <- muestras[[1]]
+  muestra_2 <- muestras[[2]]
+  diferencia <- FUN(muestra_1) - FUN(muestra_2)
+  return(diferencia)
+}
+
+# Función para calcular el valor p.
+calcular_valor_p <- function(distribucion, valor_observado, 
+                           repeticiones, alternative) {
+  if(alternative == "two.sided") {
+    numerador <- sum(abs(distribucion) > abs(valor_observado)) + 1
+    denominador <- repeticiones + 1
+    valor_p <- numerador / denominador
+  } else if(alternative == "greater") {
+    numerador <- sum(distribucion > valor_observado) + 1
+    denominador <- repeticiones + 1
+    valor_p <- numerador / denominador
+  } else {
+    numerador <- sum(distribucion < valor_observado) + 1
+    denominador <- repeticiones + 1
+    valor_p <- numerador / denominador
+  }
+  return(valor_p)
+}
+
+# Función para graficar una distribución.
+graficar_distribucion <- function(distribucion, ...) {
+  observaciones <- data.frame(distribucion)
+  
+  histograma <- gghistogram(observaciones, x = "distribucion",
+                           xlab = "Estadístico de interés",
+                           ylab = "Frecuencia", bins = 20, ...)
+
+  print(histograma)
+}
+
+# Función para hacer la prueba de permutaciones.
+contrastar_hipotesis_permutaciones <- function(muestra_1, muestra_2,
+                                             repeticiones, FUN,
+                                             alternative, plot, ...) {
+  cat("Prueba de permutaciones\n\n")
+  cat("Hipótesis alternativa:", alternative, "\n")
+  
+  observado <- calcular_diferencia(list(muestra_1, muestra_2), FUN)
+  cat("Valor observado:", observado, "\n")
+  
+  n_1 <- length(muestra_1)
+  
+  # Generar permutaciones.
+  permutaciones <- lapply(1:repeticiones, obtiene_permutacion, muestra_1,
+                         muestra_2)
+  
+  # Generar la distribución.
+  distribucion <- sapply(permutaciones, calcular_diferencia, FUN)
+  
+  # Graficar la distribución.
+  if(plot) {
+    graficar_distribucion(distribucion, ...)
+  }
+  
+  # Calcular el valor p.
+  valor_p <- calcular_valor_p(distribucion, observado, repeticiones,
+                             alternative)
+  cat("Valor p:", valor_p, "\n\n")
+}
+
+
+
+# Función para calcular proporción de viviendas DFL2 con superficie menor o igual a 120 m2.
+calcular_proporcion <- function(x) {
+  mean(x <= 120)
+}
+
+# Se realiza la prueba de permutaciones
+contrastar_hipotesis_permutaciones(norte$superf, 
+                                 centro$superf, 
+                                 repeticiones = R, 
+                                 FUN = calcular_proporcion,
+                                 alternative = "two.sided", 
+                                 plot = TRUE, 
+                                 color = "blue", 
+                                 fill = "blue")
+
+```
+
+##### Conclusión
+
+Tras realizar la prueba, y visualizar el histograma, podemos ver que este se asemeja a una distribución normal, con un valor observado de -0.1586. al realizar la prueba y calcular el valor de p con una hipótesis bilateral, obtuvimos un valor de p de 0.1188, por lo tanto utilizando un alpha de 0.05, por lo que se concluye con 95% de confianza que no existe evidencia suficiente para creer que existe una diferencia en la proporción de viviendas DFL2 en la macrozona norte y centro. 
+
+
+
+
+##### Pregunta 2.- El gobierno también quiere saber si es posible construir un modelo predictivo del consumo eléctrico de los hogares chilenos con un error menor a +-2 KWh con la misma muestra proporcionada.
+
+Se pide construir un modelo de regresión adecuado para responder la pregunta asignada que use entre 2 y 5 predictores, asegurando que el modelo obtenido sea confiable (considere VIF >= 5 como evidencia de multicolinealidad problemática). Determine si la calidad predictiva del modelo satisface los requerimientos del Gobierno evaluándolo con 499 iteraciones de bootstrapping (usando la semilla 131 para reproducir resultados).
+
+Solución:
+
+En primer lugar para la selección de predictores, se realizará una búsqueda exhaustiva apoyándonos del paquete Leaps.
+
+De esa forma, obtenemos las siguientes variables:
+
+```{r, echo = F}
+respuesta_lineal <- "consumo"
+
+rlm1_df <- datos 
+
+rlm1_fmla <- formula(paste(respuesta_lineal, ".", sep = " ~ "))
+
+rlm1_sets <- regsubsets(rlm1_fmla, data = rlm1_df, nbest = 3, nvmax = 8, method = "exhaustive")
+rlm1_sets_summ <- summary(rlm1_sets)
+rlm1_sets_i_mejor <- which.min(rlm1_sets_summ[["bic"]])
+rlm1_seleccion <- names(which(rlm1_sets_summ[["which"]][rlm1_sets_i_mejor, ])[-1])
+
+plot(rlm1_sets, main = "Subconjuntos modelo de RLM 1")
+
+print(rlm1_seleccion)
+```
+
+Sujeto a lo solicitado, se desecharán los últimos dos predictores para asegurar una cantidad máxima de 5.
+
+Así, los predictores quedan definidos por:
+
+```{r, echo = F}
+rlm1_seleccion <- rlm1_seleccion[1:5]
+rlm1_seleccion
+```
+
+A continuación para se evaluará el modelo con 499 iteraciones de bootstrapping utilizando el paquete Caret, teniendo cuidado de usar la semilla especificada para reproducir los resultados.
+
+```{r, echo = F}
+rlm1_sel_text <- paste(rlm1_seleccion, collapse = " + ")
+rlm1_fmla <- formula(paste(respuesta_lineal, rlm1_sel_text, sep = " ~ "))
+
+set.seed(131)
+B = 499
+rlm1_train <- train(rlm1_fmla, data = rlm1_df, method = "lm",
+                    trControl = trainControl(method = "boot", number = B))
+rlm1 <- rlm1_train[["finalModel"]]
+
+cat("Modelo de RLM 1:\n")
+print(summary(rlm1))
+```
+
+Para verificar la confiabilidad del modelo, se realizará la verificación de las condiciones pertinentes a la RLM, así:
+
+
+##### Multicolinealidad 
+
+R nos ofrecé la función vif, que nos permite verificar los factores de inflación de la varianza, donde aplicados al modelo, se obtienen los siguientes:
+
+```{r, echo = F}
+vif(rlm1)
+```
+
+
+A pesar de que las variables superf y n_elec_gr presentan niveles relativamente "altos", aún así, no están dentro de un nivel peligroso o menos aún, cerca del límite de 5. Así, podemos decir que el modelo presenta niveles de multicolinealidad aceptables.
+
+##### Casos sobreinfluyentes
+
+En particular, el gráfico de diagnóstico nos permite evaluar estos casos, así, estos vienen dados por: 
+
+```{r, echo = F}
+rlm1_inf_estad <- influencePlot(rlm1, fill.col = "steelblue",
+                                scale = 5, id = list(n = 3),
+                                main = "Influencia de casos (RLM 1)\n")
+```
+
+A continuación, se esbozan los límites para el modelo empleado:
+
+```{r, echo = F}
+
+limite_inf <- round(qt(0.05/2, nrow(rlm1_df) - length(predictors(rlm1)) - 2), 3)
+limite_inf
+
+limite_sup <- round(qt(1-0.05/2, nrow(rlm1_df) - length(predictors(rlm1)) - 2), 3)
+limite_sup
+
+limite_ap <- round(2 * mean(hatvalues(rlm1)), 3)
+limite_cook <- round(3 * mean(cooks.distance(rlm1)), 3)
+```
+
+  - Rango obtenido: [ `r limite_inf`, `r limite_sup`]
+  - Límite del apalancamiento: `r limite_ap`
+  - Limite de la distancia de Cook: `r limite_cook`
+
+En último lugar, tenemos los casos que resaltan en el modelo
+
+```{r, echo = F}
+rlm1_inf_estad
+```
+
+En particular, podemos apreciar que en general los todos los casos a excepción del 40 poseen una distancia de cook fuera del límite y los casos 20, 40 y 88 están fuera del límite del apalancamiento, de esa forma, analizaremos qué tanto impactan estos casos en el modelo.
+
+```{r, echo = F}
+mmps(rlm1, terms = ~ 1, 
+        col = "steelblue", pch = 20, col.line = c("steelblue", "red"),
+        smooth = list(smoother = loessLine, span = 1),
+        id = list(n = 6, cex = 0.7, location = "lr"),
+        main = "Relación marginal con predicciones (RLM 1)", sub = " ")
+```
+
+Como se puede apreciar, no existen mayores distorsiones en la línea del modelo sujeto a los casos sobreinfluyentes.
+
+##### Independencia de los residuos
+
+Para resolver esta condición, se utilizará la prueba durbinWatsonTest, donde los resultadaos obtenidos son los siguientes:
+
+```{r, echo = F}
+durbinWatsonTest(rlm1)
+```
+
+Según el resultado, se puede suponer que los residuos no sean independientes para este modelo.
+
+
+##### Desempeño
+
+A continuación se trabajará el desempeño del modelo por cada repetición de Bootstrapping, así:
+
+```{r, echo = F}
+rlm1_err_df <- data.frame(RMSE = rlm1_train[["resample"]][["RMSE"]])
+rlm1_err_p <- gghistogram(rlm1_err_df, x = "RMSE", bins = 30,
+                          fill = "steelblue", ylab = "Frecuencia",
+                          title = "Distribución del error (RLM 1)")
+```
+
+  - Gráfico asociado:
+  
+```{r, echo = F}
+rlm1_err_p
+```
+
+  - Rendimiento del modelo:
+
+```{r, echo = F}
+rlm1_train[["results"]]
+```
+
+  - Detalles del error cuadrático medio:
+```{r, echo = F}
+describe(rlm1_err_df, trim = 0, quant = c(0.25, 0.75),
+               skew = FALSE, IQR = TRUE)
+```
+
+
+```{r, echo = F}
+min <- min(datos$consumo)
+max <- max(datos$consumo)
+media <- mean(datos$consumo)
+
+```
+
+Vemos que el error promedio que el modelo comete en sus estimaciones es de 0.883±0.095 kWh, lo que es muy bueno sujeto a lo solicitado y además considerando que la variable de respuesta varía entre `r min` kWh y `r max` kWh con una media de `r media` kWh. 
+
+##### Conclusiones
+
+En base al modelo construido, podemos mencionar que es confiable en términos de ajuste,
+generando residuos sin patrones y sin indicios de falta de independencia, además de cumplir con niveles aceptables de multicolinealidad.
+
+Por último se consiguió una calidad predictiva buena y por debajo del límite planteado por el enunciado. 
